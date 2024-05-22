@@ -1,12 +1,12 @@
-package com.hit11.citus
+package com.hit11.zeus
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.runApplication
 
 @SpringBootApplication(exclude = [DataSourceAutoConfiguration::class])
-class CitusApplication
+class ZeusApplication
 
 fun main(args: Array<String>) {
-    runApplication<CitusApplication>(*args)
+    runApplication<ZeusApplication>(*args)
 }

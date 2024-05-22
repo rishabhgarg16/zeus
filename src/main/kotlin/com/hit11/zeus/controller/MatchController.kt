@@ -1,7 +1,7 @@
-package com.hit11.citus.controller
+package com.hit11.zeus.controller
 
-import com.hit11.citus.model.Match
-import com.hit11.citus.service.MatchService
+import com.hit11.zeus.model.Match
+import com.hit11.zeus.service.MatchService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController

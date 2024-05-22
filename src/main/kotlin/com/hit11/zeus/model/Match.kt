@@ -1,4 +1,4 @@
-package com.hit11.citus.model
+package com.hit11.zeus.model
 
 data class Match(
     val id: String,

@@ -1,7 +1,7 @@
-package com.hit11.citus.service
+package com.hit11.zeus.service
 
-import com.hit11.citus.model.Match
-import com.hit11.citus.repository.MatchRepository
+import com.hit11.zeus.model.Match
+import com.hit11.zeus.repository.MatchRepository
 import org.springframework.stereotype.Service
 
 @Service

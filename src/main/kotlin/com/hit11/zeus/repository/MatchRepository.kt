@@ -1,6 +1,6 @@
-package com.hit11.citus.repository
+package com.hit11.zeus.repository
 
-import com.hit11.citus.model.Match
+import com.hit11.zeus.model.Match
 import org.springframework.stereotype.Repository
 import java.util.*
 
