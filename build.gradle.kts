@@ -1,7 +1,8 @@
 plugins {
     kotlin("jvm") version "1.9.23"
     id("org.springframework.boot") version "2.7.6"
-    kotlin("plugin.spring") version "1.5.31"
+    kotlin("plugin.spring") version "1.5.31" 
+    id('maven-publish')
 }
 
 group = "com.hit11"
@@ -25,4 +26,24 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(8)
+}
+
+publishing {
+  publications {
+      mavenJava(MavenPublication) {
+            groupId = 'ai.hit11'
+            artifactId = 'zeus'
+            version = '0.1.0'
+            from components.java
+      }
+  }
+  repositories {
+      maven {
+            url 'https://hitcentral-590183692348.d.codeartifact.ap-south-1.amazonaws.com/maven/hitcentral/'
+            credentials {
+                username "aws"
+                password System.env.CODEARTIFACT_AUTH_TOKEN
+          }
+      }
+  }
 }
