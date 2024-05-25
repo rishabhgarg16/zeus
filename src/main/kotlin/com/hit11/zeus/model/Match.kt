@@ -1,5 +1,6 @@
 package com.hit11.zeus.model
 
+
 data class Match(
     val id: String,
     val title: String,
