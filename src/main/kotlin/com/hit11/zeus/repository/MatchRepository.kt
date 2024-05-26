@@ -11,7 +11,7 @@ class MatchRepository {
         // Mock data for demonstration
         return listOf(
             Match(
-                id = "1",
+                id = 1,
                 title = "IPL 2024",
                 team1 = "BLR",
                 team2 = "GUJ",
@@ -21,7 +21,7 @@ class MatchRepository {
                 matchType = "T20"
             ),
             Match(
-                id = "2",
+                id = 2,
                 title = "EPL 2024",
                 team1 = "BE-CC",
                 team2 = "FNC",
@@ -31,7 +31,7 @@ class MatchRepository {
                 matchType = "T20"
             ),
             Match(
-                "3",
+                3,
                 "Rwanda Women's Series",
                 "Charity CC",
                 "CHA",
@@ -41,7 +41,7 @@ class MatchRepository {
                 matchType = "T20"
             ),
             Match(
-                "4",
+                4,
                 "Emirates D50 Championship",
                 "Team A",
                 "TEA",
@@ -51,7 +51,7 @@ class MatchRepository {
                 matchType = "T20"
             ),
             Match(
-                id = "5",
+                id = 5,
                 title = "IPL 2024",
                 team1 = "BLR",
                 team2 = "GUJ",
@@ -61,7 +61,7 @@ class MatchRepository {
                 matchType = "T20"
             ),
             Match(
-                id = "6",
+                id = 6,
                 title = "IPL 2024",
                 team1 = "BLR",
                 team2 = "GUJ",
