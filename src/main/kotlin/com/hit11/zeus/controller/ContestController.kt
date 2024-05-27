@@ -21,4 +21,12 @@ class ContestController(
     ): List<Contest> {
         return contestService.getContestForMatch(matchId)
     }
+
+    @GetMapping("/match/{matchId}/user/{userId}")
+    fun getUserEnrolledContests(
+        @PathVariable("matchId") matchId: Int,
+        @PathVariable("userId") userId: String
+    ): List<Contest> {
+        return contestService.getContestForMatch(matchId) // TODO change this
+    }
 }
