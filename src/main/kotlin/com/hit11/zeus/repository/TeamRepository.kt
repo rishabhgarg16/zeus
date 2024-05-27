@@ -1,19 +1,17 @@
 package com.hit11.zeus.repository
 
-import com.hit11.zeus.model.Player
-import com.hit11.zeus.model.PlayerRole
-import com.hit11.zeus.model.Team
+import com.hit11.zeus.model.UserTeam
 import org.springframework.stereotype.Repository
 
 
 @Repository
 class TeamRepository {
 
-    fun getUserTeams(): List<Team> {
+    fun getUserTeams(): List<UserTeam> {
         TODO()
     }
 
-    fun saveUserTeam(team: Team) {
+    fun saveUserTeam(userTeam: UserTeam) {
         TODO()
     }
 }

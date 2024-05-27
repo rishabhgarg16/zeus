@@ -1,9 +1,11 @@
 package com.hit11.zeus.controller
 
 
-import com.hit11.zeus.model.Team
+import com.hit11.zeus.model.UserTeam
 import com.hit11.zeus.service.PlayerService
 import com.hit11.zeus.service.TeamService
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -14,15 +16,20 @@ class TeamController(
 ) {
     @GetMapping("/user/{userId}/match/{matchId}")
     fun getUserTeamsForMatch(
-        @PathVariable userId: Int,
+        @PathVariable userId: String,
         @PathVariable matchId: Int
-    ): List<Team> {
+    ): List<UserTeam> {
         return teamService.getUserTeams(userId, matchId)
     }
 
 
     @PostMapping("/create")
-    suspend fun saveTeam(@RequestBody team: Team) {
-        TODO()
+    fun saveTeam(@RequestBody userTeam: UserTeam): Any? {
+        if (userTeam.matchId == 0 || userTeam.userId.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("bad request");
+        }
+        val team = teamService.saveUserTeam(userTeam)
+            ?: return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("internal server error")
+        return team
     }
 }
