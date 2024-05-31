@@ -1,6 +1,7 @@
 package com.hit11.zeus.model
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.hit11.zeus.config.MatchDeserializer
 
 @JsonDeserialize(using = MatchDeserializer::class)
 data class Match(

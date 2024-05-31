@@ -5,25 +5,25 @@ import pandas as pd
 # List of squad URLs
 squad_urls = [
     "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/afghanistan-squad-1431702/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/australia-squad-1431715/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/bangladesh-squad-1433740/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/canada-squad-1431914/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/england-squad-1431604/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/india-squad-1431601/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/ireland-squad-1432769/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/nepal-squad-1431788/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/netherlands-squad-1433671/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/new-zealand-squad-1431440/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/namibia-squad-1433240/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/oman-squad-1431785/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/pakistan-squad-1435201/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/papua-new-guinea-squad-1432846/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/scotland-squad-1432589/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/south-africa-squad-1431579/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/sri-lanka-squad-1433061/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/uganda-squad-1432588/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/united-states-of-america-squad-1432101/series-squads",
-    "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/west-indies-squad-1432115/series-squads"
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/australia-squad-1431715/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/bangladesh-squad-1433740/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/canada-squad-1431914/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/england-squad-1431604/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/india-squad-1431601/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/ireland-squad-1432769/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/nepal-squad-1431788/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/netherlands-squad-1433671/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/new-zealand-squad-1431440/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/namibia-squad-1433240/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/oman-squad-1431785/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/pakistan-squad-1435201/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/papua-new-guinea-squad-1432846/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/scotland-squad-1432589/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/south-africa-squad-1431579/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/sri-lanka-squad-1433061/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/uganda-squad-1432588/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/united-states-of-america-squad-1432101/series-squads",
+    # "https://www.espncricinfo.com/series/icc-men-s-t20-world-cup-2024-1411166/west-indies-squad-1432115/series-squads"
 ]
 
 squads_data = []
@@ -38,6 +38,7 @@ def scrape_squad(url):
     print(f"Scraping team: {team_name}")
 
     player_sections = soup.find_all('div', class_='ds-relative ds-flex ds-flex-row ds-space-x-4 ds-p-3')
+    print(f"player section: {player_sections}")
 
     for player_section in player_sections:
         # Extract player name
@@ -83,6 +84,8 @@ def scrape_squad(url):
             'Batting Style': player_batting_style,
             'Bowling Style': player_bowling_style
         })
+
+        break
 
 
 # Iterate through each squad URL and scrape data

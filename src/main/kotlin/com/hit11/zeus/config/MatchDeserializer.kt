@@ -1,9 +1,10 @@
-package com.hit11.zeus.model
+package com.hit11.zeus.config
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
+import com.hit11.zeus.model.Match
 
 class MatchDeserializer : JsonDeserializer<Match>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Match {
