@@ -1,13 +1,25 @@
 package com.hit11.zeus.model
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
+@JsonDeserialize(using = MatchDeserializer::class)
 data class Match(
-    val id: Int,
-    val title: String,
-    val team1: String,
-    val team2: String,
-    val time: Long,
-    val location: String,
-    val prize: String,
-    val matchType: String
+    val id: Int? = null,  // Human-readable ID
+    val firebase_id: String? = null,  // Firebase generated ID
+    val match_number: Int? = null,
+    val match_group: String? = null,
+    val team1: String? = null,
+    val team_1_image_url: String? = null,
+    val team2: String? = null,
+    val team_2_image_url: String? = null,
+    val time_gmt: String? = null,
+    val city: String? = null,
+    val stadium: String? = null,
+    val country: String? = null,
+    val tournament_name: String? = null,
+    val match_type: String? = null,
+    val match_status: String? = null,
+    val match_link: String? = null,
+    val start_date: String? = null,
+    val uploaded_at: Long? = null
 )
