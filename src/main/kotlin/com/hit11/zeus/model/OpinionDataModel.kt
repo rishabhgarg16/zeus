@@ -1,41 +1,21 @@
-package com.obsidian.warhammer.repository.model
+package com.hit11.zeus.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.google.cloud.firestore.annotation.PropertyName
+import com.hit11.zeus.config.OpinionDataModelDeserializer
 
-data class OpinionDataModel(
-    @JsonProperty("match_id")
-    val id: Int,
-
-    @JsonProperty("quiz_details")
-    val questionDetail: String,
-
-    @JsonProperty("quiz_text")
-    val questionText: String,
-
-    @JsonProperty("option_a")
-    val optionA: String,
-
-    @JsonProperty("option_a_wager")
-    val optionAWager: Long,
-
-    @JsonProperty("option_b")
-    val optionB: String,
-
-    @JsonProperty("option_b_wager")
-    val optionBWager: Long,
-
-    @JsonProperty("option_a_users")
-    val traderACount: Long,
-
-    @JsonProperty("option_b_users")
-    val traderBCount: Long,
-
-    @JsonProperty("tags")
-    val category: List<String>,
-
-    @JsonProperty("enabled")
-    val enabled: Boolean,
-
-    @JsonProperty("tradersInterested")
-    val tradersInterested: Long
+@JsonDeserialize(using = OpinionDataModelDeserializer::class)
+class OpinionDataModel(
+    var id: Int = 0,
+    var questionDetail: String = "",
+    var questionText: String = "",
+    var optionA: String = "",
+    var optionAWager: Long = -1L,
+    var optionB: String = "",
+    var optionBWager: Long = -1L,
+    var traderACount: Long = -1L,
+    var traderBCount: Long = -1L,
+    var category: List<String> = ArrayList(),
+    var enabled: Boolean = false,
+    var tradersInterested: Long = -1L
 )

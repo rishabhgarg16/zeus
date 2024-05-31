@@ -2,6 +2,7 @@ package com.hit11.zeus.controller
 
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.cloud.FirestoreClient
+import com.google.type.DateTime
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.service.MatchService
 import org.springframework.http.HttpStatus
@@ -10,6 +11,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
+import java.text.SimpleDateFormat
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @RestController
 @RequestMapping("/api/match")
@@ -25,8 +30,8 @@ class MatchController(private val matchService: MatchService) {
     @GetMapping("/upload/fixture")
     fun uploadData(): ResponseEntity<String> {
         return try {
-            val data = readCsv("/Users/rishabhgarg/IdeaProjects/zeus/fixtures.csv")
-            uploadToFirestore("fixtures", data)
+            val data = readCsv("/Users/anmolsingh/github/citus/fixtures.csv")
+            uploadToFirestore("fixtures_2", data)
             ResponseEntity.status(HttpStatus.OK).body("Data upload initiated")
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: ${e.message}")
@@ -58,7 +63,7 @@ class MatchController(private val matchService: MatchService) {
         val collectionRef = firestore.collection(collectionName)
         val currentCount = collectionRef.get().get().size()
         var nextId = currentCount + 1
-
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         data.forEach { document ->
             try {
                 val mappedDocument = mapOf(
@@ -78,7 +83,7 @@ class MatchController(private val matchService: MatchService) {
                     "match_type" to document["Tournament Type"],
                     "match_status" to document["Match Status"],
                     "match_link" to document["Match Link"],
-                    "start_date" to document["Start Date"],
+                    "start_date" to ZonedDateTime.parse(document["Start Date"], DateTimeFormatter.ISO_OFFSET_DATE_TIME).toEpochSecond(),
                     "uploaded_at" to System.currentTimeMillis(),
                 )
                 val documentReference = collectionRef.add(mappedDocument).get()
