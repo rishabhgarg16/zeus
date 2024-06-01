@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 class PulseController(private val service: PulseService) {
     private val logger = LoggerFactory.getLogger(PulseController::class.java)
 
-    @GetMapping("/active")
+    @PostMapping("/active")
     fun getAllOpinions(@RequestBody matchId: String): List<PulseDataModelResponse>? {
         val response = service.getAllActiveOpinions(matchId)?.map { it.toResponse() }
         return response
@@ -54,12 +54,13 @@ class PulseController(private val service: PulseService) {
         }
     }
 
-    @GetMapping("/enrolled")
+    @PostMapping("/enrolled/{userId}/match")
     fun getEnrolledPulsesByUserAndMatch(
-        @RequestBody request: GetUserEnrolledPulseRequest
+        @PathVariable userId: String,
+        @RequestBody matchIdRef: String,
     ): ResponseEntity<List<UserPulseSubmissionResponse>> {
         try {
-            val response = service.getEnrolledPulsesByUserAndMatch(request.userId, request.matchIdRef)
+            val response = service.getEnrolledPulsesByUserAndMatch(userId, matchIdRef)
             return ResponseEntity.status(HttpStatus.OK).body(response)
         } catch (ex: Exception) {
             logger.error("Error while fetching data", ex)

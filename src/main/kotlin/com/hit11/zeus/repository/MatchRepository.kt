@@ -26,7 +26,7 @@ class MatchRepository(@Autowired private val objectMapper: ObjectMapper) {
                 val json = document.data
                 if (json != null) {
                     val match = objectMapper.convertValue(json, Match::class.java)
-                    match.docRef = document.id
+                    match.docRef = document.reference.path
                     matches.add(match)
                 }
             }
