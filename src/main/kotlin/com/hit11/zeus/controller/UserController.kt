@@ -1,5 +1,6 @@
 package com.hit11.zeus.controller
 
+import com.google.firebase.auth.UserRecord
 import com.hit11.zeus.model.User
 import com.hit11.zeus.service.UserService
 import org.springframework.http.HttpStatus
@@ -15,24 +16,12 @@ class UserController(
     private val userService: UserService
 ) {
     @GetMapping("/{firebaseUID}")
-    fun getUserDetails(@PathVariable("firebaseUID") firebaseUID: String): Any? {
-        val userDetails = userService.getUserFromAuth(firebaseUID)
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server error");
-        } else {
-            val documentSnapshot = userService.getUser(userDetails.uid).get()
-            if (!documentSnapshot.exists()) {
-                val createdUser = userService.createUser(
-                    User(0,userDetails.uid, userDetails.email, userDetails.displayName, userDetails.phoneNumber, 500.0,0.0)
-                )
-                if (createdUser == null) {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server error. Can't create user");
-                }
-                return createdUser
-            } else {
-                val user = documentSnapshot.toObject(User::class.java)
-                return  user
-            }
-        }
+    fun getUserDetails(@PathVariable("firebaseUID") firebaseUID: String): UserRecord? {
+        return userService.getUserFromAuth(firebaseUID)
+    }
+
+    @GetMapping("/internal/{firebaseUID}")
+    fun getInternalUser(@PathVariable("firebaseUID") firebaseUID: String): User? {
+        return userService.getUser(firebaseUID)
     }
 }

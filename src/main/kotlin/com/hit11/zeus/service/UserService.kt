@@ -9,13 +9,14 @@ import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.UserRecord
 import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.model.User
+import com.hit11.zeus.repository.UserRepository
 import org.springframework.stereotype.Service
 
 
 @Service
-class UserService() {
-    private val firestore: Firestore = FirestoreClient.getFirestore()
-    private val userCollection = firestore.collection("users")
+class UserService(
+    private val userRepository: UserRepository
+) {
 
     fun getUserFromAuth(firebaseUID: String): UserRecord? {
         try {
@@ -30,24 +31,11 @@ class UserService() {
         return null
     }
 
-    fun getUser(firebaseUID: String): ApiFuture<DocumentSnapshot> {
-        val userRef = userCollection.document(firebaseUID)
-        val userSnapshot = userRef.get()
-        return userSnapshot
+    fun getUser(firebaseUID: String): User? {
+        return userRepository.getUser(firebaseUID)
     }
 
-    // This function will create an entry in the users collection in Firestore
-    // Actual user will still reside in FirebaseAuth
     fun createUser(user: User): User? {
-        val userRef = userCollection.document(user.firebaseUID).get()
-        if (!userRef.get().exists()) {
-            val res = userCollection.document(user.firebaseUID).set(user).get()
-            val createdUserRef = userCollection.document(user.firebaseUID).get().get()
-            if (createdUserRef.exists()) {
-                val createdUser = createdUserRef.toObject(User::class.java)
-                return createdUser
-            }
-        }
-        return null
+       return userRepository.createUser(user)
     }
 }
