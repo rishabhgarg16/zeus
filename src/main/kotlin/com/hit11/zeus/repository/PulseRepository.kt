@@ -55,7 +55,7 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
 
     fun saveUserResponse(response: UserPulseDataModel): UserPulseDataModel? {
         try {
-            val matchIdRef : DocumentReference = firestore.document(response.matchIdRef)
+            val matchIdRef : DocumentReference = firestore.document(response.matchIdRefString)
             val userResponseCollection = firestore.collection("user_pulse_response")
             val query = userResponseCollection
                 .whereEqualTo("userId", response.userId)
@@ -66,8 +66,9 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
 
             if (query.isEmpty) {
                 val newDocRef = userResponseCollection.document()
-                newDocRef.set(response).get()
-                return response
+                val responseWithRef = response.copy(matchIdRef = matchIdRef)
+                newDocRef.set(responseWithRef).get()
+                return responseWithRef
             } else {
                 return UserPulseDataModel()
             }

@@ -2,6 +2,8 @@ package com.hit11.zeus.model
 
 import com.google.cloud.firestore.DocumentReference
 import com.google.firebase.database.Exclude
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 enum class Option(val optionText: String) {
     YES("Yes"),
@@ -80,10 +82,12 @@ class PulseDataModelResponse(
     var tradersInterested: Long = -1L
 )
 
-class UserPulseDataModel(
+@Serializable
+data class UserPulseDataModel(
     val userId: String = "",
     val pulseId: String = "",
-    val matchIdRef: String = "",
+    val matchIdRefString: String = "",
+    @Transient val matchIdRef: DocumentReference? = null,
     val userAnswer: String = "",
     val answerTime: Long = -1L,
     val userWager: Double = -1.0,

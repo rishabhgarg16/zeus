@@ -27,7 +27,7 @@ class PulseController(private val service: PulseService) {
         val userPulseDataModel = UserPulseDataModel(
             userId = request.userId,
             pulseId = request.pulseId,
-            matchIdRef = request.matchIdRef,
+            matchIdRefString = request.matchIdRef,
             userAnswer = request.userAnswer,
             answerTime = System.currentTimeMillis() / 1000,
             userWager = request.userWager,

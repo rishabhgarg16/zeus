@@ -25,8 +25,7 @@ dependencies {
     implementation("com.google.firebase:firebase-admin:8.1.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.7.6")
     implementation(kotlin("script-runtime"))
 }
