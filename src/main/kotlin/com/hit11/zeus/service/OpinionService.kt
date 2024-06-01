@@ -2,14 +2,14 @@ package com.hit11.zeus.service
 
 import com.hit11.zeus.model.PulseDataModel
 import com.hit11.zeus.model.UserPulseDataModel
-import com.hit11.zeus.repository.OpinionRepository
+import com.hit11.zeus.repository.PulseRepository
 import org.springframework.stereotype.Service
 
 @Service
-class OpinionService(private val repository: OpinionRepository) {
+class OpinionService(private val repository: PulseRepository) {
 
     fun getAllActiveOpinions(matchId: String): List<PulseDataModel>? =
-        repository.getAllActiveOpinionsByMatch(matchId.toInt())
+        repository.getAllActivePulseByMatch(matchId)
 
     fun submitResponse(response: UserPulseDataModel): UserPulseDataModel? = repository.saveUserResponse(response)
 

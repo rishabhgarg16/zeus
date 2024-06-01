@@ -3,6 +3,7 @@ package com.hit11.zeus.model
 
 data class Contest(
     val id: Int,
+    var docRef: String? = "",
     val title: String,
     val prize: String,
     val originalAmount: String,

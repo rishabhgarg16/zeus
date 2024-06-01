@@ -1,10 +1,11 @@
 package com.hit11.zeus.controller
 
 
-import com.hit11.zeus.model.Option
 import com.hit11.zeus.model.PulseDataModel
+import com.hit11.zeus.model.PulseDataModelResponse
 import com.hit11.zeus.model.UserPulseDataModel
 import com.hit11.zeus.model.UserPulseSubmissionRequest
+import com.hit11.zeus.model.toResponse
 import com.hit11.zeus.service.OpinionService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -18,8 +19,9 @@ class PulseController(private val service: OpinionService) {
     private val logger = LoggerFactory.getLogger(PulseController::class.java)
 
     @GetMapping("/active/{matchId}")
-    fun getAllOpinions(@PathVariable("matchId") matchId: String): List<PulseDataModel>? {
-        return service.getAllActiveOpinions(matchId)
+    fun getAllOpinions(@PathVariable("matchId") matchId: String): List<PulseDataModelResponse>? {
+        val response = service.getAllActiveOpinions(matchId)?.map { it.toResponse() }
+        return response
     }
 
     @PostMapping("/user/submit")
@@ -28,10 +30,11 @@ class PulseController(private val service: OpinionService) {
 
         val userPulseDataModel = UserPulseDataModel(
             userId = request.userId,
-            pulseId = request.pulseId,
-            matchId = request.matchId,
-            answerChosen = request.answerChosen,
-            answerTime = request.answerTime,
+            pulseId = request.pulseIdRef,
+            matchId = request.matchIdRef,
+            answerChosen = request.userAnswer,
+            answerTime = System.currentTimeMillis()/1000,
+            userWager = request.userWager
         )
         val savedResponse = service.submitResponse(userPulseDataModel)
         if (savedResponse is UserPulseDataModel) {

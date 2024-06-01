@@ -12,24 +12,22 @@ import java.util.concurrent.ExecutionException
 
 
 @Repository
-class OpinionRepository(@Autowired private val objectMapper: ObjectMapper) {
+class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
     private val firestore: Firestore = FirestoreClient.getFirestore()
-    val quizzesRef = firestore.collection("quizzes")
+    val quizzesRef = firestore.collection("pulse")
 
-    fun getAllActiveOpinionsByMatch(matchId: Int): List<PulseDataModel>? {
+    fun getAllActivePulseByMatch(matchId: String): List<PulseDataModel>? {
         var opinions = mutableListOf<PulseDataModel>()
         try {
             val querySnapshot =
                 quizzesRef
-                    .whereEqualTo("match_id", matchId)
                     .whereEqualTo("enabled", true)
                     .get()
                     .get()
             querySnapshot.map {
-                if (it.exists()) {
-                    val opinion = objectMapper.convertValue(it.data, PulseDataModel::class.java)
-                    opinions.add(opinion)
-                }
+                var pulse = it.toObject(PulseDataModel::class.java)
+                pulse.docRef = it.id
+                opinions.add(pulse)
             }
             return opinions
         } catch (e: Exception) {
@@ -56,8 +54,8 @@ class OpinionRepository(@Autowired private val objectMapper: ObjectMapper) {
         try {
             val userResponseCollection = firestore.collection("user_pulse_response")
             val query = userResponseCollection
-                .whereEqualTo("user_id", response.userId)
-                .whereEqualTo("pulse_id", response.pulseId)
+                .whereEqualTo("userId", response.userId)
+                .whereEqualTo("pulseId", response.pulseId)
                 .get()
                 .get()
 

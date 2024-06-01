@@ -6,6 +6,7 @@ import com.hit11.zeus.config.MatchDeserializer
 @JsonDeserialize(using = MatchDeserializer::class)
 data class Match(
     val id: Int? = null,  // Human-readable ID
+    var docRef: String? = "",
     val firebase_id: String? = null,  // Firebase generated ID
     val match_number: Int? = null,
     val match_group: String? = null,
