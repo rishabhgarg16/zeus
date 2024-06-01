@@ -8,19 +8,23 @@ enum class Option(val optionText: String) {
     NO("No")
 }
 
-enum class PulseOutcome(val outcome: Int) {
-    WON(1),
-    LOSE(2),
-    ACTIVE(3),
+enum class UserResult(val text: String, val outcome: Int) {
+    WIN("Win", 1),
+    LOSE("Lose", 2),
+    ACTIVE("Active", 3),;
+
+    companion object {
+        fun fromText(userResult: String): UserResult {
+            when(userResult) {
+                "Yes" -> return WIN
+                "No" -> return LOSE
+                "Active" -> return ACTIVE
+            }
+            return ACTIVE
+        }
+    }
 }
 
-//data class Option (
-//    val optionUnit: UnitOption,
-//    val wager: Double,
-//    val traderCount: Long
-//)
-
-//@JsonDeserialize(using = PulseDataModelDeserializer::class)
 class PulseDataModel(
     var id: Int = 0,
     var docRef: String = "",
@@ -36,7 +40,8 @@ class PulseDataModel(
     var userBCount: Long = -1L,
     var category: List<String> = ArrayList(),
     var enabled: Boolean = false,
-    var tradersInterested: Long = -1L
+    var tradersInterested: Long = -1L,
+    var pulseResult: String = ""
 )
 
 fun PulseDataModel.toResponse(): PulseDataModelResponse {
@@ -57,6 +62,7 @@ fun PulseDataModel.toResponse(): PulseDataModelResponse {
         tradersInterested = tradersInterested
     )
 }
+
 class PulseDataModelResponse(
     var id: Int = 0,
     var docRef: String = "",
@@ -77,29 +83,48 @@ class PulseDataModelResponse(
 class UserPulseDataModel(
     val userId: String = "",
     val pulseId: String = "",
-    val answerChosen: String = "",
+    val matchIdRef: String = "",
+    val userAnswer: String = "",
     val answerTime: Long = -1L,
     val userWager: Double = -1.0,
-    val matchId: String = "",
-)
+    val userResult: String = UserResult.ACTIVE.text,
+
+    ) {
+    fun checkIfUserWon(userAnswer: String, pulseDataModel: PulseDataModel): String {
+        return when {
+            pulseDataModel.enabled -> UserResult.ACTIVE.text
+            pulseDataModel.pulseResult.isEmpty() -> UserResult.ACTIVE.text
+            userAnswer == pulseDataModel.pulseResult-> UserResult.WIN.text
+            else -> UserResult.LOSE.toString()
+        }
+    }
+}
 
 class UserPulseSubmissionResponse(
-    val userId: Int = -1,
-    val pulseId: Int = -1,
+    val userId: String = "",
+    val matchIdRef: String = "",
+    val pulseId: String = "",
     val pulseDetail: String = "",
     val pulseText: String = "",
-    val userAnswer: Option? = null,
-    val pulseResult: PulseOutcome = PulseOutcome.ACTIVE,
+    val userWager: Double = -1.0,
+    val userAnswer: String = "",
     val answerTime: Long = -1L,
-    val matchIdRef: String = "",
+    val userResult: String = "",
+    val isPulseActive: Boolean = true,
 )
 
 class UserPulseSubmissionRequest(
     val userId: String = "",
-    val pulseIdRef: String = "",
+    val pulseId: String = "",
     val userAnswer: String = "",
     val answerTime: Long = -1L,
     val userWager: Double = -1.0,
+    val matchIdRef: String = "",
+    val userResult: String = "",
+)
+
+class GetUserEnrolledPulseRequest(
+    val userId: String = "",
     val matchIdRef: String = "",
 )
 

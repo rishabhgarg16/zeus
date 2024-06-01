@@ -1,0 +1,63 @@
+package com.hit11.zeus.service
+
+import com.hit11.zeus.model.*
+import com.hit11.zeus.repository.PulseRepository
+import org.springframework.stereotype.Service
+
+@Service
+class PulseService(private val repository: PulseRepository) {
+
+    fun getAllActiveOpinions(matchId: String): List<PulseDataModel>? =
+        repository.getAllActivePulseByMatch(matchId)
+
+    fun submitResponse(response: UserPulseDataModel): UserPulseSubmissionResponse? {
+        try {
+            val userResponse = repository.saveUserResponse(response)
+            val pulseDoc = repository.getPulseById(userResponse?.pulseId)
+            return response.toResponse(pulseDoc)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    fun getEnrolledPulsesByUser(userId: String): List<UserPulseSubmissionResponse>? {
+
+        try {
+            val userResponse = repository.getEnrolledPulsesByUser(userId)
+            return userResponse!!.map {
+                val pulseDoc = repository.getPulseById(it.pulseId)
+                it.toResponse(pulseDoc)
+            }
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    fun getEnrolledPulsesByUserAndMatch(userId: String, matchIdRef: String): List<UserPulseSubmissionResponse>? {
+
+        try {
+            val userResponse = repository.getEnrolledPulsesByUserAndMatch(userId, matchIdRef)
+            return userResponse!!.map {
+                val pulseDoc = repository.getPulseById(it.pulseId)
+                it.toResponse(pulseDoc)
+            }
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    fun UserPulseDataModel.toResponse(pulseDataModel: PulseDataModel): UserPulseSubmissionResponse {
+        return UserPulseSubmissionResponse(
+            userId = userId,
+            pulseId = pulseId,
+            pulseDetail = pulseDataModel.pulseDetails,
+            pulseText = pulseDataModel.pulseText,
+            userWager = userWager,
+            userAnswer = userAnswer,
+            answerTime = answerTime,
+            matchIdRef = pulseDataModel.matchIdRef!!.path,
+            userResult = checkIfUserWon(userAnswer, pulseDataModel),
+            isPulseActive = pulseDataModel.enabled
+        )
+    }
+}

@@ -1,6 +1,7 @@
 package com.hit11.zeus.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.cloud.firestore.DocumentReference
 import com.google.cloud.firestore.Firestore
 import com.google.cloud.firestore.Query
 import com.google.firebase.cloud.FirestoreClient
@@ -19,9 +20,11 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
     fun getAllActivePulseByMatch(matchId: String): List<PulseDataModel>? {
         var opinions = mutableListOf<PulseDataModel>()
         try {
+            val matchIdRef : DocumentReference = firestore.document(matchId)
             val querySnapshot =
                 quizzesRef
                     .whereEqualTo("enabled", true)
+                    .whereEqualTo("matchIdRef", matchIdRef)
                     .get()
                     .get()
             querySnapshot.map {
@@ -52,10 +55,12 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
 
     fun saveUserResponse(response: UserPulseDataModel): UserPulseDataModel? {
         try {
+            val matchIdRef : DocumentReference = firestore.document(response.matchIdRef)
             val userResponseCollection = firestore.collection("user_pulse_response")
             val query = userResponseCollection
                 .whereEqualTo("userId", response.userId)
                 .whereEqualTo("pulseId", response.pulseId)
+                .whereEqualTo("matchId", matchIdRef)
                 .get()
                 .get()
 
@@ -76,19 +81,14 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
         return null
     }
 
-    fun getEnrolledPulsesByUser(userId: Int): List<UserPulseDataModel>? {
+    fun getEnrolledPulsesByUser(userId: String): List<UserPulseDataModel>? {
         return try {
-            var userAnswers = mutableListOf<UserPulseDataModel>()
             val documentSnapshot =
-                firestore.collection("user_pulse_response").whereEqualTo("user_id", userId)
-                    .orderBy("answer_time", Query.Direction.DESCENDING).get().get()
-            documentSnapshot.map {
-                if (it.exists()) {
-                    val opinion = objectMapper.convertValue(it.data, UserPulseDataModel::class.java)
-                    userAnswers.add(opinion)
-                }
-            }
-            return userAnswers
+                firestore.collection("user_pulse_response")
+                    .whereEqualTo("userId", userId)
+                    .orderBy("answerTime", Query.Direction.DESCENDING)
+                    .get().get()
+            return documentSnapshot.toObjects(UserPulseDataModel::class.java)
         } catch (e: InterruptedException) {
             e.printStackTrace()
             null
@@ -98,20 +98,16 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
         }
     }
 
-    fun getEnrolledPulsesByUserAndMatch(userId: Int, matchId: Int): List<UserPulseDataModel>? {
+    fun getEnrolledPulsesByUserAndMatch(userId: String, matchIdRef: String): List<UserPulseDataModel>? {
         return try {
-            var userAnswers = mutableListOf<UserPulseDataModel>()
+            val matchIdRef : DocumentReference = firestore.document(matchIdRef)
             val documentSnapshot =
-                firestore.collection("user_pulse_response").whereEqualTo("user_id", userId)
-                    .whereEqualTo("match_id", matchId)
-                    .orderBy("answer_time", Query.Direction.DESCENDING).get().get()
-            documentSnapshot.map {
-                if (it.exists()) {
-                    val opinion = objectMapper.convertValue(it.data, UserPulseDataModel::class.java)
-                    userAnswers.add(opinion)
-                }
-            }
-            return userAnswers
+                firestore.collection("user_pulse_response")
+                    .whereEqualTo("userId", userId)
+                    .whereEqualTo("matchIdRef", matchIdRef)
+                    .orderBy("answerTime", Query.Direction.DESCENDING)
+                    .get().get()
+            return documentSnapshot.toObjects(UserPulseDataModel::class.java)
         } catch (e: InterruptedException) {
             e.printStackTrace()
             null
@@ -121,5 +117,9 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
         }
     }
 
-
+    fun getPulseById(pulseId: String?): PulseDataModel {
+        if (pulseId == null) return PulseDataModel()
+        val documentSnapshot = firestore.collection("pulse").document(pulseId).get().get()
+        return documentSnapshot.toObject(PulseDataModel::class.java)!!
+    }
 }
