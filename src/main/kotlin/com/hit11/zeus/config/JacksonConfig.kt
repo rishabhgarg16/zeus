@@ -17,16 +17,8 @@ class JacksonConfig {
     fun objectMapper(): ObjectMapper {
         val module = SimpleModule()
         module.addDeserializer(Match::class.java, MatchDeserializer())
-//        module.addDeserializer(PulseDataModel::class.java, PulseDataModelDeserializer())
-//        module.addDeserializer(Option::class.java, OptionDeserializer())
-//        module.addDeserializer(UserPulseDataModel::class.java, UserPulseDeserializer())
-
         val objectMapper = ObjectMapper()
         objectMapper.registerModule(module)
-//        objectMapper.apply {
-//            propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
-//        }
-
         return objectMapper
     }
 }
