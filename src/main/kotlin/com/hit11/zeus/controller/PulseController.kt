@@ -1,6 +1,7 @@
 package com.hit11.zeus.controller
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.hit11.zeus.model.*
 import com.hit11.zeus.service.PulseService
 import org.slf4j.LoggerFactory
@@ -56,17 +57,35 @@ class PulseController(private val service: PulseService) {
         }
     }
 
-    @PostMapping("/enrolled/{userId}/match")
+    @PostMapping("/enrolledabc/matchabc")
     fun getEnrolledPulsesByUserAndMatch(
-        @PathVariable userId: String,
-        @RequestBody matchIdRef: String,
+        @RequestBody req: UserMatchIdRequest,
     ): ResponseEntity<List<UserPulseSubmissionResponse>> {
         try {
-            val response = service.getEnrolledPulsesByUserAndMatch(userId, matchIdRef)
+            val response = service.getEnrolledPulsesByUserAndMatch(req.userId, req.matchIdRef)
             return ResponseEntity.status(HttpStatus.OK).body(response)
         } catch (ex: Exception) {
             logger.error("Error while fetching data", ex)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(emptyList())
         }
     }
+
+    @PostMapping("/updateAnswer")
+    fun updateAnswer(
+        @RequestBody req: PulseAnswerUpdateRequest,
+    ): ResponseEntity<PulseAnswerUpdateResponse> {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(service.updatePulseAnswer(req))
+        } catch (ex: Exception) {
+            logger.error("Error while fetching data", ex)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(PulseAnswerUpdateResponse())
+        }
+    }
 }
+
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class UserMatchIdRequest(
+    val userId: String = "",
+    val matchIdRef: String = "",
+)

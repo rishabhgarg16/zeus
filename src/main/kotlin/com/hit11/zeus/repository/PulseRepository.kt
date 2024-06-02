@@ -15,14 +15,14 @@ import java.util.concurrent.ExecutionException
 @Repository
 class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
     private val firestore: Firestore = FirestoreClient.getFirestore()
-    val quizzesRef = firestore.collection("pulse")
+    val pulseCollection = firestore.collection("pulse")
 
     fun getAllActivePulseByMatch(matchId: String): List<PulseDataModel>? {
         var opinions = mutableListOf<PulseDataModel>()
         try {
             val matchIdRef : DocumentReference = firestore.document(matchId)
             val querySnapshot =
-                quizzesRef
+                pulseCollection
                     .whereEqualTo("enabled", true)
                     .whereEqualTo("matchIdRef", matchIdRef)
                     .get()
@@ -42,7 +42,7 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
 
     fun findById(id: String): PulseDataModel? {
         return try {
-            val documentSnapshot = quizzesRef.document(id).get().get()
+            val documentSnapshot = pulseCollection.document(id).get().get()
             documentSnapshot.toObject(PulseDataModel::class.java)
         } catch (e: InterruptedException) {
             e.printStackTrace()
@@ -121,9 +121,31 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
         }
     }
 
+    fun updatePulseAnswer(pulseId: String, answer: String): Boolean {
+        try {
+            val documentSnapshot = pulseCollection.document(pulseId).get().get()
+            val pulse = documentSnapshot.toObject(PulseDataModel::class.java)
+            if (pulse?.optionA == answer || pulse?.optionB == answer) {
+                pulse.enabled = false
+                pulse.pulseResult = answer
+            } else {
+                throw Exception("Invalid answer")
+            }
+            pulseCollection.document(pulseId).set(pulse).get()
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+            return false
+        }
+        return true
+    }
+
     fun getPulseById(pulseId: String?): PulseDataModel {
         if (pulseId == null) return PulseDataModel()
-        val documentSnapshot = firestore.collection("pulse").document(pulseId).get().get()
+        var finalPulseId = pulseId
+        if (pulseId.contains("pulse")) {
+            finalPulseId = pulseId.split("/", limit = 2)[1]
+        }
+        val documentSnapshot = firestore.collection("pulse").document(finalPulseId).get().get()
         return documentSnapshot.toObject(PulseDataModel::class.java)!!
     }
 }

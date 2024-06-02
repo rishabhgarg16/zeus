@@ -94,7 +94,7 @@ data class UserPulseDataModel(
     val userAnswer: String = "",
     val answerTime: Long = -1L,
     val userWager: Double = -1.0,
-    val userResult: String = UserResult.ACTIVE.text,
+    var userResult: String = UserResult.ACTIVE.text,
 
     ) {
     fun checkIfUserWon(userAnswer: String, pulseDataModel: PulseDataModel): String {
@@ -102,7 +102,7 @@ data class UserPulseDataModel(
             pulseDataModel.enabled -> UserResult.ACTIVE.text
             pulseDataModel.pulseResult.isEmpty() -> UserResult.ACTIVE.text
             userAnswer == pulseDataModel.pulseResult-> UserResult.WIN.text
-            else -> UserResult.LOSE.toString()
+            else -> UserResult.LOSE.text
         }
     }
 }
@@ -135,5 +135,18 @@ class UserPulseSubmissionRequest(
 class GetUserEnrolledPulseRequest(
     val userId: String = "",
     val matchIdRef: String = "",
+)
+
+class PulseAnswerUpdateRequest(
+    var pulseId: String = "",
+    var pulseResult: String = "",
+)
+
+class PulseAnswerUpdateResponse(
+    var updatedUserIds: List<String> = emptyList<String>(),
+    var totalWon: Long = -1L,
+    var totalLost: Long = -1L,
+    var totalActive: Long = -1L,
+    var status: String = "",
 )
 
