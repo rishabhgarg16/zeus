@@ -89,12 +89,15 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
                     .whereEqualTo("userId", userId)
                     .orderBy("answerTime", Query.Direction.DESCENDING)
                     .get().get()
-            return documentSnapshot.toObjects(UserPulseDataModel::class.java)
+            return documentSnapshot.map{ it.toObject(UserPulseDataModel::class.java) }
         } catch (e: InterruptedException) {
             e.printStackTrace()
             null
         } catch (e: ExecutionException) {
             e.printStackTrace()
+            null
+        } catch (ex: Exception) {
+            ex.printStackTrace()
             null
         }
     }

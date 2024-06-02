@@ -9,14 +9,16 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 
+data class MatchIdRequest(val matchId: String)
+
 @RestController
 @RequestMapping("/api/pulse")
 class PulseController(private val service: PulseService) {
     private val logger = LoggerFactory.getLogger(PulseController::class.java)
 
     @PostMapping("/active")
-    fun getAllOpinions(@RequestBody matchId: String): List<PulseDataModelResponse>? {
-        val response = service.getAllActiveOpinions(matchId)?.map { it.toResponse() }
+    fun getAllOpinions(@RequestBody request: MatchIdRequest): List<PulseDataModelResponse>? {
+        val response = service.getAllActiveOpinions(request.matchId)?.map { it.toResponse() }
         return response
     }
 

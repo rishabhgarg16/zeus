@@ -1,7 +1,9 @@
 package com.hit11.zeus.model
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.google.cloud.firestore.DocumentReference
 import com.google.firebase.database.Exclude
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -27,6 +29,7 @@ enum class UserResult(val text: String, val outcome: Int) {
     }
 }
 
+@Serializable
 class PulseDataModel(
     var id: Int = 0,
     var docRef: String = "",
@@ -42,7 +45,7 @@ class PulseDataModel(
     var userBCount: Long = -1L,
     var category: List<String> = ArrayList(),
     var enabled: Boolean = false,
-    var tradersInterested: Long = -1L,
+    @Transient var tradersInterested: Long = -1L,
     var pulseResult: String = ""
 )
 
@@ -86,7 +89,7 @@ class PulseDataModelResponse(
 data class UserPulseDataModel(
     val userId: String = "",
     val pulseId: String = "",
-    val matchIdRefString: String = "",
+    @SerializedName("matchIdRef") val matchIdRefString: String = "",
     @Transient val matchIdRef: DocumentReference? = null,
     val userAnswer: String = "",
     val answerTime: Long = -1L,
@@ -117,16 +120,18 @@ class UserPulseSubmissionResponse(
     val isPulseActive: Boolean = true,
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class UserPulseSubmissionRequest(
     val userId: String = "",
     val pulseId: String = "",
+    val matchIdRef: String = "",
     val userAnswer: String = "",
     val answerTime: Long = -1L,
     val userWager: Double = -1.0,
-    val matchIdRef: String = "",
     val userResult: String = "",
+    val isPulseActive: Boolean=false,
+    val test: Boolean = false,
 )
-
 class GetUserEnrolledPulseRequest(
     val userId: String = "",
     val matchIdRef: String = "",
