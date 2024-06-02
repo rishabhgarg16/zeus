@@ -71,19 +71,4 @@ class PulseService(
         }
         return res
     }
-
-    fun UserPulseDataModel.toResponse(pulseDataModel: PulseDataModel): UserPulseSubmissionResponse {
-        return UserPulseSubmissionResponse(
-            userId = userId,
-            pulseId = pulseId,
-            pulseDetail = pulseDataModel.pulseDetails,
-            pulseText = pulseDataModel.pulseText,
-            userWager = userWager,
-            userAnswer = userAnswer,
-            answerTime = answerTime,
-            matchIdRef = pulseDataModel.matchIdRef!!.path,
-            userResult = checkIfUserWon(userAnswer, pulseDataModel),
-            isPulseActive = pulseDataModel.enabled
-        )
-    }
 }

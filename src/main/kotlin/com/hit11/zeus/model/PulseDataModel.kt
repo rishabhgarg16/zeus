@@ -46,7 +46,8 @@ class PulseDataModel(
     var category: List<String> = ArrayList(),
     var enabled: Boolean = false,
     @Transient var tradersInterested: Long = -1L,
-    var pulseResult: String = ""
+    var pulseResult: String = "",
+    var pulseImageUrl: String = ""
 )
 
 fun PulseDataModel.toResponse(): PulseDataModelResponse {
@@ -64,10 +65,12 @@ fun PulseDataModel.toResponse(): PulseDataModelResponse {
         userBCount = userBCount,
         category = category,
         enabled = enabled,
-        tradersInterested = tradersInterested
+        tradersInterested = tradersInterested,
+        pulseImageUrl = pulseImageUrl
     )
 }
 
+@JsonIgnoreProperties (ignoreUnknown = true)
 class PulseDataModelResponse(
     var id: Int = 0,
     var docRef: String = "",
@@ -82,7 +85,8 @@ class PulseDataModelResponse(
     var userBCount: Long = -1L,
     var category: List<String> = ArrayList(),
     var enabled: Boolean = false,
-    var tradersInterested: Long = -1L
+    var tradersInterested: Long = -1L,
+    var pulseImageUrl: String = ""
 )
 
 @Serializable
@@ -107,6 +111,7 @@ data class UserPulseDataModel(
     }
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class UserPulseSubmissionResponse(
     val userId: String = "",
     val matchIdRef: String = "",
@@ -118,6 +123,7 @@ class UserPulseSubmissionResponse(
     val answerTime: Long = -1L,
     val userResult: String = "",
     val isPulseActive: Boolean = true,
+    val pulseImageUrl: String = ""
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -150,3 +156,19 @@ class PulseAnswerUpdateResponse(
     var status: String = "",
 )
 
+// combines user response + pulse data together
+fun UserPulseDataModel.toResponse(pulseDataModel: PulseDataModel): UserPulseSubmissionResponse {
+    return UserPulseSubmissionResponse(
+        userId = userId,
+        pulseId = pulseId,
+        pulseDetail = pulseDataModel.pulseDetails,
+        pulseText = pulseDataModel.pulseText,
+        userWager = userWager,
+        userAnswer = userAnswer,
+        answerTime = answerTime,
+        matchIdRef = pulseDataModel.matchIdRef!!.path,
+        userResult = checkIfUserWon(userAnswer, pulseDataModel),
+        isPulseActive = pulseDataModel.enabled,
+        pulseImageUrl = pulseDataModel.pulseImageUrl,
+    )
+}
