@@ -36,11 +36,12 @@ class UserRepository {
 
         userRef.get().get().toObject(User::class.java)?.let {
             user ->
-            if (user.walletBalance < amount) {
+            val newBalance = user.walletBalance + amount
+            if (newBalance < 0) {
                 logger.error("Insufficient Funds ${firebaseUID}")
                 throw InsufficientFundsException()
             }
-            val newBalance = user.walletBalance + amount
+
             var success = userRef.update("walletBalance", newBalance)
             if (success.get() != null) {
                 return true
