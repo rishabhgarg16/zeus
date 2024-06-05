@@ -47,7 +47,8 @@ class PulseDataModel(
     var enabled: Boolean = false,
     @Transient var tradersInterested: Long = -1L,
     var pulseResult: String = "",
-    var pulseImageUrl: String = ""
+    var pulseImageUrl: String = "",
+    var pulseEndDate: Long = 0L,
 )
 
 fun PulseDataModel.toResponse(): PulseDataModelResponse {
@@ -66,7 +67,8 @@ fun PulseDataModel.toResponse(): PulseDataModelResponse {
         category = category,
         enabled = enabled,
         tradersInterested = tradersInterested,
-        pulseImageUrl = pulseImageUrl
+        pulseImageUrl = pulseImageUrl,
+        pulseEndDate = pulseEndDate
     )
 }
 
@@ -86,7 +88,8 @@ class PulseDataModelResponse(
     var category: List<String> = ArrayList(),
     var enabled: Boolean = false,
     var tradersInterested: Long = -1L,
-    var pulseImageUrl: String = ""
+    var pulseImageUrl: String = "",
+    var pulseEndDate: Long = -1L,
 )
 
 @Serializable
@@ -123,7 +126,8 @@ class UserPulseSubmissionResponse(
     val answerTime: Long = -1L,
     val userResult: String = "",
     val isPulseActive: Boolean = true,
-    val pulseImageUrl: String = ""
+    val pulseImageUrl: String = "",
+    val pulseEndDate: Long = -1L,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

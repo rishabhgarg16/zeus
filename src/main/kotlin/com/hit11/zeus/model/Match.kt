@@ -18,6 +18,7 @@ data class Match(
     val city: String? = null,
     val stadium: String? = null,
     val country: String? = null,
+    val enabled: Boolean = true,
     val tournament_name: String? = null,
     val match_type: String? = null,
     val match_status: String? = null,

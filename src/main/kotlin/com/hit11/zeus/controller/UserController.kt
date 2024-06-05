@@ -24,4 +24,9 @@ class UserController(
     fun getInternalUser(@PathVariable("firebaseUID") firebaseUID: String): User? {
         return userService.getUser(firebaseUID)
     }
+
+    @GetMapping("/createnew/{firebaseUID}")
+    fun createNew(@PathVariable("firebaseUID") firebaseUID: String): User? {
+        return userService.createUser(firebaseUID)
+    }
 }

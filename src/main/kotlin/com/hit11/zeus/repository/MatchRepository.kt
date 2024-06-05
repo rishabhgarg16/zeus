@@ -15,9 +15,17 @@ class MatchRepository(@Autowired private val objectMapper: ObjectMapper) {
 
     private val firestore: Firestore = FirestoreClient.getFirestore()
 
-    fun getUpcomingMatches(): List<Match> {
-        val matches = mutableListOf<Match>()
+    private var matches: MutableList<Match> = mutableListOf()
+    private var lastUpdated: Instant = Instant.now()
 
+    fun getUpcomingMatches(): List<Match> {
+
+        if (!Instant.now().isAfter(lastUpdated.plusSeconds(60)) and matches.isNotEmpty()) {
+            return matches
+        }
+
+        matches.clear()
+        lastUpdated = Instant.now()
         try {
             val querySnapshot =
                 firestore.collection("fixtures_2").whereGreaterThan("start_date", Instant.now().epochSecond)

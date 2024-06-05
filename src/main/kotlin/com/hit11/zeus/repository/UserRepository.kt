@@ -1,6 +1,7 @@
 package com.hit11.zeus.repository
 
 import com.google.cloud.firestore.Firestore
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.exceptions.InsufficientFundsException
 import com.hit11.zeus.model.User
@@ -18,14 +19,26 @@ class UserRepository {
 
     // This function will create an entry in the users collection in Firestore
     // Actual user will still reside in FirebaseAuth
-    fun createUser(user: User): User? {
-        val userRef = userCollection.document(user.firebaseUID).get()
-        if (!userRef.get().exists()) {
-            val res = userCollection.document(user.firebaseUID).set(user).get()
-            val createdUserRef = userCollection.document(user.firebaseUID).get().get()
-            if (createdUserRef.exists()) {
-                val createdUser = createdUserRef.toObject(User::class.java)
-                return createdUser
+    fun createUser(firebaseUID: String): User? {
+        val firebaseUser = FirebaseAuth.getInstance().getUser(firebaseUID)
+        if (firebaseUser != null) {
+            val userRef = userCollection.document(firebaseUID).get()
+            if (!userRef.get().exists()) {
+                val user = User(
+                    0,
+                    firebaseUser.uid,
+                    firebaseUser.email,
+                    firebaseUser.displayName,
+                    firebaseUser.phoneNumber,
+                    500.0,
+                    0.0
+                )
+                val res = userCollection.document(firebaseUID).set(user).get()
+                val createdUserRef = userCollection.document(user.firebaseUID).get().get()
+                if (createdUserRef.exists()) {
+                    val createdUser = createdUserRef.toObject(User::class.java)
+                    return createdUser
+                }
             }
         }
         return null
@@ -34,8 +47,7 @@ class UserRepository {
     fun updateBalance(firebaseUID: String, amount: Double): Boolean {
         var userRef = userCollection.document(firebaseUID)
 
-        userRef.get().get().toObject(User::class.java)?.let {
-            user ->
+        userRef.get().get().toObject(User::class.java)?.let { user ->
             val newBalance = user.walletBalance + amount
             if (newBalance < 0) {
                 logger.error("Insufficient Funds ${firebaseUID}")

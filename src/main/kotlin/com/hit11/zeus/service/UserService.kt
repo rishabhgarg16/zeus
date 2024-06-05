@@ -35,7 +35,7 @@ class UserService(
         return userRepository.getUser(firebaseUID)
     }
 
-    fun createUser(user: User): User? {
-       return userRepository.createUser(user)
+    fun createUser(firebaseUID: String): User? {
+       return userRepository.createUser(firebaseUID)
     }
 }
