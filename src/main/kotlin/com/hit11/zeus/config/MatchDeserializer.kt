@@ -28,6 +28,8 @@ class MatchDeserializer : JsonDeserializer<Match>() {
         val matchLink = node.get("match_link").asTextOrNull()
         val startDate = node.get("start_date").asTextOrNull()
         val uploadedAt = node.get("uploaded_at").asLong()
+        val team1ShortName = node.get("team1_short_name").asTextOrNull()
+        val team2ShortName = node.get("team2_short_name").asTextOrNull()
 
         return Match(
             id = id,
@@ -47,7 +49,9 @@ class MatchDeserializer : JsonDeserializer<Match>() {
             match_status = matchStatus,
             match_link = matchLink,
             start_date = startDate,
-            uploaded_at = uploadedAt
+            uploaded_at = uploadedAt,
+            team1_short_name = team1ShortName,
+            team2_short_name = team2ShortName,
         )
     }
 

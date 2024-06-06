@@ -15,11 +15,11 @@ enum class Option(val optionText: String) {
 enum class UserResult(val text: String, val outcome: Int) {
     WIN("Win", 1),
     LOSE("Lose", 2),
-    ACTIVE("Active", 3),;
+    ACTIVE("Active", 3), ;
 
     companion object {
         fun fromText(userResult: String): UserResult {
-            when(userResult) {
+            when (userResult) {
                 "Yes" -> return WIN
                 "No" -> return LOSE
                 "Active" -> return ACTIVE
@@ -29,7 +29,7 @@ enum class UserResult(val text: String, val outcome: Int) {
     }
 }
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 class PulseDataModel(
     var id: Int = 0,
     var docRef: String = "",
@@ -72,7 +72,7 @@ fun PulseDataModel.toResponse(): PulseDataModelResponse {
     )
 }
 
-@JsonIgnoreProperties (ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class PulseDataModelResponse(
     var id: Int = 0,
     var docRef: String = "",
@@ -89,7 +89,7 @@ class PulseDataModelResponse(
     var enabled: Boolean = false,
     var tradersInterested: Long = -1L,
     var pulseImageUrl: String = "",
-    var pulseEndDate: Long = -1L,
+    var pulseEndDate: Long = -1L
 )
 
 @Serializable
@@ -108,7 +108,7 @@ data class UserPulseDataModel(
         return when {
             pulseDataModel.enabled -> UserResult.ACTIVE.text
             pulseDataModel.pulseResult.isEmpty() -> UserResult.ACTIVE.text
-            userAnswer == pulseDataModel.pulseResult-> UserResult.WIN.text
+            userAnswer == pulseDataModel.pulseResult -> UserResult.WIN.text
             else -> UserResult.LOSE.text
         }
     }
@@ -128,6 +128,8 @@ class UserPulseSubmissionResponse(
     val isPulseActive: Boolean = true,
     val pulseImageUrl: String = "",
     val pulseEndDate: Long = -1L,
+    val userACount: Long = 10,
+    val userBCount: Long = 10
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -139,9 +141,10 @@ class UserPulseSubmissionRequest(
     val answerTime: Long = -1L,
     val userWager: Double = -1.0,
     val userResult: String = "",
-    val isPulseActive: Boolean=false,
+    val isPulseActive: Boolean = false,
     val test: Boolean = false,
 )
+
 class GetUserEnrolledPulseRequest(
     val userId: String = "",
     val matchIdRef: String = "",
@@ -174,5 +177,8 @@ fun UserPulseDataModel.toResponse(pulseDataModel: PulseDataModel): UserPulseSubm
         userResult = checkIfUserWon(userAnswer, pulseDataModel),
         isPulseActive = pulseDataModel.enabled,
         pulseImageUrl = pulseDataModel.pulseImageUrl,
+        userACount = pulseDataModel.userACount,
+        userBCount = pulseDataModel.userBCount,
+        pulseEndDate = pulseDataModel.pulseEndDate
     )
 }

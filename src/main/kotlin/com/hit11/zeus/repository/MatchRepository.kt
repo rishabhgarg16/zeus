@@ -20,16 +20,16 @@ class MatchRepository(@Autowired private val objectMapper: ObjectMapper) {
 
     fun getUpcomingMatches(): List<Match> {
 
-        if (!Instant.now().isAfter(lastUpdated.plusSeconds(60)) and matches.isNotEmpty()) {
-            return matches
-        }
+//        if (!Instant.now().isAfter(lastUpdated.plusSeconds(60)) and matches.isNotEmpty()) {
+//            return matches
+//        }
 
         matches.clear()
         lastUpdated = Instant.now()
         try {
             val querySnapshot =
                 firestore.collection("fixtures_2").whereGreaterThan("start_date", Instant.now().epochSecond)
-                    .orderBy("start_date", Query.Direction.ASCENDING).limit(10).get().get()
+                    .orderBy("start_date", Query.Direction.ASCENDING).limit(4).get().get()
             for (document in querySnapshot.documents) {
                 val json = document.data
                 if (json != null) {
