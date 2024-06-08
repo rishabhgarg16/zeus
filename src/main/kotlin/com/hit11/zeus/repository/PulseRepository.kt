@@ -20,12 +20,14 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
     private val firestore: Firestore = FirestoreClient.getFirestore()
     val pulseCollection = firestore.collection("pulse")
     var opinions = mutableListOf<PulseDataModel>()
+    var pulseMap = mutableMapOf<String, List<PulseDataModel>>()
     var lastUpdated: Instant = Instant.now()
 
     fun getAllActivePulseByMatch(matchId: String): List<PulseDataModel>? {
-        if (Instant.now().isAfter(lastUpdated.plusSeconds(60)) and opinions.isNotEmpty()) {
-            return opinions
-        }
+//        if (Instant.now().isAfter(lastUpdated.plusSeconds(60))) {
+//            if (pulseMap.get(matchId) != null)
+//            return opinions
+//        }
 
         val tempOpinions = mutableListOf<PulseDataModel>()
         lastUpdated = Instant.now()
