@@ -27,6 +27,14 @@ class PulseService(
         }
     }
 
+    fun submitUserTrade(req: UserTradeSubmissionRequest): Boolean {
+        val balanceSuccess = userRepository.updateBalanceForUserRef(req.userIdRef, -(req.userWager*req.userTradeQuantity))
+        if (!balanceSuccess) {
+            return false
+        }
+        return repository.saveUserTrade(req)
+    }
+
     fun getEnrolledPulsesByUser(userId: String): List<UserPulseSubmissionResponse>? {
 
         try {

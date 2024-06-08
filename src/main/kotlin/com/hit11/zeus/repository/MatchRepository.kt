@@ -20,9 +20,9 @@ class MatchRepository(@Autowired private val objectMapper: ObjectMapper) {
 
     fun getUpcomingMatches(): List<Match> {
 
-//        if (!Instant.now().isAfter(lastUpdated.plusSeconds(60)) and matches.isNotEmpty()) {
-//            return matches
-//        }
+        if (Instant.now().isBefore(lastUpdated.plusSeconds(60)) and matches.isNotEmpty()) {
+            return matches
+        }
 
         matches.clear()
         lastUpdated = Instant.now()

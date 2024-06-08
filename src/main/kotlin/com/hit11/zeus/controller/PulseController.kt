@@ -2,6 +2,7 @@ package com.hit11.zeus.controller
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.hit11.zeus.exceptions.InsufficientFundsException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.service.PulseService
 import org.slf4j.LoggerFactory
@@ -10,7 +11,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 
-data class MatchIdRequest(val matchId: String)
+data class MatchIdRequest(val matchId: String = "")
 
 @RestController
 @RequestMapping("/api/pulse")
@@ -48,6 +49,25 @@ class PulseController(private val service: PulseService) {
         } catch (e: Exception) {
             logger.error("Error while submitting response", e)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(UserPulseSubmissionResponse())
+        }
+    }
+
+    @PostMapping("/user/bookOrder")
+    fun submitUserTrade(@RequestBody request: UserTradeSubmissionRequest): ResponseEntity<Boolean> {
+        logger.info("Received request: $request")
+        try {
+            val savedResponse = service.submitUserTrade(request)
+            if (savedResponse) {
+                return ResponseEntity.status(HttpStatus.CREATED).body(true)
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false)
+        } catch (e: InsufficientFundsException) {
+            logger.error("Insufficient funds", e)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false)
+        }
+        catch (e: Exception) {
+            logger.error("Error while submitting response", e)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false)
         }
     }
 

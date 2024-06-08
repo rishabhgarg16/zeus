@@ -7,6 +7,8 @@ import com.google.cloud.firestore.Query
 import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.model.PulseDataModel
 import com.hit11.zeus.model.UserPulseDataModel
+import com.hit11.zeus.model.UserTradeResponseDataModel
+import com.hit11.zeus.model.UserTradeSubmissionRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import java.time.Instant
@@ -21,9 +23,9 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
     var lastUpdated: Instant = Instant.now()
 
     fun getAllActivePulseByMatch(matchId: String): List<PulseDataModel>? {
-//        if (Instant.now().isAfter(lastUpdated.plusSeconds(60)) and opinions.isNotEmpty()) {
-//            return opinions
-//        }
+        if (Instant.now().isAfter(lastUpdated.plusSeconds(60)) and opinions.isNotEmpty()) {
+            return opinions
+        }
 
         val tempOpinions = mutableListOf<PulseDataModel>()
         lastUpdated = Instant.now()
@@ -33,6 +35,7 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
                 pulseCollection
                     .whereEqualTo("enabled", true)
                     .whereEqualTo("matchIdRef", matchIdRef)
+                    .limit(50)
                     .get()
                     .get()
 
@@ -160,5 +163,28 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
         }
         val documentSnapshot = firestore.collection("pulse").document(finalPulseId).get().get()
         return documentSnapshot.toObject(PulseDataModel::class.java)!!
+    }
+
+    fun saveUserTrade(req: UserTradeSubmissionRequest): Boolean {
+        try {
+            var amount = req.userWager * req.userTradeQuantity
+            val userIdRef = firestore.document(req.userIdRef)
+            val pulseIdRef = firestore.document(req.pulseIdRef)
+            val pulseSnapshot = pulseIdRef.get().get()
+            val matchIdRef = pulseSnapshot.get("matchIdRef") as DocumentReference
+            val userTrade = UserTradeResponseDataModel()
+            userTrade.matchIdRef = matchIdRef
+            userTrade.userIdRef = userIdRef
+            userTrade.pulseIdRef = pulseIdRef
+            userTrade.userAnswer = req.userAnswer
+            userTrade.userWager = req.userWager
+            userTrade.userTradeQuantity = req.userTradeQuantity
+            val userTradeRef = firestore.collection("user_trade_response").document()
+            userTradeRef.set(userTrade).get()
+            return true
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+        return false
     }
 }

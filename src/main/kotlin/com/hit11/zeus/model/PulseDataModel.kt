@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.google.cloud.firestore.DocumentReference
 import com.google.firebase.database.Exclude
 import com.google.gson.annotations.SerializedName
+import com.google.type.DateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -49,6 +50,21 @@ class PulseDataModel(
     var pulseResult: String = "",
     var pulseImageUrl: String = "",
     var pulseEndDate: Long = 0L,
+)
+
+
+// Maps 101 to userTradeResponse collection in firebase
+@JsonIgnoreProperties(ignoreUnknown = true)
+class UserTradeResponseDataModel(
+    var docRef: String = "",
+    @Exclude
+    var matchIdRef: DocumentReference? = null,
+    var pulseIdRef: DocumentReference? = null,
+    var userIdRef: DocumentReference? = null,
+    var userAnswer: String = "",
+    var userWager: Double = 10.0,
+    var userTradeQuantity: Long = 0L,
+    val answerTime: DateTime? = null,
 )
 
 fun PulseDataModel.toResponse(): PulseDataModelResponse {
@@ -143,6 +159,16 @@ data class UserPulseSubmissionRequest(
     val userResult: String = "",
     val isPulseActive: Boolean = false,
     val test: Boolean = false,
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class UserTradeSubmissionRequest(
+    val userIdRef: String = "",
+    val pulseIdRef: String = "",
+//    val matchIdRef: String = "",
+    val userAnswer: String = "",
+    val userWager: Double = -1.0,
+    val userTradeQuantity: Long = 0L,
 )
 
 class GetUserEnrolledPulseRequest(
