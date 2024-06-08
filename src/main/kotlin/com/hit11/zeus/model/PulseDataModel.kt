@@ -133,7 +133,7 @@ class UserPulseSubmissionResponse(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class UserPulseSubmissionRequest(
+data class UserPulseSubmissionRequest(
     val userId: String = "",
     val pulseId: String = "",
     val matchIdRef: String = "",

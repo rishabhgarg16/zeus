@@ -21,9 +21,9 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
     var lastUpdated: Instant = Instant.now()
 
     fun getAllActivePulseByMatch(matchId: String): List<PulseDataModel>? {
-        if (Instant.now().isAfter(lastUpdated.plusSeconds(60)) and opinions.isNotEmpty()) {
-            return opinions
-        }
+//        if (Instant.now().isAfter(lastUpdated.plusSeconds(60)) and opinions.isNotEmpty()) {
+//            return opinions
+//        }
 
         val tempOpinions = mutableListOf<PulseDataModel>()
         lastUpdated = Instant.now()
@@ -35,6 +35,7 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
                     .whereEqualTo("matchIdRef", matchIdRef)
                     .get()
                     .get()
+
             querySnapshot.map {
                 var pulse = it.toObject(PulseDataModel::class.java)
                 pulse.docRef = it.id

@@ -33,9 +33,14 @@ class MatchRepository(@Autowired private val objectMapper: ObjectMapper) {
             for (document in querySnapshot.documents) {
                 val json = document.data
                 if (json != null) {
-                    val match = objectMapper.convertValue(json, Match::class.java)
-                    match.docRef = document.reference.path
-                    matches.add(match)
+                    try {
+                        val match = objectMapper.convertValue(json, Match::class.java)
+                        match.docRef = document.reference.path
+                        matches.add(match)
+                    } catch (e: Exception) {
+                        val matchId = json.get("id").toString()
+                        println("Error deserializing match : $matchId $e")
+                    }
                 }
             }
         } catch (e: Exception) {

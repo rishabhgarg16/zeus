@@ -19,13 +19,18 @@ class PulseController(private val service: PulseService) {
 
     @PostMapping("/active")
     fun getAllOpinions(@RequestBody request: MatchIdRequest): List<PulseDataModelResponse>? {
-        val response = service.getAllActiveOpinions(request.matchId)?.map { it.toResponse() }
-        return response
+        try {
+            val response = service.getAllActiveOpinions(request.matchId)?.map { it.toResponse() }
+            return response
+        } catch (ex: Exception ){
+            logger.error(ex.message, ex)
+        }
+        return null
     }
 
     @PostMapping("/user/submit")
     fun submitResponse(@RequestBody request: UserPulseSubmissionRequest): ResponseEntity<UserPulseSubmissionResponse> {
-        logger.info("Received request: $request")
+        logger.info("Received request: ${request.toString()}")
 
         val userPulseDataModel = UserPulseDataModel(
             userId = request.userId,
