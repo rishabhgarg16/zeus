@@ -28,7 +28,7 @@ class MatchRepository(@Autowired private val objectMapper: ObjectMapper) {
         lastUpdated = Instant.now()
         try {
             val querySnapshot =
-                firestore.collection("fixtures_2").whereGreaterThan("start_date", Instant.now().epochSecond)
+                firestore.collection("fixtures_2").whereGreaterThan("end_date", Instant.now().epochSecond)
                     .orderBy("start_date", Query.Direction.ASCENDING).limit(4).get().get()
             for (document in querySnapshot.documents) {
                 val json = document.data

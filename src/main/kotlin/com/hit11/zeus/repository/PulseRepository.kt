@@ -1,6 +1,7 @@
 package com.hit11.zeus.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.cloud.Timestamp
 import com.google.cloud.firestore.DocumentReference
 import com.google.cloud.firestore.Firestore
 import com.google.cloud.firestore.Query
@@ -184,7 +185,7 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
             userTrade.userTradeQuantity = req.userTradeQuantity
             userTrade.tradeAmount = totalAmount
             userTrade.status = "Active"
-            userTrade.answerTime = Instant.now()
+            userTrade.answerTime = Timestamp.now()
             val userTradeRef = firestore.collection("user_trade_response").document()
             userTradeRef.set(userTrade).get()
             return true

@@ -1,6 +1,7 @@
 package com.hit11.zeus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.google.cloud.Timestamp
 import com.google.cloud.firestore.DocumentReference
 import com.google.firebase.database.Exclude
 import com.google.gson.annotations.SerializedName
@@ -67,7 +68,7 @@ class UserTradeResponseDataModel(
     var userTradeQuantity: Long = 0L,
     var tradeAmount: Double = 0.0,
     var status: String = "",
-    var answerTime: Instant? = null,
+    var answerTime: Timestamp? = null,
 )
 
 fun PulseDataModel.toResponse(): PulseDataModelResponse {

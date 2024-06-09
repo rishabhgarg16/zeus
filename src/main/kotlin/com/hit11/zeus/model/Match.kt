@@ -24,6 +24,7 @@ data class Match(
     val match_status: String? = null,
     val match_link: String? = null,
     val start_date: String? = null,
+    val end_date: String? = null,
     val uploaded_at: Long? = null,
     val team1_short_name: String? = null,
     val team2_short_name: String? = null

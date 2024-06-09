@@ -4,6 +4,7 @@ import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.PulseRepository
 import com.hit11.zeus.repository.UserPulseRepository
 import com.hit11.zeus.repository.UserRepository
+import com.hit11.zeus.repository.UserTradeRepository
 import org.springframework.stereotype.Service
 
 @Service
@@ -11,6 +12,7 @@ class PulseService(
     private val repository: PulseRepository,
     private val userPulseRepository: UserPulseRepository,
     private val userRepository: UserRepository,
+    private val userTradeRepository: UserTradeRepository
 ) {
 
     fun getAllActiveOpinions(matchId: String): List<PulseDataModel>? =
@@ -67,11 +69,15 @@ class PulseService(
         try {
             val success = repository.updatePulseAnswer(anserRequest.pulseId, anserRequest.pulseResult)
             if (success) {
-                var usersToUpdate = userPulseRepository.updatePulseResultsForAllUsers(anserRequest.pulseId, anserRequest.pulseResult)
+                var usersToUpdate = userTradeRepository.updatePulseTradeResultsForAllUsers(anserRequest.pulseId, anserRequest.pulseResult)
                 if (!usersToUpdate.isEmpty()) {
-                    res.updatedUserIds = usersToUpdate
-                    usersToUpdate.forEach{
-                        userRepository.updateBalance(it, 10.0)
+                    usersToUpdate.map {
+                        try {
+                            userRepository.updateBalanceForUserRef(it.userIdRef!!.path, 10.0*it.userTradeQuantity)
+                            res.updatedUserIds = res.updatedUserIds.plus(it.userIdRef!!.path)
+                        } catch (e: Exception) {
+                            println(e.message)
+                        }
                     }
                 }
             }
