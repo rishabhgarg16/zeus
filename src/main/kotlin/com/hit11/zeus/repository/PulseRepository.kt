@@ -5,6 +5,7 @@ import com.google.cloud.firestore.DocumentReference
 import com.google.cloud.firestore.Firestore
 import com.google.cloud.firestore.Query
 import com.google.firebase.cloud.FirestoreClient
+import com.google.type.DateTime
 import com.hit11.zeus.model.PulseDataModel
 import com.hit11.zeus.model.UserPulseDataModel
 import com.hit11.zeus.model.UserTradeResponseDataModel
@@ -167,7 +168,7 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
         return documentSnapshot.toObject(PulseDataModel::class.java)!!
     }
 
-    fun saveUserTrade(req: UserTradeSubmissionRequest): Boolean {
+    fun saveUserTrade(req: UserTradeSubmissionRequest, totalAmount: Double): Boolean {
         try {
             var amount = req.userWager * req.userTradeQuantity
             val userIdRef = firestore.document(req.userIdRef)
@@ -179,8 +180,11 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
             userTrade.userIdRef = userIdRef
             userTrade.pulseIdRef = pulseIdRef
             userTrade.userAnswer = req.userAnswer
-            userTrade.userWager = req.userWager
+            userTrade.userWager = "%.2f".format(req.userWager.toFloat()).toDouble()
             userTrade.userTradeQuantity = req.userTradeQuantity
+            userTrade.tradeAmount = totalAmount
+            userTrade.status = "Active"
+            userTrade.answerTime = Instant.now()
             val userTradeRef = firestore.collection("user_trade_response").document()
             userTradeRef.set(userTrade).get()
             return true

@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 import com.google.type.DateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import java.time.Instant
 
 enum class Option(val optionText: String) {
     YES("Yes"),
@@ -64,7 +65,9 @@ class UserTradeResponseDataModel(
     var userAnswer: String = "",
     var userWager: Double = 10.0,
     var userTradeQuantity: Long = 0L,
-    val answerTime: DateTime? = null,
+    var tradeAmount: Double = 0.0,
+    var status: String = "",
+    var answerTime: Instant? = null,
 )
 
 fun PulseDataModel.toResponse(): PulseDataModelResponse {
