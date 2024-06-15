@@ -3,6 +3,7 @@ package com.hit11.zeus.controller
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.cloud.FirestoreClient
 import com.google.type.DateTime
+import com.hit11.zeus.model.ApiResponse
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.service.MatchService
 import org.springframework.http.HttpStatus
@@ -23,19 +24,31 @@ class MatchController(private val matchService: MatchService) {
     private val firestore: Firestore = FirestoreClient.getFirestore()
 
     @GetMapping("/upcoming")
-    fun getUpcomingMatches(): List<Match> {
-        return matchService.getUpcomingMatches()
+    fun getUpcomingMatches(): ResponseEntity<ApiResponse<List<Match>>> {
+        val data = matchService.getUpcomingMatches()
+        return ResponseEntity.ok(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = data
+            )
+        )
     }
 
     @GetMapping("/upload/fixture")
-    fun uploadData(): ResponseEntity<String> {
-        return try {
-            val data = readCsv("/Users/anmolsingh/github/citus/fixtures.csv")
-            uploadToFirestore("fixtures_2", data)
-            ResponseEntity.status(HttpStatus.OK).body("Data upload initiated")
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: ${e.message}")
-        }
+    fun uploadData(): ResponseEntity<ApiResponse<String>> {
+        val data = readCsv("/Users/anmolsingh/github/citus/fixtures.csv")
+        uploadToFirestore("fixtures_2", data)
+        return ResponseEntity.ok(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = "Data Uploaded"
+            )
+        )
+
     }
 
     private fun readCsv(filePath: String): List<Map<String, String>> {
@@ -83,7 +96,8 @@ class MatchController(private val matchService: MatchService) {
                     "match_type" to document["Tournament Type"],
                     "match_status" to document["Match Status"],
                     "match_link" to document["Match Link"],
-                    "start_date" to ZonedDateTime.parse(document["Start Date"], DateTimeFormatter.ISO_OFFSET_DATE_TIME).toEpochSecond(),
+                    "start_date" to ZonedDateTime.parse(document["Start Date"], DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                        .toEpochSecond(),
                     "uploaded_at" to System.currentTimeMillis(),
                 )
                 val documentReference = collectionRef.add(mappedDocument).get()

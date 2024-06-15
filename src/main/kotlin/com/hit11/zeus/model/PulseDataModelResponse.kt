@@ -1,16 +1,12 @@
 package com.hit11.zeus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.google.cloud.firestore.DocumentReference
-import com.google.firebase.database.Exclude
-import kotlinx.serialization.Transient
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class PulseDataModel(
+class PulseDataModelResponse(
     var id: Int = 0,
     var docRef: String = "",
-    @Exclude
-    var matchIdRef: DocumentReference? = null,
+    var matchIdRef: String? = null,
     var pulseDetails: String = "",
     var pulseText: String = "",
     var optionA: String = "",
@@ -21,8 +17,7 @@ class PulseDataModel(
     var userBCount: Long = -1L,
     var category: List<String> = ArrayList(),
     var enabled: Boolean = false,
-    @Transient var tradersInterested: Long = -1L,
-    var pulseResult: String = "",
+    var tradersInterested: Long = -1L,
     var pulseImageUrl: String = "",
-    var pulseEndDate: Long = 0L,
+    var pulseEndDate: Long = -1L
 )

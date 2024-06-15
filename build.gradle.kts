@@ -21,6 +21,7 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-web:2.7.6")
+    implementation("org.springframework.boot:spring-boot-starter-validation:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:2.7.6")
     implementation("com.google.firebase:firebase-admin:8.1.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
