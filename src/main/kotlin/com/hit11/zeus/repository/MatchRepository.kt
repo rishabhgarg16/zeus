@@ -1,51 +1,17 @@
 package com.hit11.zeus.repository
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.cloud.Timestamp
-import com.google.cloud.firestore.Firestore
-import com.google.cloud.firestore.Query
-import com.google.firebase.cloud.FirestoreClient
-import com.hit11.zeus.model.Match
-import org.springframework.beans.factory.annotation.Autowired
+import com.hit11.zeus.model.MatchEntity
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import org.springframework.data.domain.Pageable
 import java.time.Instant
 
-@Repository
-class MatchRepository(@Autowired private val objectMapper: ObjectMapper) {
-
-    private val firestore: Firestore = FirestoreClient.getFirestore()
-
-    private var matches: MutableList<Match> = mutableListOf()
-    private var lastUpdated: Instant = Instant.now()
-
-    fun getUpcomingMatches(): List<Match> {
-
-        if (Instant.now().isBefore(lastUpdated.plusSeconds(60)) and matches.isNotEmpty()) {
-            return matches
-        }
-
-        matches.clear()
-        lastUpdated = Instant.now()
-        try {
-            val querySnapshot =
-                firestore.collection("fixtures_2").whereGreaterThan("start_date", Instant.now().epochSecond)
-                    .orderBy("start_date", Query.Direction.ASCENDING).limit(4).get().get()
-            for (document in querySnapshot.documents) {
-                val json = document.data
-                if (json != null) {
-                    try {
-                        val match = objectMapper.convertValue(json, Match::class.java)
-                        match.docRef = document.reference.path
-                        matches.add(match)
-                    } catch (e: Exception) {
-                        val matchId = json.get("id").toString()
-                        println("Error deserializing match : $matchId $e")
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            println("Error fetching upcoming matches: $e")
-        }
-        return matches
-    }
+@Repository interface MatchRepository : JpaRepository<MatchEntity, Int> {
+    @Query("SELECT m FROM MatchEntity m WHERE m.startDate > :startDate ORDER BY m.startDate ASC")
+    fun findMatchesWithLimit(
+        @Param("startDate") startDate: Instant,
+        pageable: Pageable
+    ): List<MatchEntity>
 }

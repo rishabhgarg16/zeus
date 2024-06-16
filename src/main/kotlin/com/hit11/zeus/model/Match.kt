@@ -1,30 +1,94 @@
 package com.hit11.zeus.model
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.hit11.zeus.config.MatchDeserializer
+import java.time.Instant
+import javax.persistence.*
 
-@JsonDeserialize(using = MatchDeserializer::class)
 data class Match(
-    val id: Int? = null,  // Human-readable ID
-    var docRef: String? = "",
-    val firebase_id: String? = null,  // Firebase generated ID
-    val match_number: Int? = null,
-    val match_group: String? = null,
-    val team1: String? = null,
-    val team_1_image_url: String? = null,
-    val team2: String? = null,
-    val team_2_image_url: String? = null,
-    val time_gmt: String? = null,
+    val id: Int = 0,
+    val matchNumber: Int? = null,
+    val matchGroup: String? = null,
+    val team1: String = "",
+    val team1ImageUrl: String? = null,
+    val team2: String = "",
+    val team2ImageUrl: String? = null,
     val city: String? = null,
     val stadium: String? = null,
     val country: String? = null,
     val enabled: Boolean = true,
-    val tournament_name: String? = null,
-    val match_type: String? = null,
-    val match_status: String? = null,
-    val match_link: String? = null,
-    val start_date: String? = null,
-    val uploaded_at: Long? = null,
-    val team1_short_name: String? = null,
-    val team2_short_name: String? = null
+    val tournamentName: String? = null,
+    val matchType: String? = null,
+    val matchStatus: String? = null,
+    val matchLink: String? = null,
+    val startDate: Instant = Instant.now(),
+    val uploadedAt: Instant = Instant.now(),
+    val team1ShortName: String? = null,
+    val team2ShortName: String? = null
 )
+
+
+@Entity
+@Table(name = "matches")
+data class MatchEntity(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Int = 0,
+
+    val matchGroup: String? = null,
+    val team1: String = "",
+    val team1ImageUrl: String? = null,
+    val team2: String = "",
+    val team2ImageUrl: String? = null,
+    val matchStatus: String? = null,
+    val startDate: Instant = Instant.now(),
+    val team1ShortName: String? = null,
+    val team2ShortName: String? = null,
+    val city: String? = null,
+    val stadium: String? = null,
+    val country: String? = null,
+    val status: Boolean = false,
+    val tournamentName: String? = null,
+    val matchType: String? = null,
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    var createdAt: Instant = Instant.now(),
+
+
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: Instant = Instant.now()
+
+) {
+    @PrePersist
+    fun prePersist() {
+        val now = Instant.now()
+        createdAt = now
+        updatedAt = now
+    }
+
+    @PreUpdate
+    fun preUpdate() {
+        updatedAt = Instant.now()
+    }
+}
+
+fun MatchEntity.mapToMatch(matchEntity: MatchEntity): Match {
+
+    return Match(
+        id = matchEntity.id,
+        matchGroup = matchEntity.matchGroup,
+        team1 = matchEntity.team1,
+        team1ImageUrl = matchEntity.team1ImageUrl,
+        team2 = matchEntity.team2,
+        team2ImageUrl = matchEntity.team2ImageUrl,
+        city = matchEntity.city,
+        stadium = matchEntity.stadium,
+        country = matchEntity.country,
+        enabled = matchEntity.status,
+        tournamentName = matchEntity.tournamentName,
+        matchType = matchEntity.matchType,
+        matchStatus = matchEntity.matchStatus,
+        startDate = matchEntity.startDate,
+        uploadedAt = matchEntity.updatedAt,
+        team1ShortName = matchEntity.team1ShortName,
+        team2ShortName = matchEntity.team2ShortName
+    )
+}

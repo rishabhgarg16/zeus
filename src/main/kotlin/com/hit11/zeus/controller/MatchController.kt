@@ -2,7 +2,6 @@ package com.hit11.zeus.controller
 
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.cloud.FirestoreClient
-import com.google.type.DateTime
 import com.hit11.zeus.model.ApiResponse
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.service.MatchService
@@ -10,12 +9,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
 import java.text.SimpleDateFormat
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
+import java.util.*
 
 @RestController
 @RequestMapping("/api/match")
@@ -24,8 +24,9 @@ class MatchController(private val matchService: MatchService) {
     private val firestore: Firestore = FirestoreClient.getFirestore()
 
     @GetMapping("/upcoming")
-    fun getUpcomingMatches(): ResponseEntity<ApiResponse<List<Match>>> {
-        val data = matchService.getUpcomingMatches()
+    fun getUpcomingMatches(@RequestParam("limit", defaultValue = "4") limit: Int):
+            ResponseEntity<ApiResponse<List<Match>>> {
+        val data = matchService.getUpcomingMatches(limit)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
@@ -97,7 +98,7 @@ class MatchController(private val matchService: MatchService) {
                     "match_status" to document["Match Status"],
                     "match_link" to document["Match Link"],
                     "start_date" to ZonedDateTime.parse(document["Start Date"], DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                        .toEpochSecond(),
+                            .toEpochSecond(),
                     "uploaded_at" to System.currentTimeMillis(),
                 )
                 val documentReference = collectionRef.add(mappedDocument).get()
