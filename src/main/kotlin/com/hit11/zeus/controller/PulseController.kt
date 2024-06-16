@@ -103,7 +103,7 @@ class PulseController(private val service: PulseService) {
             return ResponseEntity.status(HttpStatus.OK).body(service.updatePulseAnswer(req))
         } catch (ex: Exception) {
             logger.error("Error while fetching data", ex)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(PulseAnswerUpdateResponse())
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(PulseAnswerUpdateResponse(status = "Error"))
         }
     }
 }

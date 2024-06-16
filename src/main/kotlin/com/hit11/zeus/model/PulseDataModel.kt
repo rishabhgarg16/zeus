@@ -46,10 +46,10 @@ class PulseDataModel(
     var optionBWager: Long = -1L,
     var userACount: Long = -1L,
     var userBCount: Long = -1L,
-    var category: List<String> = ArrayList(),
+    var category: List<String>? = ArrayList(),
     var enabled: Boolean = false,
     @Transient var tradersInterested: Long = -1L,
-    var pulseResult: String = "",
+    var pulseResult: String? = "",
     var pulseImageUrl: String = "",
     var pulseEndDate: Long = 0L,
 )
@@ -105,7 +105,7 @@ class PulseDataModelResponse(
     var optionBWager: Long = -1L,
     var userACount: Long = -1L,
     var userBCount: Long = -1L,
-    var category: List<String> = ArrayList(),
+    var category: List<String>? = ArrayList(),
     var enabled: Boolean = false,
     var tradersInterested: Long = -1L,
     var pulseImageUrl: String = "",
@@ -127,7 +127,7 @@ data class UserPulseDataModel(
     fun checkIfUserWon(userAnswer: String, pulseDataModel: PulseDataModel): String {
         return when {
             pulseDataModel.enabled -> UserResult.ACTIVE.text
-            pulseDataModel.pulseResult.isEmpty() -> UserResult.ACTIVE.text
+            pulseDataModel.pulseResult!=null && pulseDataModel.pulseResult!!.isEmpty() -> UserResult.ACTIVE.text
             userAnswer == pulseDataModel.pulseResult -> UserResult.WIN.text
             else -> UserResult.LOSE.text
         }

@@ -31,6 +31,7 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
 //            return opinions
 //        }
 
+        opinions.clear()
         val tempOpinions = mutableListOf<PulseDataModel>()
         lastUpdated = Instant.now()
         try {
@@ -43,15 +44,19 @@ class PulseRepository(@Autowired private val objectMapper: ObjectMapper) {
                     .get()
                     .get()
 
-            querySnapshot.map {
-                var pulse = it.toObject(PulseDataModel::class.java)
-                pulse.docRef = it.id
-                tempOpinions.add(pulse)
+            try {
+                querySnapshot.map {
+                    var pulse = it.toObject(PulseDataModel::class.java)
+                    pulse.docRef = it.id
+                    tempOpinions.add(pulse)
+                    opinions = tempOpinions
+                }
+            } catch (e: Exception) {
+                println("Error converting pulse: $e")
             }
-            opinions = tempOpinions
             return opinions
         } catch (e: Exception) {
-            println("Error fetching upcoming matches: $e")
+            println("Error fetching active pulse: $e")
         }
         return null
     }

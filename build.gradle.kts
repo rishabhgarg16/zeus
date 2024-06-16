@@ -21,6 +21,7 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-web:2.7.6")
+    implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:2.7.6")
     implementation("com.google.firebase:firebase-admin:8.1.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -51,7 +52,7 @@ publishing {
             groupId = "ai.hit11"
             artifactId = "zeus"
             // if getting 409, bump the version
-            version = "0.4.10"
+            version = "0.5.0"
         }
     }
     repositories {
@@ -61,7 +62,7 @@ publishing {
                 username = "aws"
                 // if getting 401, run
                 // aws codeartifact get-authorization-token --domain hitcentral --domain-owner 590183692348 --region ap-south-1 --query authorizationToken --output text
-                password = "eyJ2ZXIiOjEsImlzdSI6MTcxNzU5Nzg1OCwiZW5jIjoiQTEyOEdDTSIsInRhZyI6IklIbVpvQTV4UEV3cU5QdHFEZi0wYVEiLCJleHAiOjE3MTc2NDEwNTgsImFsZyI6IkExMjhHQ01LVyIsIml2IjoiMEloa25iVHQ5T3p2MkItaiJ9.E_0mUNFsI6pZBoWrDe0cQg.iBT68neJtNeQjmT6.F3Z8cqd5jeQfSsV4RQ0xM_mpC-GOx3DosFGGBBt0gqy2IDI7OR9NzWhwvgy779PIp5jvqMRo21QGNSUIokbTEVVS_F3ADd5Kgnr8lVCzekFCv9YCDbbzgvmgCn7F-ybEZX-RKPmFUyikv7YHtLON657BpNe7eeTp6Ms7pYnQglahXOLHfo5TzkHF88cOZBSW3aqQoB7OyP_vEg5dagOH9f4zF8v96P--RyTvrmAMPHEEaPHNrw8ioiUFPI9AGpyDhcCFdMNPAW2m2w0BUBJJbv3QBbP0dPjT2cgnJJkCd2Ch5P5Vd4ieE6cmSNAnIiKD9uI0KoqPg_FNBg8tMQFsmaEmPY7D46sQomcqKP4G_37U1qLRNXMN1TZFn3XAIOzjPaz5EXA_LmQZAgFxnajYsBBZHx945aNyyg21vGtWo7RRjnu8XlM-i7oJ9Ko2OWZNbCzN7CDEn4EWXlLGSDVb_F4ruuZ9NoRhM9jwWKS_r-aeUwxmKA2K40AWOG1M-20vHymPwJGeGGSQ1G_31krojV8EsJkoKlNjQ10QRCA5346OC7OF_KNN2EjReW-TI0tiv0vME9BQlWcXUT2IMsq66sCQ4BkSmojLB239ns4tG5XgxmHylOcgj7STKAXD_RhquE5WCMkAiOrhVu-9rBW9KAS7la92cAXvDRv7gdee3A-BishWZVhXqEO21EWkqadFM1NvWtozqUHfZZhd6ZRUcmaTkQQN-cqE-9X4CJvSXrIrMnRAEl2kFNEeCiCqfTCh-6RXxRwB7-Ue6M1AIurPIZ4w3IQwqhJDDk2fKX0-M6mb0U545mQfg-GwUmhcvcRW-XoEhoPtT5INjFRdmSFOErRUQfpKYqxGzi1QEN6y6lun4S4x4RRzAyLgHcxmnReb5yjvj0Nxtv-ocpG5oLapRmcqmoJkDQ.8oB7galwhGFUpTkS11qEmQ"
+                password = "eyJ2ZXIiOjEsImlzdSI6MTcxNzk0MjcxMywiZW5jIjoiQTEyOEdDTSIsInRhZyI6Im9nZ2QzeEk5RmlSMzk2MkFhNllfZGciLCJleHAiOjE3MTc5ODU5MTMsImFsZyI6IkExMjhHQ01LVyIsIml2IjoiNnA2OU1CdUJOeXFBNEN6biJ9.FaNOUXDr4A1StvrSOGVS-w.gJQDcf5HRExrThe_.EFMis-HwMs_5vsLtPWq2xm4rHA8FNmPNbUz8DXGLjkzDv8xsAVq4rvu8duGhfRuEftYrT6XgOsHjgQByqeywbHNTPJURd8sfokWJnRLFZERY5S6_ACyS46WE8Oa7Ypj4G-osYg6rqTr-aAMrG-s8jLDg5S5SVncGU8LrNZJultu6XlHmseuTgW0pKkR-QhRe7lfkStf-4LAszPPSwMSq7vAEhXcA4PC3HTRqyq1sRw4QpGMCnGMmLxYCio_EK9XDOR06tOy95KjNb7JFel-hvR6YyF5Vti8x-iF6bkbPI9qAScUsS3YACLthO50tEVc3hDsAExNe4L13lSPBiLWGIcHNDDRfp3ORmvWI7phJKlf1vs1EMm3uTAYF5a9huptsg0qKYKLY_MoutCAkLh_zKDbx5NDYQnRujjOt52CR-X6qvcTZ4DjavQ8OQazn_kZ76iZtDSI_OnXIw39et_ijm1zYK4qWovYER0mvG84obX_EmN93bImNf6RrmIWbwpL6fFnQzmUZHzBCZKEvMaJCBnVErd0J0_AGyH_-1kaJT5XnrG_5Hq_pZLtNv2INbiZ0aHCUq7qW3sDSC-v0LdV3QjIQ1ZaaZj9rtrair1Gx436k0HdhYjwUJqdBtTk-xYsRXmrtc9iOkcqsFTrLMa7yj9ddClH7ARXrFsljXMGFTEWOe4NVLqzI39wCfIQfcWJAedOWel0yQC1Tv4EV2kpo5u4Bb4hvZ3k4tyLa9xrTcSFFA_LivW6wLZ_wGK_i4vyH3sGL61DjESIG7yCf6NokDronNBPjSKlDVTXlFLqucix4v7vcZ6a3YqiXzmHmcQAqICdLjT11GhTifGgz4DYavTQGWycd6djYB1pBGxt0MjPQ1CA8m8NSXBnbt8y7sxa8mkVjbCdl-kRuIfnTEpwr9OJlfVQ-povdZNBB3zAjyML6RBPQvf06ztJRZeC0.WOCtMr9hTG4L-ubiwO7Tzg"
             }
         }
     }

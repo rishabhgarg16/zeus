@@ -30,7 +30,7 @@ class PulseService(
     }
 
     fun submitUserTrade(req: UserTradeSubmissionRequest): Boolean {
-        val amountToDeduct = "%.2f".format((req.userWager*req.userTradeQuantity)).toDouble()
+        val amountToDeduct = "%.2f".format((req.userWager * req.userTradeQuantity)).toDouble()
         val balanceSuccess = userRepository.updateBalanceForUserRef(req.userIdRef, -amountToDeduct)
         if (!balanceSuccess) {
             return false
@@ -42,16 +42,26 @@ class PulseService(
 
         try {
             val userResponse = repository.getEnrolledPulsesByUser(userId)
-            return userResponse!!.map {
-                val pulseDoc = repository.getPulseById(it.pulseId)
-                it.toResponse(pulseDoc)
+            var pulseDocSet = userResponse!!.map { it.pulseId }
+                .toSet().map{repository.getPulseById(it)}
+
+            var responseList = emptyList<UserPulseSubmissionResponse>()
+            var temp = userResponse.map {
+                val pulseDoc = pulseDocSet.find { it1 -> it1.docRef == it.pulseId  }
+                if (pulseDoc != null) {
+                    responseList = responseList.plus(it.toResponse(pulseDoc))
+                }
             }
+            return  responseList
         } catch (e: Exception) {
             throw e
         }
     }
 
-    fun getEnrolledPulsesByUserAndMatch(userId: String, matchIdRef: String): List<UserPulseSubmissionResponse>? {
+    fun getEnrolledPulsesByUserAndMatch(
+        userId: String,
+        matchIdRef: String
+    ): List<UserPulseSubmissionResponse>? {
 
         try {
             val userResponse = repository.getEnrolledPulsesByUserAndMatch(userId, matchIdRef)
@@ -67,13 +77,20 @@ class PulseService(
     fun updatePulseAnswer(anserRequest: PulseAnswerUpdateRequest): PulseAnswerUpdateResponse {
         var res = PulseAnswerUpdateResponse()
         try {
-            val success = repository.updatePulseAnswer(anserRequest.pulseId, anserRequest.pulseResult)
+            val success =
+                repository.updatePulseAnswer(anserRequest.pulseId, anserRequest.pulseResult)
             if (success) {
-                var usersToUpdate = userTradeRepository.updatePulseTradeResultsForAllUsers(anserRequest.pulseId, anserRequest.pulseResult)
+                var usersToUpdate = userTradeRepository.updatePulseTradeResultsForAllUsers(
+                    anserRequest.pulseId,
+                    anserRequest.pulseResult
+                )
                 if (!usersToUpdate.isEmpty()) {
                     usersToUpdate.map {
                         try {
-                            userRepository.updateBalanceForUserRef(it.userIdRef!!.path, 10.0*it.userTradeQuantity)
+                            userRepository.updateBalanceForUserRef(
+                                it.userIdRef!!.path,
+                                10.0 * it.userTradeQuantity
+                            )
                             res.updatedUserIds = res.updatedUserIds.plus(it.userIdRef!!.path)
                         } catch (e: Exception) {
                             println(e.message)
