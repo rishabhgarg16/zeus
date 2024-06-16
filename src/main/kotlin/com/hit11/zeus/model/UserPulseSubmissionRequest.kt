@@ -1,16 +1,35 @@
 package com.hit11.zeus.model
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import javax.validation.constraints.Min
+import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotNull
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class UserPulseSubmissionRequest(
-    val userId: String = "",
-    val pulseId: String = "",
-    val matchIdRef: String = "",
-    val userAnswer: String = "",
-    val answerTime: Long = -1L,
-    val userWager: Double = -1.0,
-    val userResult: String = "",
-    val isPulseActive: Boolean = false,
-    val test: Boolean = false,
-)
+//data class UserPulseSubmissionRequest(
+//    @field:NotNull(message = "User ID cannot be null")
+//    @field:Min(value = 1, message = "User ID must be greater than 0")
+//    val userId: Int = 0,
+//
+//    @field:NotNull(message = "Pulse ID cannot be null")
+//    @field:Min(value = 1, message = "Pulse ID must be greater than 0")
+//    val pulseId: Int = 0,
+//
+//    @field:NotNull(message = "Match ID cannot be null")
+//    @field:Min(value = 1, message = "Match ID must be greater than 0")
+//    val matchId: Int = 0,
+//
+//    @field:NotBlank(message = "User Answer cannot be blank")
+//    val userAnswer: String = "",
+//
+//    @field:NotNull(message = "Answer Time cannot be null")
+//    val answerTime: Long = -1L,
+//
+//    @field:NotNull(message = "User Wager cannot be null")
+//    @field:Min(value = 1, message = "User Wager must be greater than 0")
+//    val userWager: Double = -1.0,
+//
+//    @field:NotBlank(message = "User Result cannot be blank")
+//    val userResult: String = "",
+//
+//    @field:NotNull(message = "Pulse Active status cannot be null")
+//    val isPulseActive: Boolean = false
+//)

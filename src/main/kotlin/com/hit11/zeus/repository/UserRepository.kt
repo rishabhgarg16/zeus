@@ -4,7 +4,7 @@ import com.google.cloud.firestore.DocumentReference
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.cloud.FirestoreClient
-import com.hit11.zeus.exceptions.InsufficientFundsException
+import com.hit11.zeus.exception.InsufficientBalanceException
 import com.hit11.zeus.model.User
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Repository
@@ -45,14 +45,13 @@ class UserRepository {
         return null
     }
 
-
     private  fun updateBalance(userRef: DocumentReference, amount: Double): Boolean {
         val snapshot = userRef.get().get()
         snapshot.toObject(User::class.java)?.let { user ->
             val newBalance = user.walletBalance + amount
             if (newBalance < 0) {
                 logger.error("Insufficient Funds ${user.id}")
-                throw InsufficientFundsException()
+                throw InsufficientBalanceException("Insufficient Balance ${user.id}")
             }
 
             var success = userRef.update("walletBalance", newBalance)
@@ -63,12 +62,9 @@ class UserRepository {
 
         return false
     }
-    fun updateBalance(firebaseUID: String, amount: Double): Boolean {
-        val userRef = userCollection.document(firebaseUID)
-        return updateBalance(userRef, amount)
-    }
 
-    fun updateBalanceForUserRef(userIdRef: String, amount: Double): Boolean {
+    fun updateBalanceForUserRef(userIdRef: Int, amount: Double): Boolean {
+        var userIdRef = "users/EA1OWNYtBxQBHUwAQzaUqhS30mw2"
         val userRef = firestore.document(userIdRef)
         return updateBalance(userRef, amount)
     }

@@ -1,100 +1,75 @@
 package com.hit11.zeus.service
 
+import com.hit11.zeus.adapter.UserPulseAdapter.toResponse
+import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.*
-import com.hit11.zeus.repository.PulseRepository
-import com.hit11.zeus.repository.UserPulseRepository
-import com.hit11.zeus.repository.UserRepository
+import com.hit11.zeus.repository.*
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 @Service
 class PulseService(
-    private val repository: PulseRepository,
-    private val userPulseRepository: UserPulseRepository,
+    private val orderService: OrderService,
     private val userRepository: UserRepository,
+    private val pulseRepositorySql: PulseRepositorySql,
 ) {
-
-    fun getAllActiveOpinions(matchId: String): List<PulseDataModel>? =
-        repository.getAllActivePulseByMatch(matchId)
-
-    fun submitResponse(response: UserPulseDataModel): UserPulseSubmissionResponse? {
-        try {
-            val userResponse = repository.saveUserResponse(response)
-            val balanceSuccess = userRepository.updateBalance(response.userId, -response.userWager)
-            val pulseDoc = repository.getPulseById(userResponse?.pulseId)
-            return response.toResponse(pulseDoc)
-        } catch (e: Exception) {
-            throw e
-        }
+    private val logger = Logger.getLogger(PulseService::class.java)
+    fun getAllActiveOpinions(matchId: Int): List<PulseDataModel>? {
+        val activePulse = pulseRepositorySql.findByMatchIdAndStatus(matchId, true)
+        return activePulse?.map { it.mapToPulseDataModel() }
     }
 
-    fun submitUserTrade(req: UserTradeSubmissionRequest): Boolean {
-        val amountToDeduct = "%.2f".format((req.userWager*req.userTradeQuantity)).toDouble()
-        val balanceSuccess = userRepository.updateBalanceForUserRef(req.userIdRef, -amountToDeduct)
-        if (!balanceSuccess) {
-            return false
-        }
-        return repository.saveUserTrade(req, amountToDeduct)
-    }
-
-    fun getEnrolledPulsesByUser(userId: String): List<UserPulseSubmissionResponse>? {
-
+    @Transactional
+    fun submitUserTrade(response: UserPulseDataModel): UserPulseSubmissionResponse? {
+        // check pulse is not expired
+//        val pulse = pulseRepositorySql.findByPulseId(response.pulseId)
+        val amountToDeduct = "%.2f".format(response.tradeAmount).toDouble()
         try {
-            val userResponse = repository.getEnrolledPulsesByUser(userId)
-            return userResponse!!.map {
-                val pulseDoc = repository.getPulseById(it.pulseId)
-                it.toResponse(pulseDoc)
+            val balanceSuccess = userRepository.updateBalanceForUserRef(response.userId, -amountToDeduct)
+
+            if (balanceSuccess) {
+                val userResponse = orderService.saveOrder(response)
+                val pulseDoc = pulseRepositorySql.getPulseById(userResponse.pulseId).mapToPulseDataModel()
+                return response.toResponse(pulseDoc)
+            } else {
+                logger.error("Error updating the user wallet for user id ${response.userId}")
+                throw RuntimeException("Error updating the user wallet for user id ${response.userId}")
             }
         } catch (e: Exception) {
+            logger.error("Error in submitUserTrade for user id ${response.userId}", e)
             throw e
         }
+
     }
 
-    fun getEnrolledPulsesByUserAndMatch(userId: String, matchIdRef: String): List<UserPulseSubmissionResponse>? {
-
+    fun getEnrolledPulsesByUser(userId: Int, matchIdList: List<Int>): List<UserPulseSubmissionResponse>? {
         try {
-            val userResponse = repository.getEnrolledPulsesByUserAndMatch(userId, matchIdRef)
-            return userResponse!!.map {
-                val pulseDoc = repository.getPulseById(it.pulseId)
-                it.toResponse(pulseDoc)
-            }
+            val userResponse = orderService.getOrdersByUserIdAndMatchIdIn(userId, matchIdList)
+            val pulseData = pulseRepositorySql.findAllByMatchIdIn(matchIdList).map { it.mapToPulseDataModel() }
+            val pulseMap: Map<Int, PulseDataModel> = pulseData.associateBy { it.id }.mapValues { it.value }
+            return userResponse?.mapNotNull { order -> pulseMap[order.pulseId]?.let { order.toResponse(it) } }
         } catch (e: Exception) {
             throw e
         }
     }
 
-    fun updatePulseAnswer(anserRequest: PulseAnswerUpdateRequest): PulseAnswerUpdateResponse {
-        var res = PulseAnswerUpdateResponse()
-        try {
-            val success = repository.updatePulseAnswer(anserRequest.pulseId, anserRequest.pulseResult)
-            if (success) {
-                var usersToUpdate = userPulseRepository.updatePulseResultsForAllUsers(anserRequest.pulseId, anserRequest.pulseResult)
-                if (!usersToUpdate.isEmpty()) {
-                    res.updatedUserIds = usersToUpdate
-                    usersToUpdate.forEach{
-                        userRepository.updateBalance(it, 10.0)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            throw e
-        }
-        return res
-    }
+//    fun updatePulseAnswer(anserRequest: PulseAnswerUpdateRequest): PulseAnswerUpdateResponse {
+//        var res = PulseAnswerUpdateResponse()
+//        try {
+//            val success = repository.updatePulseAnswer(anserRequest.pulseId, anserRequest.pulseResult)
+//            if (success) {
+//                var usersToUpdate = userPulseRepository.updatePulseResultsForAllUsers(anserRequest.pulseId, anserRequest.pulseResult)
+//                if (!usersToUpdate.isEmpty()) {
+//                    res.updatedUserIds = usersToUpdate
+//                    usersToUpdate.forEach{
+//                        userRepository.updateBalance(it, 10.0)
+//                    }
+//                }
+//            }
+//        } catch (e: Exception) {
+//            throw e
+//        }
+//        return res
+//    }
 
-    fun UserPulseDataModel.toResponse(pulseDataModel: PulseDataModel): UserPulseSubmissionResponse {
-        return UserPulseSubmissionResponse(
-            userId = userId,
-            pulseId = pulseId,
-            pulseDetail = pulseDataModel.pulseDetails,
-            pulseText = pulseDataModel.pulseText,
-            userWager = userWager,
-            userAnswer = userAnswer,
-            answerTime = answerTime,
-            matchIdRef = pulseDataModel.matchIdRef!!.path,
-            userResult = checkIfUserWon(userAnswer, pulseDataModel),
-            isPulseActive = pulseDataModel.enabled,
-            pulseImageUrl = pulseDataModel.pulseImageUrl,
-            pulseEndDate = pulseDataModel.pulseEndDate,
-        )
-    }
 }

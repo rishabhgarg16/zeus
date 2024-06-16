@@ -1,0 +1,55 @@
+-- CREATE TABLE matches (
+-- 	id INT PRIMARY KEY AUTO_INCREMENT PRIMARY KEY,
+--     match_group VARCHAR(255) ,
+--     team1 VARCHAR(255) NOT NULL ,
+--     team_1_image_url VARCHAR(255),
+--     team2 VARCHAR(255)  NOT NULL ,
+--     team_2_image_url VARCHAR(255),
+--     match_status VARCHAR(255),
+--     start_date VARCHAR(255)  NOT NULL ,
+--     team1_short_name VARCHAR(255),
+--     team2_short_name VARCHAR(255),
+--     city VARCHAR(255),
+--     stadium VARCHAR(255),
+--     country VARCHAR(255),
+--     status BOOLEAN DEFAULT FALSE,
+--     tournament_name VARCHAR(255),
+--     match_type VARCHAR(255),
+-- 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+-- )
+
+
+CREATE TABLE orders (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    pulse_id INT NOT NULL,
+    match_id INT NOT NULL,
+    user_answer VARCHAR(255) NOT NULL,
+    answer_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_wager DOUBLE NOT NULL,
+    user_result VARCHAR(255),
+    quantity BIGINT NOT NULL,
+    trade_amount DOUBLE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE pulse_questions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    match_id INT NOT NULL,
+    pulse_question TEXT NOT NULL,
+    option_a VARCHAR(255) NOT NULL,
+    option_a_wager BIGINT NOT NULL DEFAULT -1,
+    option_b VARCHAR(255) NOT NULL,
+    option_b_wager BIGINT NOT NULL DEFAULT -1,
+    user_a_count BIGINT DEFAULT -1,
+    user_b_count BIGINT DEFAULT -1,
+    category VARCHAR(1024),
+    status BOOLEAN DEFAULT FALSE,
+    pulse_result VARCHAR(255),
+    pulse_image_url VARCHAR(255),
+    pulse_end_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

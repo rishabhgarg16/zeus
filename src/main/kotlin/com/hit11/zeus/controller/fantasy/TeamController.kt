@@ -1,4 +1,4 @@
-package com.hit11.zeus.controller
+package com.hit11.zeus.controller.fantasy
 
 
 import com.hit11.zeus.model.UserTeam

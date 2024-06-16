@@ -1,14 +1,12 @@
 package com.hit11.zeus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import java.time.Instant
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 class PulseDataModelResponse(
     var id: Int = 0,
-    var docRef: String = "",
-    var matchIdRef: String? = null,
+    val matchId: Int = 0,
     var pulseDetails: String = "",
-    var pulseText: String = "",
     var optionA: String = "",
     var optionAWager: Long = -1L,
     var optionB: String = "",
@@ -17,7 +15,6 @@ class PulseDataModelResponse(
     var userBCount: Long = -1L,
     var category: List<String> = ArrayList(),
     var enabled: Boolean = false,
-    var tradersInterested: Long = -1L,
     var pulseImageUrl: String = "",
-    var pulseEndDate: Long = -1L
+    var pulseEndDate: Instant = Instant.now(),
 )

@@ -55,6 +55,30 @@ class GlobalExceptionHandler {
         return ResponseEntity(errorResponse, HttpStatus.OK)
     }
 
+    @ExceptionHandler(OrderNotFoundException::class)
+    fun handleOrderNotFoundException(ex: OrderNotFoundException): ResponseEntity<ApiResponse<Any>> {
+        logger.error("Order not found: ${ex.message}")
+        val errorResponse = ApiResponse<Any>(
+            status = HttpStatus.OK.value(),
+            internalCode = ErrorCode.ORDER_NOT_FOUND.code,
+            message = ErrorCode.ORDER_NOT_FOUND.message,
+            data = null
+        )
+        return ResponseEntity(errorResponse, HttpStatus.OK)
+    }
+
+    @ExceptionHandler(OrderNotSaveException::class)
+    fun handleOrderNotSaveException(ex: OrderNotSaveException): ResponseEntity<ApiResponse<Any>> {
+        logger.error("Order not saved to DB: ${ex.message}")
+        val errorResponse = ApiResponse<Any>(
+            status = HttpStatus.OK.value(),
+            internalCode = ErrorCode.ORDER_NOT_SAVED.code,
+            message = ErrorCode.ORDER_NOT_SAVED.message,
+            data = null
+        )
+        return ResponseEntity(errorResponse, HttpStatus.OK)
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<ApiResponse<Any>> {
         logger.error("General error: ${ex.message}", ex)

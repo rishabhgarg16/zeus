@@ -2,24 +2,22 @@ package com.hit11.zeus.adapter
 
 import com.hit11.zeus.model.PulseDataModel
 import com.hit11.zeus.model.PulseDataModelResponse
+import java.time.Instant
 
 fun PulseDataModel.toResponse(): PulseDataModelResponse {
     return PulseDataModelResponse(
         id = id,
-        docRef = docRef,
-        matchIdRef = matchIdRef?.path,
-        pulseDetails = pulseDetails,
-        pulseText = pulseText,
+        matchId = matchId,
+        pulseDetails = pulseQuestion,
         optionA = optionA,
         optionAWager = optionAWager,
         optionB = optionB,
         optionBWager = optionBWager,
-        userACount = userACount,
-        userBCount = userBCount,
-        category = category,
+        userACount = userACount ?: 100,
+        userBCount = userBCount ?: 100,
+        category = category ?: emptyList(),
         enabled = enabled,
-        tradersInterested = tradersInterested,
-        pulseImageUrl = pulseImageUrl,
-        pulseEndDate = pulseEndDate
+        pulseImageUrl = pulseImageUrl ?: "",
+        pulseEndDate = pulseEndDate ?: Instant.now()
     )
 }

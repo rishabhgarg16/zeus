@@ -8,9 +8,9 @@ import java.time.Instant
 // Maps 101 to userTradeResponse collection in firebase
 @JsonIgnoreProperties(ignoreUnknown = true)
 class UserTradeResponseDataModel(
-    var docRef: String = "",
     @Exclude
     var matchIdRef: DocumentReference? = null,
+    var docRef: String = "",
     var pulseIdRef: DocumentReference? = null,
     var userIdRef: DocumentReference? = null,
     var userAnswer: String = "",

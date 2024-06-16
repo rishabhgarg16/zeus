@@ -1,35 +1,44 @@
 package com.hit11.zeus.adapter
 
-import com.hit11.zeus.model.PulseDataModel
-import com.hit11.zeus.model.UserPulseDataModel
-import com.hit11.zeus.model.UserPulseSubmissionRequest
-import com.hit11.zeus.model.UserPulseSubmissionResponse
+import com.hit11.zeus.model.*
+import java.time.Instant
 
 object UserPulseAdapter {
-    fun toDataModel(request: UserPulseSubmissionRequest): UserPulseDataModel {
+//    fun toDataModel(request: UserPulseSubmissionRequest): UserPulseDataModel {
+//        return UserPulseDataModel(
+//            userId = request.userId,
+//            pulseId = request.pulseId,
+//            matchId = request.matchId,
+//            userAnswer = request.userAnswer,
+//            answerTime = Instant.ofEpochMilli(request.answerTime),
+//            userWager = request.userWager,
+//            userResult = request.userResult
+//        )
+//    }
+
+    fun toDataModelNew(request: UserTradeSubmissionRequest): UserPulseDataModel {
         return UserPulseDataModel(
             userId = request.userId,
             pulseId = request.pulseId,
-            matchIdRefString = request.matchIdRef,
+            matchId = request.matchId,
             userAnswer = request.userAnswer,
-            answerTime = System.currentTimeMillis() / 1000,
+            answerTime = Instant.ofEpochMilli(request.answerTime),
             userWager = request.userWager,
-            userResult = request.userResult
+            quantity = request.userTradeQuantity,
+            tradeAmount = request.userTradeQuantity * request.userWager
         )
     }
-
 
     // combines user response + pulse data together
     fun UserPulseDataModel.toResponse(pulseDataModel: PulseDataModel): UserPulseSubmissionResponse {
         return UserPulseSubmissionResponse(
             userId = userId,
             pulseId = pulseId,
-            pulseDetail = pulseDataModel.pulseDetails,
-            pulseText = pulseDataModel.pulseText,
+            pulseDetail = pulseDataModel.pulseQuestion,
             userWager = userWager,
             userAnswer = userAnswer,
             answerTime = answerTime,
-            matchIdRef = pulseDataModel.matchIdRef!!.path,
+            matchId = pulseDataModel.matchId,
             userResult = checkIfUserWon(userAnswer, pulseDataModel),
             isPulseActive = pulseDataModel.enabled,
             pulseImageUrl = pulseDataModel.pulseImageUrl,

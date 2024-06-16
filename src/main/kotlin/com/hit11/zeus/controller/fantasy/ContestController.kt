@@ -1,9 +1,8 @@
-package com.hit11.zeus.controller
+package com.hit11.zeus.controller.fantasy
 
 
 import com.hit11.zeus.model.Contest
 import com.hit11.zeus.service.ContestService
-import com.hit11.zeus.service.PlayerService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
