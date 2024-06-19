@@ -34,6 +34,7 @@ data class MatchEntity(
 
     val matchGroup: String? = null,
     val team1: String = "",
+    @Column(name = "team_1_image_url")
     val team1ImageUrl: String? = null,
     val team2: String = "",
     @Column(name = "team_2_image_url")
