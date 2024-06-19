@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository interface PulseRepositorySql : JpaRepository<PulseQuestionEntity, Int> {
-    fun findByMatchIdAndStatus(matchId: Int, status: Boolean): List<PulseQuestionEntity>?
+    fun findByMatchIdInAndStatus(matchIdList: List<Int>, status: Boolean): List<PulseQuestionEntity>?
     fun findByMatchId(matchId: Int): List<PulseQuestionEntity>?
     fun findAllByStatus(status: Boolean): List<PulseQuestionEntity>
     fun findAllByMatchIdIn(matchIds: List<Int>): List<PulseQuestionEntity>

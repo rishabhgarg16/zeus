@@ -5,7 +5,6 @@ import javax.persistence.*
 
 data class Match(
     val id: Int = 0,
-    val matchNumber: Int? = null,
     val matchGroup: String? = null,
     val team1: String = "",
     val team1ImageUrl: String? = null,
@@ -20,7 +19,7 @@ data class Match(
     val matchStatus: String? = null,
     val matchLink: String? = null,
     val startDate: Instant = Instant.now(),
-    val uploadedAt: Instant = Instant.now(),
+    val endDate: Instant = Instant.now(),
     val team1ShortName: String? = null,
     val team2ShortName: String? = null
 )
@@ -70,7 +69,7 @@ data class MatchEntity(
     }
 }
 
-fun MatchEntity.mapToMatch(matchEntity: MatchEntity): Match {
+fun mapToMatch(matchEntity: MatchEntity): Match {
 
     return Match(
         id = matchEntity.id,
@@ -87,7 +86,6 @@ fun MatchEntity.mapToMatch(matchEntity: MatchEntity): Match {
         matchType = matchEntity.matchType,
         matchStatus = matchEntity.matchStatus,
         startDate = matchEntity.startDate,
-        uploadedAt = matchEntity.updatedAt,
         team1ShortName = matchEntity.team1ShortName,
         team2ShortName = matchEntity.team2ShortName
     )

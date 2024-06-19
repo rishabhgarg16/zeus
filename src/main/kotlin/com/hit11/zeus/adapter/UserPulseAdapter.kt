@@ -16,8 +16,8 @@ object UserPulseAdapter {
 //        )
 //    }
 
-    fun toDataModelNew(request: UserTradeSubmissionRequest): UserPulseDataModel {
-        return UserPulseDataModel(
+    fun toDataModelNew(request: OrderPlaceRequest): TradeDataModel {
+        return TradeDataModel(
             userId = request.userId,
             pulseId = request.pulseId,
             matchId = request.matchId,
@@ -30,8 +30,8 @@ object UserPulseAdapter {
     }
 
     // combines user response + pulse data together
-    fun UserPulseDataModel.toResponse(pulseDataModel: PulseDataModel): UserPulseSubmissionResponse {
-        return UserPulseSubmissionResponse(
+    fun TradeDataModel.addPulseData(pulseDataModel: PulseDataModel): TradeResponse {
+        return TradeResponse(
             userId = userId,
             pulseId = pulseId,
             pulseDetail = pulseDataModel.pulseQuestion,
@@ -42,8 +42,6 @@ object UserPulseAdapter {
             userResult = checkIfUserWon(userAnswer, pulseDataModel),
             isPulseActive = pulseDataModel.enabled,
             pulseImageUrl = pulseDataModel.pulseImageUrl,
-            userACount = pulseDataModel.userACount,
-            userBCount = pulseDataModel.userBCount,
             pulseEndDate = pulseDataModel.pulseEndDate
         )
     }

@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class UserPulseSubmissionResponse(
-    val userId: Int = 0,
+class TradeResponse(
     val matchId: Int = 0,
+    val userId: Int = 0,
     val pulseId: Int = 0,
     val pulseDetail: String = "",
     val userWager: Double = -1.0,
@@ -16,6 +16,6 @@ class UserPulseSubmissionResponse(
     val isPulseActive: Boolean = true,
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
-    val userACount: Long? = 10,
-    val userBCount: Long? = 10
+    val userTradeQuantity: Long = 0L,
+    val category: List<String> = emptyList()
 )

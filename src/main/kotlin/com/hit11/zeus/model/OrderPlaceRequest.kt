@@ -4,7 +4,7 @@ import javax.validation.constraints.Min
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
-class UserTradeSubmissionRequest(
+class OrderPlaceRequest(
 
     @field:NotNull(message = "User ID cannot be null")
     @field:Min(value = 1, message = "User ID must be greater than 0")

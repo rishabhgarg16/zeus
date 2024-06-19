@@ -1,8 +1,7 @@
 package com.hit11.zeus.controller
 
 
-import com.hit11.zeus.adapter.UserPulseAdapter
-import com.hit11.zeus.adapter.toResponse
+import com.hit11.zeus.adapter.addPulseData
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.*
 import com.hit11.zeus.service.PulseService
@@ -19,7 +18,7 @@ class PulseController(private val service: PulseService) {
     @PostMapping("/pulse/active") fun getAllOpinions(
         @Valid @RequestBody request: GetActivePulseRequest
     ): ResponseEntity<ApiResponse<List<PulseDataModelResponse>?>> {
-        val response = service.getAllActiveOpinions(request.matchId)?.map { it.toResponse() }
+        val response = service.getAllActiveOpinions(request.matchIdList)?.map { it.addPulseData() }
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(), internalCode = null, message = "Success", data = response

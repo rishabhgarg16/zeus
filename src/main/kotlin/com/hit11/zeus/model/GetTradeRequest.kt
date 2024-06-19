@@ -3,7 +3,7 @@ package com.hit11.zeus.model
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotEmpty
 
-data class GetUserOrderRequest(
+data class GetTradeRequest(
     @field:Min(value = 1, message = "The user id must be positive and integer")
     val userId: Int = 0,
 

@@ -24,7 +24,7 @@ class MatchService(
                     matchRepository.findMatchesWithLimit(now, pageable)
             for (matchEntity in matchEntities) {
                 try {
-                    val match: Match = matchEntity.mapToMatch(matchEntity)
+                    val match: Match = mapToMatch(matchEntity)
                     matches.add(match)
                 } catch (e: Exception) {
                     println("Error deserializing match : ${matchEntity.id} $e")
