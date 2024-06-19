@@ -45,10 +45,12 @@ class OrderController(private val service: PulseService) {
     ): ResponseEntity<ApiResponse<List<TradeResponse>>> {
 
         val response = service.getAllTradesByUserAndMatch(request.userId, request.matchIdList)
-
         return ResponseEntity.status(HttpStatus.OK).body(
             ApiResponse(
-                status = HttpStatus.OK.value(), internalCode = null, message = "Success", data = response
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = response
             )
         )
     }

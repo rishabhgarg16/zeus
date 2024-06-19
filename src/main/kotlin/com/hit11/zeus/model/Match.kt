@@ -36,10 +36,13 @@ data class MatchEntity(
     val team1: String = "",
     val team1ImageUrl: String? = null,
     val team2: String = "",
+    @Column(name = "team_2_image_url")
     val team2ImageUrl: String? = null,
     val matchStatus: String? = null,
     val startDate: Instant = Instant.now(),
+    @Column(name = "team1_short_name")
     val team1ShortName: String? = null,
+    @Column(name = "team2_short_name")
     val team2ShortName: String? = null,
     val city: String? = null,
     val stadium: String? = null,
