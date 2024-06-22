@@ -42,7 +42,8 @@ object UserPulseAdapter {
             userResult = checkIfUserWon(userAnswer, pulseDataModel),
             isPulseActive = pulseDataModel.enabled,
             pulseImageUrl = pulseDataModel.pulseImageUrl,
-            pulseEndDate = pulseDataModel.pulseEndDate
+            pulseEndDate = pulseDataModel.pulseEndDate,
+            userTradeQuantity = quantity,
         )
     }
 }

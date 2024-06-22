@@ -47,18 +47,18 @@ class PulseController(private val service: PulseService) {
 
 
 
-//    @PostMapping("/updateAnswer")
-//    fun updateAnswer(
-//        @RequestBody req: PulseAnswerUpdateRequest
-//    ): ResponseEntity<ApiResponse<PulseAnswerUpdateResponse>> {
-//        val response = service.updatePulseAnswer(req)
-//        return ResponseEntity.ok(
-//            ApiResponse(
-//                status = HttpStatus.OK.value(),
-//                internalCode = null,
-//                message = "Answer updated successfully",
-//                data = response
-//            )
-//        )
-//    }
+    @PostMapping("/updateAnswer")
+    fun updateAnswer(
+        @RequestBody req: PulseAnswerUpdateRequest
+    ): ResponseEntity<ApiResponse<PulseAnswerUpdateResponse>> {
+        val response = service.updatePulseAnswer(req)
+        return ResponseEntity.ok(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Answer updated successfully",
+                data = response
+            )
+        )
+    }
 }

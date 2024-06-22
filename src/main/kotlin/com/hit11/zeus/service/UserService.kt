@@ -10,6 +10,7 @@ import com.google.firebase.auth.UserRecord
 import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.exception.InsufficientBalanceException
 import com.hit11.zeus.exception.UserNotFoundException
+import com.hit11.zeus.model.PulseQuestionEntity
 import com.hit11.zeus.model.User
 import com.hit11.zeus.model.UserEntity
 import com.hit11.zeus.model.mapToUser

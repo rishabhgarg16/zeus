@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository
     fun findTradesByUserIdAndMatchIdIn(userId: Int, matchId: List<Int>): List<OrderEntity>?
     fun findOrderByUserIdAndMatchIdAndPulseId(userId: Int, matchId: Int, pulseId: Int): OrderEntity?
     fun findOrderByUserId(userId: Int): List<OrderEntity>
+    fun findTradesByPulseId(pulseId: Int): List<OrderEntity>
 }

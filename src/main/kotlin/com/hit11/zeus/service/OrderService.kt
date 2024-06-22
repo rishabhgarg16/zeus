@@ -14,7 +14,8 @@ class OrderService(
     private val logger = Logger.getLogger(this.javaClass)
 
     fun getAllTradesByUserIdAndMatchIdIn(userId: Int, matchIdList: List<Int>): List<TradeDataModel>? {
-        return orderRepository.findTradesByUserIdAndMatchIdIn(userId, matchIdList)?.map { it.toDataModel() }
+        val temp = orderRepository.findTradesByUserIdAndMatchIdIn(userId, matchIdList)
+        return temp?.map { it.toDataModel() }
     }
 
     fun saveOrder(response: TradeDataModel): TradeDataModel {
@@ -26,5 +27,9 @@ class OrderService(
             logger.error("Error saving order for user id ${response.userId}", e)
             throw OrderNotSaveException("Not able to save order for User ${response.userId}")
         }
+    }
+
+    fun getAllTradesByPulseId(pulseId: Int): List<TradeDataModel>? {
+        return orderRepository.findTradesByPulseId(pulseId)?.map { it.toDataModel() }
     }
 }

@@ -2,6 +2,8 @@ package com.hit11.zeus.service
 
 import com.hit11.zeus.adapter.UserPulseAdapter.addPulseData
 import com.hit11.zeus.exception.Logger
+import com.hit11.zeus.model.PulseAnswerUpdateRequest
+import com.hit11.zeus.model.PulseAnswerUpdateResponse
 import com.hit11.zeus.model.PulseDataModel
 import com.hit11.zeus.model.TradeDataModel
 import com.hit11.zeus.model.TradeResponse
@@ -58,9 +60,24 @@ class PulseService(
         }
     }
 
-//    fun updatePulseAnswer(anserRequest: PulseAnswerUpdateRequest): PulseAnswerUpdateResponse {
-//        var res = PulseAnswerUpdateResponse()
-//        try {
+    fun updatePulseAnswer(anserRequest: PulseAnswerUpdateRequest): PulseAnswerUpdateResponse {
+        var res = PulseAnswerUpdateResponse()
+        try {
+            val pulse = pulseRepositorySql.getPulseById(anserRequest.pulseId)
+            pulse.pulseResult = anserRequest.pulseResult
+            pulse.status = false
+            pulseRepositorySql.save(pulse)
+
+            var orders = orderService.getAllTradesByPulseId(anserRequest.pulseId)
+            orders?.forEach{
+                if (it.userAnswer == anserRequest.pulseResult) {
+                    it.userResult = "Win"
+                    userService.updateBalance(it.userId, it.quantity*10.0)
+                } else {
+                    it.userResult = "Lose"
+                }
+                orderService.saveOrder(it)
+            }
 //            val success = repository.updatePulseAnswer(anserRequest.pulseId, anserRequest.pulseResult)
 //            if (success) {
 //                var usersToUpdate = userPulseRepository.updatePulseResultsForAllUsers(anserRequest.pulseId, anserRequest.pulseResult)
@@ -71,10 +88,10 @@ class PulseService(
 //                    }
 //                }
 //            }
-//        } catch (e: Exception) {
-//            throw e
-//        }
-//        return res
-//    }
+        } catch (e: Exception) {
+            throw e
+        }
+        return res
+    }
 
 }

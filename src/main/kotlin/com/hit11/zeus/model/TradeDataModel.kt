@@ -82,7 +82,9 @@ fun OrderEntity.toDataModel(): TradeDataModel {
         userAnswer = this.userAnswer,
         answerTime = this.answerTime,
         userWager = this.userWager,
-        userResult = this.userResult
+        userResult = this.userResult,
+        quantity = this.quantity,
+        tradeAmount = this.tradeAmount,
     )
 }
 
