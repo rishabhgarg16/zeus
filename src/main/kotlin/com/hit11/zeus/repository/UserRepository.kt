@@ -5,8 +5,11 @@ import com.google.cloud.firestore.Firestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.exception.InsufficientBalanceException
+import com.hit11.zeus.model.OrderEntity
 import com.hit11.zeus.model.User
+import com.hit11.zeus.model.UserEntity
 import org.slf4j.LoggerFactory
+import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -68,4 +71,11 @@ class UserRepository {
         val userRef = firestore.document(userIdRef)
         return updateBalance(userRef, amount)
     }
+}
+
+@Repository interface UserRepositoryMysql : JpaRepository<UserEntity, Int> {
+    fun findByFirebaseUID(firebaseUID: String): UserEntity?
+    fun save(user: UserEntity): UserEntity
+
+//    fun updateWalletBalance(userId: Int, amount: Double): UserEntity
 }

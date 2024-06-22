@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.23"
     id("org.springframework.boot") version "2.7.6"
+    id("io.spring.dependency-management") version "1.1.5"
     kotlin("plugin.spring") version "1.5.31"
     id("maven-publish")
     id("java")
@@ -24,6 +25,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:2.7.6")
     implementation("mysql:mysql-connector-java:8.0.26")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("com.google.firebase:firebase-admin:8.1.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation("org.jetbrains.kotlin:kotlin-reflect")

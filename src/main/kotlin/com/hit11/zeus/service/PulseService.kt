@@ -7,6 +7,7 @@ import com.hit11.zeus.model.TradeDataModel
 import com.hit11.zeus.model.TradeResponse
 import com.hit11.zeus.repository.PulseRepositorySql
 import com.hit11.zeus.repository.UserRepository
+import com.hit11.zeus.repository.UserRepositoryMysql
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
@@ -14,6 +15,8 @@ import javax.transaction.Transactional
 class PulseService(
     private val orderService: OrderService,
     private val userRepository: UserRepository,
+    private val userRepositoryMysql: UserRepositoryMysql,
+    private val userService: UserService,
     private val pulseRepositorySql: PulseRepositorySql,
 ) {
     private val logger = Logger.getLogger(PulseService::class.java)
@@ -28,7 +31,7 @@ class PulseService(
 //        val pulse = pulseRepositorySql.findByPulseId(response.pulseId)
         val amountToDeduct = "%.2f".format(response.tradeAmount).toDouble()
         try {
-            val balanceSuccess = userRepository.updateBalanceForUserRef(response.userId, -amountToDeduct)
+            val balanceSuccess = userService.updateBalance(response.userId, -amountToDeduct)
 
             if (balanceSuccess) {
                 val userResponse = orderService.saveOrder(response)

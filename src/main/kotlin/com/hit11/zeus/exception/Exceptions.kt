@@ -4,3 +4,5 @@ class InsufficientBalanceException(message: String) : RuntimeException(message)
 class OrderInvalidationException(message: String) : RuntimeException(message)
 class OrderNotFoundException (message: String) : RuntimeException(message)
 class OrderNotSaveException (message: String) : RuntimeException(message)
+
+class UserNotFoundException(message: String) : RuntimeException(message)
