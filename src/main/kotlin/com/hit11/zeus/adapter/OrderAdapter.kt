@@ -3,21 +3,10 @@ package com.hit11.zeus.adapter
 import com.hit11.zeus.model.*
 import java.time.Instant
 
-object UserPulseAdapter {
-//    fun toDataModel(request: UserPulseSubmissionRequest): UserPulseDataModel {
-//        return UserPulseDataModel(
-//            userId = request.userId,
-//            pulseId = request.pulseId,
-//            matchId = request.matchId,
-//            userAnswer = request.userAnswer,
-//            answerTime = Instant.ofEpochMilli(request.answerTime),
-//            userWager = request.userWager,
-//            userResult = request.userResult
-//        )
-//    }
+object OrderAdapter {
 
-    fun toDataModelNew(request: OrderPlaceRequest): TradeDataModel {
-        return TradeDataModel(
+    fun convertToDataModel(request: OrderPlaceRequest): OrderDataModel {
+        return OrderDataModel(
             userId = request.userId,
             pulseId = request.pulseId,
             matchId = request.matchId,
@@ -30,7 +19,7 @@ object UserPulseAdapter {
     }
 
     // combines user response + pulse data together
-    fun TradeDataModel.addPulseData(pulseDataModel: PulseDataModel): TradeResponse {
+    fun OrderDataModel.toTradeResponse(pulseDataModel: PulseDataModel): TradeResponse {
         return TradeResponse(
             userId = userId,
             pulseId = pulseId,

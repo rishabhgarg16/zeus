@@ -1,7 +1,5 @@
 package com.hit11.zeus.service
 
-import com.google.api.core.ApiFuture
-import com.google.cloud.firestore.DocumentSnapshot
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.auth.AuthErrorCode
 import com.google.firebase.auth.FirebaseAuth
@@ -10,12 +8,10 @@ import com.google.firebase.auth.UserRecord
 import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.exception.InsufficientBalanceException
 import com.hit11.zeus.exception.UserNotFoundException
-import com.hit11.zeus.model.PulseQuestionEntity
 import com.hit11.zeus.model.User
 import com.hit11.zeus.model.UserEntity
 import com.hit11.zeus.model.mapToUser
 import com.hit11.zeus.repository.UserRepository
-import com.hit11.zeus.repository.UserRepositoryMysql
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.SQLIntegrityConstraintViolationException
@@ -23,8 +19,7 @@ import java.sql.SQLIntegrityConstraintViolationException
 
 @Service
 class UserService(
-    private val userRepository: UserRepository,
-    private val userRepositoryMysql: UserRepositoryMysql
+    private val userRepository: UserRepository
 ) {
     private val firestore: Firestore = FirestoreClient.getFirestore()
     val userCollection = firestore.collection("users")
@@ -43,7 +38,7 @@ class UserService(
     }
 
     fun getUser(firebaseUID: String): User? {
-        val userRecord = userRepositoryMysql.findByFirebaseUID(firebaseUID) ?: return null
+        val userRecord = userRepository.findByFirebaseUID(firebaseUID) ?: return null
         return mapToUser(userRecord)
     }
 
@@ -60,7 +55,7 @@ class UserService(
                 0.0
             )
             try {
-                val createdUser = userRepositoryMysql.save(newUser)
+                val createdUser = userRepository.save(newUser)
                 return mapToUser(createdUser)
             } catch (e: SQLIntegrityConstraintViolationException) {
                 throw Exception("User Already Exists")
@@ -73,7 +68,7 @@ class UserService(
 
     @Transactional
     fun updateBalance(userId: Int, amount: Double): Boolean {
-        val user = userRepositoryMysql.findById(userId).orElseThrow {
+        val user = userRepository.findById(userId).orElseThrow {
             throw UserNotFoundException("User not found with ID: $userId")
         }
 
@@ -83,7 +78,7 @@ class UserService(
         }
 
         user.walletBalance = newBalance
-        userRepositoryMysql.save(user)
+        userRepository.save(user)
         return true
     }
 }

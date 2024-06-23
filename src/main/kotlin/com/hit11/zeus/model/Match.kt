@@ -3,6 +3,13 @@ package com.hit11.zeus.model
 import java.time.Instant
 import javax.persistence.*
 
+enum class MatchStatus (val text: String) {
+    SCHEDULED("Scheduled"),
+    ENDED("Ended"),
+    DELAYED("Delayed"),
+    LIVE("Live")
+}
+
 data class Match(
     val id: Int = 0,
     val matchGroup: String? = null,
@@ -13,7 +20,7 @@ data class Match(
     val city: String? = null,
     val stadium: String? = null,
     val country: String? = null,
-    val enabled: Boolean = true,
+    val status: String = "",
     val tournamentName: String? = null,
     val matchType: String? = null,
     val matchStatus: String? = null,
@@ -48,7 +55,7 @@ data class MatchEntity(
     val city: String? = null,
     val stadium: String? = null,
     val country: String? = null,
-    val status: Boolean = false,
+    val status: String = MatchStatus.SCHEDULED.text,
     val tournamentName: String? = null,
     val matchType: String? = null,
 
@@ -85,7 +92,7 @@ fun mapToMatch(matchEntity: MatchEntity): Match {
         city = matchEntity.city,
         stadium = matchEntity.stadium,
         country = matchEntity.country,
-        enabled = matchEntity.status,
+        status = matchEntity.status,
         tournamentName = matchEntity.tournamentName,
         matchType = matchEntity.matchType,
         matchStatus = matchEntity.matchStatus,

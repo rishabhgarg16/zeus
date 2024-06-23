@@ -1,23 +1,19 @@
 package com.hit11.zeus.service
 
-import com.hit11.zeus.adapter.UserPulseAdapter.addPulseData
+import com.hit11.zeus.adapter.OrderAdapter.toTradeResponse
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.PulseAnswerUpdateRequest
 import com.hit11.zeus.model.PulseAnswerUpdateResponse
 import com.hit11.zeus.model.PulseDataModel
-import com.hit11.zeus.model.TradeDataModel
+import com.hit11.zeus.model.OrderDataModel
 import com.hit11.zeus.model.TradeResponse
 import com.hit11.zeus.repository.PulseRepositorySql
-import com.hit11.zeus.repository.UserRepository
-import com.hit11.zeus.repository.UserRepositoryMysql
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
 @Service
 class PulseService(
     private val orderService: OrderService,
-    private val userRepository: UserRepository,
-    private val userRepositoryMysql: UserRepositoryMysql,
     private val userService: UserService,
     private val pulseRepositorySql: PulseRepositorySql,
 ) {
@@ -28,7 +24,7 @@ class PulseService(
     }
 
     @Transactional
-    fun submitTrade(response: TradeDataModel): TradeResponse? {
+    fun submitOrder(response: OrderDataModel) {
         // check pulse is not expired
 //        val pulse = pulseRepositorySql.findByPulseId(response.pulseId)
         val amountToDeduct = "%.2f".format(response.tradeAmount).toDouble()
@@ -36,9 +32,7 @@ class PulseService(
             val balanceSuccess = userService.updateBalance(response.userId, -amountToDeduct)
 
             if (balanceSuccess) {
-                val userResponse = orderService.saveOrder(response)
-                val pulseDoc = pulseRepositorySql.getPulseById(userResponse.pulseId).mapToPulseDataModel()
-                return response.addPulseData(pulseDoc)
+                orderService.saveOrder(response)
             } else {
                 logger.error("Error updating the user wallet for user id ${response.userId}")
                 throw RuntimeException("Error updating the user wallet for user id ${response.userId}")
@@ -54,7 +48,7 @@ class PulseService(
             val allTrades = orderService.getAllTradesByUserIdAndMatchIdIn(userId, matchIdList)
             val pulseData = pulseRepositorySql.findAllByMatchIdIn(matchIdList).map { it.mapToPulseDataModel() }
             val pulseMap: Map<Int, PulseDataModel> = pulseData.associateBy { it.id }.mapValues { it.value }
-            return allTrades?.mapNotNull { trade -> pulseMap[trade.pulseId]?.let { trade.addPulseData(it) } }
+            return allTrades?.mapNotNull { trade -> pulseMap[trade.pulseId]?.let { trade.toTradeResponse(it) } }
         } catch (e: Exception) {
             throw e
         }
@@ -78,16 +72,6 @@ class PulseService(
                 }
                 orderService.saveOrder(it)
             }
-//            val success = repository.updatePulseAnswer(anserRequest.pulseId, anserRequest.pulseResult)
-//            if (success) {
-//                var usersToUpdate = userPulseRepository.updatePulseResultsForAllUsers(anserRequest.pulseId, anserRequest.pulseResult)
-//                if (!usersToUpdate.isEmpty()) {
-//                    res.updatedUserIds = usersToUpdate
-//                    usersToUpdate.forEach{
-//                        userRepository.updateBalance(it, 10.0)
-//                    }
-//                }
-//            }
         } catch (e: Exception) {
             throw e
         }

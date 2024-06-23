@@ -6,10 +6,10 @@ enum class UserResult(val text: String, val outcome: Int) {
     ACTIVE("Active", 3), ;
 
     companion object {
-        fun fromText(userResult: String): UserResult {
+        fun fromText(userResult: String?): UserResult {
             when (userResult) {
-                "Yes" -> return WIN
-                "No" -> return LOSE
+                "Win" -> return WIN
+                "Lose" -> return LOSE
                 "Active" -> return ACTIVE
             }
             return ACTIVE

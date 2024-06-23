@@ -3,7 +3,7 @@ package com.hit11.zeus.model
 import java.time.Instant
 import javax.persistence.*
 
-data class TradeDataModel(
+data class OrderDataModel(
     val userId: Int = 0,
     val pulseId: Int = 0,
     val matchId: Int = 0,
@@ -74,8 +74,8 @@ data class OrderEntity(
     }
 }
 
-fun OrderEntity.toDataModel(): TradeDataModel {
-    return TradeDataModel(
+fun OrderEntity.toDataModel(): OrderDataModel {
+    return OrderDataModel(
         userId = this.userId,
         pulseId = this.pulseId,
         matchId = this.matchId,

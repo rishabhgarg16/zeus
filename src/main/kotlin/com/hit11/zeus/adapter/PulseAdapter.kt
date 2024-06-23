@@ -4,7 +4,7 @@ import com.hit11.zeus.model.PulseDataModel
 import com.hit11.zeus.model.PulseDataModelResponse
 import java.time.Instant
 
-fun PulseDataModel.addPulseData(): PulseDataModelResponse {
+fun PulseDataModel.toTradeResponse(): PulseDataModelResponse {
     return PulseDataModelResponse(
         id = id,
         matchId = matchId,

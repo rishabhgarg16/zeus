@@ -1,6 +1,6 @@
 package com.hit11.zeus.controller
 
-import com.hit11.zeus.adapter.UserPulseAdapter
+import com.hit11.zeus.adapter.OrderAdapter
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.ApiResponse
 import com.hit11.zeus.model.GetTradeRequest
@@ -24,17 +24,16 @@ class OrderController(private val service: PulseService) {
     @PostMapping("/user/bookOrder")
     fun submitOrder(
         @Valid @RequestBody request: OrderPlaceRequest
-    ): ResponseEntity<ApiResponse<TradeResponse>> {
-
+    ): ResponseEntity<ApiResponse<Boolean>> {
         logger.info("Received request: $request")
-        val dataModel = UserPulseAdapter.toDataModelNew(request)
-        val savedResponse = service.submitTrade(dataModel)
+        val dataModel = OrderAdapter.convertToDataModel(request)
+        service.submitOrder(dataModel)
         return ResponseEntity.status(HttpStatus.CREATED).body(
             ApiResponse(
                 status = HttpStatus.CREATED.value(),
                 internalCode = null,
                 message = "Order booked successfully",
-                data = savedResponse
+                data = true
             )
         )
     }

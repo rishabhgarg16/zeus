@@ -14,4 +14,10 @@ import java.time.Instant
         @Param("startDate") startDate: Instant,
         pageable: Pageable
     ): List<MatchEntity>
+
+    @Query("SELECT m FROM MatchEntity m WHERE m.status = :status ORDER BY m.startDate ASC")
+    fun findMatchesWithLiveStatusWithLimit(
+        status: String,
+        pageable: Pageable
+    ): List<MatchEntity>
 }
