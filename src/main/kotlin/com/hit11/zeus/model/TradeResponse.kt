@@ -17,5 +17,6 @@ class TradeResponse(
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
     val userTradeQuantity: Long = 0L,
-    val category: List<String> = emptyList()
+    val category: List<String> = emptyList(),
+    val totalTraders: Long = 0L
 )

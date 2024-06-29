@@ -33,6 +33,7 @@ object OrderAdapter {
             pulseImageUrl = pulseDataModel.pulseImageUrl,
             pulseEndDate = pulseDataModel.pulseEndDate,
             userTradeQuantity = quantity,
+            totalTraders = pulseDataModel.userACount ?: (pulseDataModel.userBCount ?: 0)
         )
     }
 }
