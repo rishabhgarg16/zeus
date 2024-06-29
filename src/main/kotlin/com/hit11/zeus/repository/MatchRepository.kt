@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable
 import java.time.Instant
 
 @Repository interface MatchRepository : JpaRepository<MatchEntity, Int> {
-    @Query("SELECT m FROM MatchEntity m WHERE m.startDate > :startDate ORDER BY m.startDate ASC")
+    @Query("SELECT m FROM MatchEntity m WHERE m.endDate > :startDate ORDER BY m.startDate ASC")
     fun findMatchesWithLimit(
         @Param("startDate") startDate: Instant,
         pageable: Pageable

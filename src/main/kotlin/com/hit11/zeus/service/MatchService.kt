@@ -21,7 +21,7 @@ import java.time.Instant
         val pageable: Pageable = PageRequest.of(0, limit)
         try {
             val matchEntities: List<MatchEntity> =
-                    matchRepository.findMatchesWithLiveStatusWithLimit(MatchStatus.LIVE.text, pageable)
+                    matchRepository.findMatchesWithLimit(now, pageable)
             for (matchEntity in matchEntities) {
                 try {
                     val match: Match = mapToMatch(matchEntity)

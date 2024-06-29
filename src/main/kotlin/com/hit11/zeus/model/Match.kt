@@ -20,10 +20,9 @@ data class Match(
     val city: String? = null,
     val stadium: String? = null,
     val country: String? = null,
-    val status: String = "",
     val tournamentName: String? = null,
     val matchType: String? = null,
-    val matchStatus: String? = null,
+    val matchStatus: String = "",
     val matchLink: String? = null,
     val startDate: Instant = Instant.now(),
     val endDate: Instant = Instant.now(),
@@ -46,8 +45,8 @@ data class MatchEntity(
     val team2: String = "",
     @Column(name = "team_2_image_url")
     val team2ImageUrl: String? = null,
-    val matchStatus: String? = null,
     val startDate: Instant = Instant.now(),
+    val endDate: Instant = Instant.now(),
     @Column(name = "team1_short_name")
     val team1ShortName: String? = null,
     @Column(name = "team2_short_name")
@@ -92,12 +91,20 @@ fun mapToMatch(matchEntity: MatchEntity): Match {
         city = matchEntity.city,
         stadium = matchEntity.stadium,
         country = matchEntity.country,
-        status = matchEntity.status,
         tournamentName = matchEntity.tournamentName,
         matchType = matchEntity.matchType,
-        matchStatus = matchEntity.matchStatus,
+        matchStatus = findMatchStatus(matchEntity.startDate),
         startDate = matchEntity.startDate,
+        endDate = matchEntity.endDate,
         team1ShortName = matchEntity.team1ShortName,
         team2ShortName = matchEntity.team2ShortName
     )
 }
+
+fun findMatchStatus(startDate: Instant): String {
+    if(startDate < Instant.now()) {
+        return MatchStatus.LIVE.text
+    } else {
+        return MatchStatus.SCHEDULED.text
+    }
+ }
