@@ -1,9 +1,8 @@
 package com.hit11.zeus.model
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.time.Instant
 
-class PulseDataModelResponse(
+class QuestionResponse(
     var id: Int = 0,
     val matchId: Int = 0,
     var pulseDetails: String = "",

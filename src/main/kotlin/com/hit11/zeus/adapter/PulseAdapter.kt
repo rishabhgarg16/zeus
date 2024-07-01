@@ -1,11 +1,11 @@
 package com.hit11.zeus.adapter
 
-import com.hit11.zeus.model.PulseDataModel
-import com.hit11.zeus.model.PulseDataModelResponse
+import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.QuestionResponse
 import java.time.Instant
 
-fun PulseDataModel.toTradeResponse(): PulseDataModelResponse {
-    return PulseDataModelResponse(
+fun QuestionDataModel.toTradeResponse(): QuestionResponse {
+    return QuestionResponse(
         id = id,
         matchId = matchId,
         pulseDetails = pulseQuestion,

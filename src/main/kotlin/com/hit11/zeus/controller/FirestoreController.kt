@@ -22,7 +22,10 @@ class FirestoreController(private val firestoreService: FirestoreService) {
     }
 
     @PostMapping("/{collectionName}")
-    fun addDocument(@PathVariable collectionName: String, @RequestBody documentData: Map<String, Any>): ResponseEntity<String> {
+    fun addDocument(
+        @PathVariable collectionName: String,
+        @RequestBody documentData: Map<String, Any>
+    ): ResponseEntity<String> {
         val documentId = firestoreService.addDocument(collectionName, documentData)
         return ResponseEntity.ok(documentId)
     }
@@ -34,7 +37,11 @@ class FirestoreController(private val firestoreService: FirestoreService) {
     }
 
     @PutMapping("/{collectionName}/{documentId}")
-    fun updateDocument(@PathVariable collectionName: String, @PathVariable documentId: String, @RequestBody updates: Map<String, Any>): ResponseEntity<Void> {
+    fun updateDocument(
+        @PathVariable collectionName: String,
+        @PathVariable documentId: String,
+        @RequestBody updates: Map<String, Any>
+    ): ResponseEntity<Void> {
         firestoreService.updateDocument(collectionName, documentId, updates)
         return ResponseEntity.noContent().build()
     }

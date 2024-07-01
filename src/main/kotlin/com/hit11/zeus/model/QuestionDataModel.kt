@@ -1,0 +1,170 @@
+package com.hit11.zeus.model
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import java.time.Instant
+import javax.persistence.*
+
+enum class QuestionType(val text: String) {
+    // match questions
+    MATCH_WINNER("match_winner"),
+    RUNS_IN_MATCH("runs_in_match"),
+    SUPER_OVER_IN_MATCH("super_over_in_match"),
+
+    // batting questions
+    TOP_SCORER("top_scorer"),
+    SIXES_IN_MATCH("sixes_in_match"),
+    CENTURY_IN_MATCH("century_in_match"),
+    TEAM_RUNS_IN_MATCH("team_runs_in_match"),
+
+    // bowling
+    WICKETS_IN_MATCH("wickets_in_match"),
+    WICKETS_BY_BOWLER("wickets_by_bowler"),
+    WICKETS_IN_OVER("wickets_in_over"),
+    WIDES_IN_MATCH("wides_in_match"),
+    ECONOMY_RATE("economy_rate_in_match"),
+    TOTAL_EXTRAS("total_extras"),
+
+    // invalid
+    INVALID("invalid");
+
+    companion object {
+        fun fromText(type: String): QuestionType {
+            return entries.find { it.text == type } ?: INVALID
+        }
+    }
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class QuestionDataModel(
+    val id: Int = 0,
+    val matchId: Int = 0,
+    val pulseQuestion: String = "",
+    val optionA: String = "",
+    val optionAWager: Long = -1L,
+    val optionB: String = "",
+    val optionBWager: Long = -1L,
+    val userACount: Long? = -1L,
+    val userBCount: Long? = -1L,
+    val category: List<String>? = ArrayList(),
+    val enabled: Boolean = false,
+    val pulseResult: String? = "",
+    val pulseImageUrl: String? = "",
+    val pulseEndDate: Instant? = Instant.now(),
+    val targetRuns: Int? = 0,
+    val targetOvers: Int? = 0,
+    val targetWickets: Int? = 0,
+    val specificOver: Int? = 0,
+    val targetExtras: Int? = 0,
+    val targetBoundaries: Int? = 0,
+    val type : QuestionType = QuestionType.INVALID,
+    val playerId: Int? = 0
+)
+
+@Entity
+@Table(name = "pulse_questions")
+data class QuestionEntity(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Int = 0,
+    val matchId: Int = 0,
+    @Lob
+    @Column(columnDefinition = "TEXT", name = "pulse_question")
+    val pulseQuestion: String = "",
+
+    @Column(name = "option_a")
+    val optionA: String = "",
+
+    @Column(name = "option_a_wager")
+    val optionAWager: Long = -1L,
+
+    @Column(name = "option_b")
+    val optionB: String = "",
+
+    @Column(name = "option_b_wager")
+    val optionBWager: Long = -1L,
+
+    @Column(name = "user_a_count")
+    val userACount: Long? = -1L,
+
+    @Column(name = "user_b_count")
+    val userBCount: Long? = -1L,
+
+    @Column(name = "category")
+    val category: String? = "",
+
+    var status: Boolean = false,
+    var pulseResult: String? = "",
+    val pulseImageUrl: String? = "",
+    val pulseEndDate: Instant? = Instant.now(),
+
+    @Column(name = "target_runs")
+    val targetRuns: Int = 0,
+
+    @Column(name = "target_overs")
+    val targetOvers: Int = 0,
+
+    @Column(name = "player_id")
+    val playerId: Int = 0,
+
+    @Column(name = "target_wickets")
+    val targetWickets: Int = 0,
+
+    @Column(name = "specific_over")
+    val specificOver: Int = 0,
+
+    @Column(name = "target_extras")
+    val targetExtras: Int = 0,
+
+    @Column(name = "target_boundaries")
+    val targetBoundaries: Int = 0,
+
+    @Column(name = "type")
+    val type: String = "",
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    var createdAt: Instant = Instant.now(),
+
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: Instant = Instant.now(),
+) {
+    @PrePersist
+    fun prePersist() {
+        val now = Instant.now()
+        createdAt = now
+        updatedAt = now
+    }
+
+    @PreUpdate
+    fun preUpdate() {
+        updatedAt = Instant.now()
+    }
+
+    private fun getCategoryList(): List<String>? = category?.split(",")?.map { it.trim() }
+
+    fun mapToQuestionDataModel(): QuestionDataModel {
+        return QuestionDataModel(
+            id = this.id,
+            matchId = matchId,
+            pulseQuestion = this.pulseQuestion,
+            optionA = this.optionA,
+            optionAWager = this.optionAWager,
+            optionB = this.optionB,
+            optionBWager = this.optionBWager,
+            userACount = this.userACount ?: -1L,
+            userBCount = this.userBCount ?: -1L,
+            category = getCategoryList(),
+            enabled = this.status,
+            pulseResult = this.pulseResult,
+            pulseImageUrl = this.pulseImageUrl,
+            pulseEndDate = this.pulseEndDate,
+            targetRuns = this.targetRuns,
+            targetOvers = this.targetOvers,
+            targetExtras = this.targetExtras,
+            targetWickets = this.targetWickets,
+            targetBoundaries = this.targetBoundaries,
+            specificOver = this.specificOver,
+            playerId = this.playerId,
+            type = QuestionType.fromText(this.type)
+        )
+    }
+}

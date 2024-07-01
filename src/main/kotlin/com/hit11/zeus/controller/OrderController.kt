@@ -6,7 +6,7 @@ import com.hit11.zeus.model.ApiResponse
 import com.hit11.zeus.model.GetTradeRequest
 import com.hit11.zeus.model.TradeResponse
 import com.hit11.zeus.model.OrderPlaceRequest
-import com.hit11.zeus.service.PulseService
+import com.hit11.zeus.service.QuestionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -17,7 +17,7 @@ import javax.validation.Valid
 
 @RestController
 @RequestMapping("/api")
-class OrderController(private val service: PulseService) {
+class OrderController(private val service: QuestionService) {
 
     private val logger = Logger.getLogger(this::class.java)
 

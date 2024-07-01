@@ -15,11 +15,11 @@ data class OrderDataModel(
     var userResult: String? = UserResult.ACTIVE.text,
 
     ) {
-    fun checkIfUserWon(userAnswer: String, pulseDataModel: PulseDataModel): String {
+    fun checkIfUserWon(userAnswer: String, questionDataModel: QuestionDataModel): String {
         return when {
-            pulseDataModel.enabled -> UserResult.ACTIVE.text
-            pulseDataModel.pulseResult.isNullOrBlank() -> UserResult.ACTIVE.text
-            userAnswer == pulseDataModel.pulseResult -> UserResult.WIN.text
+            questionDataModel.enabled -> UserResult.ACTIVE.text
+            questionDataModel.pulseResult.isNullOrBlank() -> UserResult.ACTIVE.text
+            userAnswer == questionDataModel.pulseResult -> UserResult.WIN.text
             else -> UserResult.LOSE.text
         }
     }

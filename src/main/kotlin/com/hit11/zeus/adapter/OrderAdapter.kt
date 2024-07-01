@@ -19,21 +19,21 @@ object OrderAdapter {
     }
 
     // combines user response + pulse data together
-    fun OrderDataModel.toTradeResponse(pulseDataModel: PulseDataModel): TradeResponse {
+    fun OrderDataModel.toTradeResponse(questionDataModel: QuestionDataModel): TradeResponse {
         return TradeResponse(
             userId = userId,
             pulseId = pulseId,
-            pulseDetail = pulseDataModel.pulseQuestion,
+            pulseDetail = questionDataModel.pulseQuestion,
             userWager = userWager,
             userAnswer = userAnswer,
             answerTime = answerTime,
-            matchId = pulseDataModel.matchId,
-            userResult = checkIfUserWon(userAnswer, pulseDataModel),
-            isPulseActive = pulseDataModel.enabled,
-            pulseImageUrl = pulseDataModel.pulseImageUrl,
-            pulseEndDate = pulseDataModel.pulseEndDate,
+            matchId = questionDataModel.matchId,
+            userResult = checkIfUserWon(userAnswer, questionDataModel),
+            isPulseActive = questionDataModel.enabled,
+            pulseImageUrl = questionDataModel.pulseImageUrl,
+            pulseEndDate = questionDataModel.pulseEndDate,
             userTradeQuantity = quantity,
-            totalTraders = pulseDataModel.userACount ?: (pulseDataModel.userBCount ?: 0)
+            totalTraders = questionDataModel.userACount ?: (questionDataModel.userBCount ?: 0)
         )
     }
 }

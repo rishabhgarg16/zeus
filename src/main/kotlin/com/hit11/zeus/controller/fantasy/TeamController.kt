@@ -29,7 +29,7 @@ class TeamController(
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("bad request");
         }
         val team = teamService.saveUserTeam(userTeam)
-            ?: return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("internal server error")
+                ?: return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("internal server error")
         return team
     }
 }
