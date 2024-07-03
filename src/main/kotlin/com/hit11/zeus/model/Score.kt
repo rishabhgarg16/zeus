@@ -1,5 +1,6 @@
 package com.hit11.zeus.model
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import javax.persistence.*
 
 @Entity
@@ -12,21 +13,31 @@ data class Inning(
     val inningNumber: Int // 1 for first innings, 2 for second innings, etc.
 )
 
-
 @Entity
 @Table(name = "scores")
 data class Score(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
+    val matchId: Int,
     val inningId: Int,
+    val batmanId : Int = 0,
+    val bowlerId : Int = 0,
+    val batsmanRuns: Int = 0,
+    val extraRuns: Int = 0,
     val overNumber: Int,
-    var runs: Int = 0,
-    var wickets: Int = 0,
-    var wides: Int = 0,
-    var noBalls: Int = 0,
-    var byes: Int = 0,
-    var legByes: Int = 0,
-    var penaltyRuns: Int = 0
+    val ballNumber: Int,
+    val totalRuns: Int = 0, // Total team runs after this ball
+    val totalWickets: Int = 0, // Total team wickets after this ball
+    val totalExtras: Int = 0, // Total team extras after this ball
+    val isWicket: Boolean = false,
+    val wicketType: String? = null,
+    val isWide: Boolean = false,
+    val isNoBall: Boolean = false,
+    val isBye: Boolean = false,
+    val isLegBye: Boolean = false,
+    val isPenalty: Boolean = false,
+    val isSix: Boolean = false,
+    val isFour: Boolean = false
 )
 
 @Entity
@@ -34,6 +45,7 @@ data class Score(
 data class BatsmanPerformance(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
+    val matchId: Int,
     val inningId: Int,
     val playerId: Int,
     var ballsFaced: Int = 0,
@@ -41,7 +53,9 @@ data class BatsmanPerformance(
     var fours: Int = 0,
     var sixes: Int = 0,
     var howOut: String? = null,
-    var bowlerId: Int? = null
+    var bowlerId: Int? = null,
+    var fielderId: Int? = null,
+    var wicketkeeperCatch: Boolean = false, // true if the catch was taken by the wicketkeeper
 )
 
 @Entity
@@ -49,6 +63,7 @@ data class BatsmanPerformance(
 data class BowlerPerformance(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
+    val matchId: Int,
     val inningId: Int,
     val playerId: Int,
     var oversBowled: Double = 0.0,

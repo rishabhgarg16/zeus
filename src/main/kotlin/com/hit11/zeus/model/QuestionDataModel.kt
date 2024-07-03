@@ -53,12 +53,41 @@ class QuestionDataModel(
     val targetRuns: Int? = 0,
     val targetOvers: Int? = 0,
     val targetWickets: Int? = 0,
+    val targetSixes: Int? = 0,
     val specificOver: Int? = 0,
     val targetExtras: Int? = 0,
     val targetBoundaries: Int? = 0,
-    val type : QuestionType = QuestionType.INVALID,
+    val type: QuestionType = QuestionType.INVALID,
     val playerId: Int? = 0
-)
+) {
+    fun maptoEntity(): QuestionEntity {
+        return QuestionEntity(
+            id = this.id,
+            matchId = this.matchId,
+            pulseQuestion = this.pulseQuestion,
+            optionA = this.optionA,
+            optionAWager = this.optionAWager,
+            optionB = this.optionB,
+            optionBWager = this.optionBWager,
+            userACount = this.userACount,
+            userBCount = this.userBCount,
+            category = this.category.toString(),
+            status = this.enabled,
+            pulseResult = this.pulseResult,
+            pulseImageUrl = this.pulseImageUrl,
+            pulseEndDate = this.pulseEndDate,
+            targetRuns = this.targetRuns,
+            targetOvers = this.targetOvers,
+            targetExtras = this.targetExtras,
+            targetWickets = this.targetWickets,
+            targetSixes = this.targetSixes,
+            targetBoundaries = this.targetBoundaries,
+            specificOver = this.specificOver,
+            playerId = this.playerId,
+            type = this.type.text
+        )
+    }
+}
 
 @Entity
 @Table(name = "pulse_questions")
@@ -68,7 +97,10 @@ data class QuestionEntity(
     val id: Int = 0,
     val matchId: Int = 0,
     @Lob
-    @Column(columnDefinition = "TEXT", name = "pulse_question")
+    @Column(
+        columnDefinition = "TEXT",
+        name = "pulse_question"
+    )
     val pulseQuestion: String = "",
 
     @Column(name = "option_a")
@@ -89,42 +121,33 @@ data class QuestionEntity(
     @Column(name = "user_b_count")
     val userBCount: Long? = -1L,
 
-    @Column(name = "category")
     val category: String? = "",
 
     var status: Boolean = false,
     var pulseResult: String? = "",
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
-
-    @Column(name = "target_runs")
-    val targetRuns: Int = 0,
-
-    @Column(name = "target_overs")
-    val targetOvers: Int = 0,
-
-    @Column(name = "player_id")
-    val playerId: Int = 0,
-
-    @Column(name = "target_wickets")
-    val targetWickets: Int = 0,
-
-    @Column(name = "specific_over")
-    val specificOver: Int = 0,
-
-    @Column(name = "target_extras")
-    val targetExtras: Int = 0,
-
-    @Column(name = "target_boundaries")
-    val targetBoundaries: Int = 0,
-
-    @Column(name = "type")
+    val targetRuns: Int? = 0,
+    val targetOvers: Int? = 0,
+    val playerId: Int? = 0,
+    val targetWickets: Int? = 0,
+    val targetSixes : Int? = 0,
+    val specificOver: Int? = 0,
+    val targetExtras: Int? = 0,
+    val targetBoundaries: Int? = 0,
     val type: String = "",
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(
+        name = "created_at",
+        nullable = false,
+        updatable = false
+    )
     var createdAt: Instant = Instant.now(),
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(
+        name = "updated_at",
+        nullable = false
+    )
     var updatedAt: Instant = Instant.now(),
 ) {
     @PrePersist
@@ -161,6 +184,7 @@ data class QuestionEntity(
             targetOvers = this.targetOvers,
             targetExtras = this.targetExtras,
             targetWickets = this.targetWickets,
+            targetSixes = this.targetSixes,
             targetBoundaries = this.targetBoundaries,
             specificOver = this.specificOver,
             playerId = this.playerId,

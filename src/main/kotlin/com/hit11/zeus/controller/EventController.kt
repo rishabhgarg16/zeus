@@ -1,5 +1,6 @@
 package com.hit11.zeus.controller;
 
+import EventService
 import com.hit11.zeus.model.ApiResponse;
 import com.hit11.zeus.model.BallEvent;
 import com.hit11.zeus.service.QuestionService;
@@ -9,11 +10,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/events")
-class EventController(private val questionService: QuestionService) {
+class EventController(private val eventService: EventService) {
 
     @PostMapping("/ball")
     fun receiveBallEvent(@RequestBody ballEvent: BallEvent): ResponseEntity<ApiResponse<String>> {
-        questionService.updateQuestions(ballEvent);
+        eventService.processBallEvent(ballEvent);
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
