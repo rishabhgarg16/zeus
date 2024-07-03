@@ -110,67 +110,73 @@ import javax.transaction.Transactional
             listOf(ballEvent.matchId),
             true
         )?.map { it.mapToQuestionDataModel() }
-
         questions?.forEach { question ->
             var questionUpdated = false
             try {
-                when (question.type) {
-                    QuestionType.MATCH_WINNER -> questionUpdated = handleMatchWinnerQuestion(
-                        question,
-                        ballEvent
-                    )
-
-                    QuestionType.TEAM_RUNS_IN_MATCH -> questionUpdated = handleTeamRunsInMatchQuestion(
-                        question,
-                        ballEvent
-                    )
-
-                    QuestionType.SUPER_OVER_IN_MATCH -> TODO()
-                    QuestionType.TOP_SCORER -> TODO()
-                    QuestionType.SIXES_IN_MATCH -> TODO()
-                    QuestionType.CENTURY_IN_MATCH -> questionUpdated = handleCenturyInMatchQuestion(
-                        question,
-                        ballEvent
-                    )
-
-                    QuestionType.WICKETS_IN_OVER -> questionUpdated = handleWicketsInOverQuestion(
-                        question,
-                        ballEvent
-                    )
-
-                    QuestionType.WICKETS_IN_MATCH -> TODO()
-                    QuestionType.WICKETS_BY_BOWLER -> questionUpdated = handleWicketByBowlerQuestion(
-                        question,
-                        ballEvent
-                    )
-
-                    QuestionType.ECONOMY_RATE -> TODO()
-                    QuestionType.WIDES_IN_MATCH -> questionUpdated = handleWidesInMatchQuestion(
-                        question,
-                        ballEvent
-                    )
-
-                    QuestionType.TOTAL_EXTRAS -> questionUpdated = handleTotalExtrasQuestion(
-                        question,
-                        ballEvent
-                    )
-
-                    QuestionType.INVALID -> TODO()
-
-                    else -> {
-                        logger.error("Invalid question type ${question.type}")
-                        throw RuntimeException("Invalid question type ${question.type}")
-                    }
-                }
+                questionUpdated = handleQuestionUpdate(
+                    question,
+                    ballEvent
+                )
             } catch (e: Exception) {
                 logger.error(
                     "Error in updateQuestions for question id ${question.id}",
                     e
                 )
             }
-
             if (questionUpdated) {
                 questionRepository.save(question.maptoEntity())
+            }
+        }
+    }
+
+    private fun handleQuestionUpdate(
+        question: QuestionDataModel,
+        ballEvent: BallEvent
+    ): Boolean {
+        return when (question.type) {
+            QuestionType.MATCH_WINNER -> handleMatchWinnerQuestion(
+                question,
+                ballEvent
+            )
+
+            QuestionType.TEAM_RUNS_IN_MATCH -> handleTeamRunsInMatchQuestion(
+                question,
+                ballEvent
+            )
+
+            QuestionType.SIXES_IN_MATCH -> handleSixesInMatchQuestion(
+                question,
+                ballEvent
+            )
+
+            QuestionType.CENTURY_IN_MATCH -> handleCenturyInMatchQuestion(
+                question,
+                ballEvent
+            )
+
+            QuestionType.WICKETS_IN_OVER -> handleWicketsInOverQuestion(
+                question,
+                ballEvent
+            )
+
+            QuestionType.WICKETS_BY_BOWLER -> handleWicketByBowlerQuestion(
+                question,
+                ballEvent
+            )
+
+            QuestionType.WIDES_IN_MATCH -> handleWidesInMatchQuestion(
+                question,
+                ballEvent
+            )
+
+            QuestionType.TOTAL_EXTRAS -> handleTotalExtrasQuestion(
+                question,
+                ballEvent
+            )
+
+            else -> {
+                logger.error("Invalid question type ${question.type}")
+                throw RuntimeException("Invalid question type ${question.type}")
             }
         }
     }
@@ -288,7 +294,10 @@ import javax.transaction.Transactional
     ): Boolean {
         val targetSixes = question.targetSixes!!
         if (ballEvent.runsScored == 6) {
-            val totalSixes = calculateTotalSixes(ballEvent.matchId, ballEvent.inningId)
+            val totalSixes = calculateTotalSixes(
+                ballEvent.matchId,
+                ballEvent.inningId
+            )
             if (totalSixes >= targetSixes) {
                 return true
             }
@@ -315,7 +324,7 @@ import javax.transaction.Transactional
     private fun calculateTotalSixes(
         matchId: Int,
         inningId: Int
-    ) : Int {
+    ): Int {
         val score = scoreRepository.findByMatchIdAndInningId(
             matchId,
             inningId
