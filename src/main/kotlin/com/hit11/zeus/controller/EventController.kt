@@ -1,12 +1,11 @@
-package com.hit11.zeus.controller;
+package com.hit11.zeus.controller
 
-import EventService
 import com.hit11.zeus.model.ApiResponse;
 import com.hit11.zeus.model.BallEvent;
-import com.hit11.zeus.service.QuestionService;
+import com.hit11.zeus.service.EventService
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/events")

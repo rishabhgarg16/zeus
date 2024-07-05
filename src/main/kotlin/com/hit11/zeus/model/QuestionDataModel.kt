@@ -58,7 +58,8 @@ class QuestionDataModel(
     val targetExtras: Int? = 0,
     val targetBoundaries: Int? = 0,
     val questionType: QuestionType = QuestionType.INVALID,
-    val playerId: Int? = 0
+    val targetBatsmanId: Int? = 0,
+    val targetBowlerId: Int? = 0
 ) {
     fun maptoEntity(): QuestionEntity {
         return QuestionEntity(
@@ -83,7 +84,8 @@ class QuestionDataModel(
             targetSixes = this.targetSixes,
             targetBoundaries = this.targetBoundaries,
             targetSpecificOver = this.specificOver,
-            playerId = this.playerId,
+            targetBatsmanId = this.targetBatsmanId,
+            targetBowlerId = this.targetBowlerId,
             questionType = this.questionType.text
         )
     }
@@ -129,9 +131,10 @@ data class QuestionEntity(
     val pulseEndDate: Instant? = Instant.now(),
     val targetRuns: Int? = 0,
     val targetOvers: Int? = 0,
-    val playerId: Int? = 0,
+    val targetBowlerId: Int? = 0,
+    val targetBatsmanId: Int? = 0,
     val targetWickets: Int? = 0,
-    val targetSixes : Int? = 0,
+    val targetSixes: Int? = 0,
     val targetSpecificOver: Int? = 0,
     val targetExtras: Int? = 0,
     val targetBoundaries: Int? = 0,
@@ -187,7 +190,8 @@ data class QuestionEntity(
             targetSixes = this.targetSixes,
             targetBoundaries = this.targetBoundaries,
             specificOver = this.targetSpecificOver,
-            playerId = this.playerId,
+            targetBatsmanId = this.targetBatsmanId,
+            targetBowlerId = this.targetBowlerId,
             questionType = QuestionType.fromText(this.questionType)
         )
     }

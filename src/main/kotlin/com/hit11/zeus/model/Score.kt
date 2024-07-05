@@ -54,6 +54,7 @@ data class BatsmanPerformance(
     var howOut: String? = null,
     var bowlerId: Int? = null,
     var fielderId: Int? = null,
+    @Column(name = "wicketkeeper_catch")
     var wicketkeeperCatch: Boolean = false, // true if the catch was taken by the wicketkeeper
 )
 

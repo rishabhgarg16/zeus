@@ -17,21 +17,20 @@ import org.springframework.stereotype.Repository
     fun getPulseById(id: Int): QuestionEntity
 }
 
-interface InningRepository : JpaRepository<Inning, Int> {
+@Repository interface InningRepository : JpaRepository<Inning, Int> {
     fun findByMatchIdAndInningNumber(matchId: Int, inningNumber: Int): Inning?
 }
 
-interface ScoreRepository : JpaRepository<Score, Int> {
+@Repository interface ScoreRepository : JpaRepository<Score, Int> {
 
     @Query(
-        "SELECT COUNT() FROM ScoreEntity " +
+        "SELECT COUNT(*) FROM Score " +
         "WHERE matchId = :matchId " +
         "AND bowlerId = :bowlerId " +
         "AND overNumber = :overNumber " +
-        "AND isWicket = true " +
-        "GROUP BY matchId, bowlerId, overNumber"
+        "AND isWicket = true "
     )
-    fun findWicketsByOverNumber(
+    fun findWicketsByMatchIdAndBowlerIdAndOverNumber(
         matchId: Int,
         bowlerId: Int,
         overNumber: Int
@@ -42,28 +41,23 @@ interface ScoreRepository : JpaRepository<Score, Int> {
         inningId: Int
     ): Score?
 
-    @Query("SELECT * FROM ScoreEntity WHERE matchId = :matchId AND inningId = :inningId")
+    @Query("SELECT s FROM Score s WHERE s.matchId = :matchId AND s.inningId = :inningId")
     fun findByMatchIdAndInningId(
         matchId: Int,
         inningId: Int
     ): List<Score>?
 }
 
-interface BatsmanPerformanceRepository : JpaRepository<BatsmanPerformance, Int> {
-    fun findByMatchIdIdAndPlayerId(
+@Repository interface BatsmanPerformanceRepository : JpaRepository<BatsmanPerformance, Int> {
+    fun findByMatchIdAndPlayerId(
         matchId: Int,
         playerId: Int
     ): BatsmanPerformance?
 }
 
-interface BowlerPerformanceRepository : JpaRepository<BowlerPerformance, Int> {
-    fun findByMatchIdIdAndPlayerId(
+@Repository interface BowlerPerformanceRepository : JpaRepository<BowlerPerformance, Int> {
+    fun findByMatchIdAndPlayerId(
         matchId: Int,
         playerId: Int
     ): BowlerPerformance?
-}
-
-interface BallEventRepository : JpaRepository<BallEvent, Int> {
-
-    fun findTopByInningIdOrderByOverNumberDescBallNumberDesc(inningId: Int): BallEvent?
 }

@@ -13,7 +13,6 @@ import javax.transaction.Transactional
     private val questionRepository: QuestionRepository,
     private val bowlerPerformanceRepository: BowlerPerformanceRepository,
     private val batsmanPerformanceRepository: BatsmanPerformanceRepository,
-    private val matchRepository: MatchRepository,
     private val scoreRepository: ScoreRepository,
 ) {
     private val logger = Logger.getLogger(QuestionService::class.java)
@@ -209,8 +208,8 @@ import javax.transaction.Transactional
         question: QuestionDataModel,
         ballEvent: BallEvent
     ): Boolean {
-        val playerId = question.playerId!!
-        if (ballEvent.isWicket && ballEvent.bowlerId == playerId) {
+        val bowlerId = question.targetBowlerId!!
+        if (ballEvent.isWicket && ballEvent.bowlerId == bowlerId) {
             val wicketsTaken = calculateWicketsTakenByPlayer(
                 ballEvent.bowlerId,
                 ballEvent.matchId
@@ -228,7 +227,7 @@ import javax.transaction.Transactional
     ): Boolean {
         if (ballEvent.overNumber == question.specificOver &&
             ballEvent.isWicket &&
-            ballEvent.bowlerId == question.playerId
+            ballEvent.bowlerId == question.targetBowlerId!!
         ) {
             val wicketsInOver = calculateWicketsInOver(
                 ballEvent
@@ -244,7 +243,7 @@ import javax.transaction.Transactional
         question: QuestionDataModel,
         ballEvent: BallEvent
     ): Boolean {
-        if (ballEvent.isWide && ballEvent.bowlerId == question.playerId) {
+        if (ballEvent.isWide && ballEvent.bowlerId == question.targetBowlerId!!) {
             val widesBowled = calculateWidesBowledByPlayer(
                 ballEvent.bowlerId,
                 ballEvent.matchId
@@ -274,7 +273,7 @@ import javax.transaction.Transactional
         question: QuestionDataModel,
         ballEvent: BallEvent
     ): Boolean {
-        if (ballEvent.batsmanId == question.playerId) {
+        if (ballEvent.batsmanId == question.targetBatsmanId!!) {
             val runsScored = calculateRunsScoredByPlayer(
                 ballEvent.batsmanId,
                 ballEvent.matchId
@@ -307,7 +306,7 @@ import javax.transaction.Transactional
         question: QuestionDataModel,
         ballEvent: BallEvent
     ): Boolean {
-        if (ballEvent.batsmanId == question.playerId) {
+        if (ballEvent.batsmanId == question.targetBatsmanId) {
             val runsScored = calculateRunsScoredByPlayer(
                 ballEvent.batsmanId,
                 ballEvent.matchId
@@ -348,7 +347,7 @@ import javax.transaction.Transactional
         bowlerId: Int,
         matchId: Int
     ): Int {
-        val performances = bowlerPerformanceRepository.findByMatchIdIdAndPlayerId(
+        val performances = bowlerPerformanceRepository.findByMatchIdAndPlayerId(
             matchId,
             bowlerId
         )
@@ -358,7 +357,7 @@ import javax.transaction.Transactional
     private fun calculateWicketsInOver(
         ballEvent: BallEvent,
     ): Int {
-        val wickets = scoreRepository.findWicketsByOverNumber(
+        val wickets = scoreRepository.findWicketsByMatchIdAndBowlerIdAndOverNumber(
             ballEvent.matchId,
             ballEvent.bowlerId,
             ballEvent.overNumber
@@ -370,7 +369,7 @@ import javax.transaction.Transactional
         bowlerId: Int,
         matchId: Int
     ): Int {
-        val performances = bowlerPerformanceRepository.findByMatchIdIdAndPlayerId(
+        val performances = bowlerPerformanceRepository.findByMatchIdAndPlayerId(
             matchId,
             bowlerId
         )
@@ -392,7 +391,7 @@ import javax.transaction.Transactional
         batsmanId: Int,
         matchId: Int
     ): Int {
-        val performance = batsmanPerformanceRepository.findByMatchIdIdAndPlayerId(
+        val performance = batsmanPerformanceRepository.findByMatchIdAndPlayerId(
             matchId,
             batsmanId
         )

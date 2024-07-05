@@ -1,13 +1,13 @@
+package com.hit11.zeus.service
+
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.ResourceNotFoundException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.*
-import com.hit11.zeus.service.QuestionService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
-@Service class EventService @Autowired constructor(
+@Service class EventService(
     private val matchRepository: MatchRepository,
     private val inningRepository: InningRepository,
     private val batsmanPerformanceRepository: BatsmanPerformanceRepository,
@@ -45,7 +45,7 @@ import javax.transaction.Transactional
         val previousScore = validateBallOrder(ballEvent)
 
         // Update Batsman Performance
-        val batsmanPerformance = batsmanPerformanceRepository.findByMatchIdIdAndPlayerId(
+        val batsmanPerformance = batsmanPerformanceRepository.findByMatchIdAndPlayerId(
             match.id,
             ballEvent.batsmanId
         ) ?: BatsmanPerformance(
@@ -84,7 +84,7 @@ import javax.transaction.Transactional
         val totalExtras = calculateTotalExtras(ballEvent)
 
         // Update Bowler Performance
-        val bowlerPerformance = bowlerPerformanceRepository.findByMatchIdIdAndPlayerId(
+        val bowlerPerformance = bowlerPerformanceRepository.findByMatchIdAndPlayerId(
             matchId = match.id,
             ballEvent.bowlerId
         ) ?: BowlerPerformance(
