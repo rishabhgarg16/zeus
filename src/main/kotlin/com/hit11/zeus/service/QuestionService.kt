@@ -14,9 +14,7 @@ import javax.transaction.Transactional
     private val bowlerPerformanceRepository: BowlerPerformanceRepository,
     private val batsmanPerformanceRepository: BatsmanPerformanceRepository,
     private val matchRepository: MatchRepository,
-    private val inningRepository: InningRepository,
     private val scoreRepository: ScoreRepository,
-    private val ballEventRepository: BallEventRepository
 ) {
     private val logger = Logger.getLogger(QuestionService::class.java)
     fun getAllActiveQuestions(matchIdList: List<Int>): List<QuestionDataModel>? {
@@ -133,7 +131,7 @@ import javax.transaction.Transactional
         question: QuestionDataModel,
         ballEvent: BallEvent
     ): Boolean {
-        return when (question.type) {
+        return when (question.questionType) {
             QuestionType.MATCH_WINNER -> handleMatchWinnerQuestion(
                 question,
                 ballEvent
@@ -175,8 +173,8 @@ import javax.transaction.Transactional
             )
 
             else -> {
-                logger.error("Invalid question type ${question.type}")
-                throw RuntimeException("Invalid question type ${question.type}")
+                logger.error("Invalid question type ${question.questionType}")
+                throw RuntimeException("Invalid question type ${question.questionType}")
             }
         }
     }

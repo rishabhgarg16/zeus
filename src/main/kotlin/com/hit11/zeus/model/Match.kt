@@ -95,9 +95,13 @@ data class MatchEntity(
     val matchLink: String? = null,
     @Column(name = "current_inning_id")
     var currentInningId: Int = 0,
+    @Column(name = "team1_score")
     val team1Score: Int = 0,
+    @Column(name = "team2_score")
     val team2Score: Int = 0,
+    @Column(name = "team1_wickets")
     val team1Wickets: Int = 0,
+    @Column(name = "team2_wickets")
     val team2Wickets: Int = 0,
 
     @Column(name = "created_at", nullable = false, updatable = false)

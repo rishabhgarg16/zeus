@@ -57,7 +57,7 @@ class QuestionDataModel(
     val specificOver: Int? = 0,
     val targetExtras: Int? = 0,
     val targetBoundaries: Int? = 0,
-    val type: QuestionType = QuestionType.INVALID,
+    val questionType: QuestionType = QuestionType.INVALID,
     val playerId: Int? = 0
 ) {
     fun maptoEntity(): QuestionEntity {
@@ -82,9 +82,9 @@ class QuestionDataModel(
             targetWickets = this.targetWickets,
             targetSixes = this.targetSixes,
             targetBoundaries = this.targetBoundaries,
-            specificOver = this.specificOver,
+            targetSpecificOver = this.specificOver,
             playerId = this.playerId,
-            type = this.type.text
+            questionType = this.questionType.text
         )
     }
 }
@@ -132,10 +132,10 @@ data class QuestionEntity(
     val playerId: Int? = 0,
     val targetWickets: Int? = 0,
     val targetSixes : Int? = 0,
-    val specificOver: Int? = 0,
+    val targetSpecificOver: Int? = 0,
     val targetExtras: Int? = 0,
     val targetBoundaries: Int? = 0,
-    val type: String = "",
+    val questionType: String = "",
 
     @Column(
         name = "created_at",
@@ -186,9 +186,9 @@ data class QuestionEntity(
             targetWickets = this.targetWickets,
             targetSixes = this.targetSixes,
             targetBoundaries = this.targetBoundaries,
-            specificOver = this.specificOver,
+            specificOver = this.targetSpecificOver,
             playerId = this.playerId,
-            type = QuestionType.fromText(this.type)
+            questionType = QuestionType.fromText(this.questionType)
         )
     }
 }

@@ -17,7 +17,9 @@ import org.springframework.stereotype.Repository
     fun getPulseById(id: Int): QuestionEntity
 }
 
-interface InningRepository : JpaRepository<Inning, Int>
+interface InningRepository : JpaRepository<Inning, Int> {
+    fun findByMatchIdAndInningNumber(matchId: Int, inningNumber: Int): Inning?
+}
 
 interface ScoreRepository : JpaRepository<Score, Int> {
 
@@ -62,13 +64,6 @@ interface BowlerPerformanceRepository : JpaRepository<BowlerPerformance, Int> {
 }
 
 interface BallEventRepository : JpaRepository<BallEvent, Int> {
-    fun existsByMatchIdAndInningIdAndOverNumberAndBallNumber(
-        matchId: Int,
-        inningId: Int,
-        overNumber: Int,
-        ballNumber:
-        Int
-    ): Boolean
 
     fun findTopByInningIdOrderByOverNumberDescBallNumberDesc(inningId: Int): BallEvent?
 }

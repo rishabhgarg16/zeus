@@ -9,7 +9,6 @@ data class Inning(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
     val matchId: Int,
-    val teamId: Int,
     val inningNumber: Int // 1 for first innings, 2 for second innings, etc.
 )
 
