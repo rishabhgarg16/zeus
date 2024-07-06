@@ -1,6 +1,6 @@
 package com.hit11.zeus.exception
 
-import com.hit11.zeus.model.ApiResponse
+import com.hit11.zeus.model.response.ApiResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.FieldError
@@ -85,7 +85,7 @@ class GlobalExceptionHandler {
         val errorResponse = ApiResponse<Any>(
             status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
             internalCode = ErrorCode.UNEXPECTED_ERROR.code,
-            message = ErrorCode.UNEXPECTED_ERROR.message,
+            message = ex.message,
             data = null
         )
         return ResponseEntity(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR)

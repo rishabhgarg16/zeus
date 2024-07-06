@@ -3,6 +3,7 @@ package com.hit11.zeus.service
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.ResourceNotFoundException
 import com.hit11.zeus.model.*
+import com.hit11.zeus.model.response.UpdateQuestionsResponse
 import com.hit11.zeus.repository.*
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
@@ -18,27 +19,26 @@ import javax.transaction.Transactional
 
     private val logger = Logger.getLogger(EventService::class.java)
 
-    @Transactional fun processBallEvent(ballEvent: BallEvent) {
+    @Transactional fun processBallEvent(ballEvent: BallEvent) : UpdateQuestionsResponse {
         // Validate ball event data
         validateBallEvent(ballEvent)
-
-        val inning = inningRepository.findByMatchIdAndInningNumber(
-            ballEvent.matchId,
-            ballEvent.inningId
-        )
-        if (inning == null) {
-            logger.info("New Inning started for match ${ballEvent.matchId}")
-            startNextInning(matchId = ballEvent.matchId)
-        }
 
         val match = matchRepository.findById(ballEvent.matchId)
                 .orElseThrow { ResourceNotFoundException("Match not found") }
                 .mapToMatch()
 
+        val inning = inningRepository.findByMatchIdAndInningNumber(
+            ballEvent.matchId,
+            ballEvent.inningId
+        ) ?: run {
+            logger.info("New Inning started for match ${ballEvent.matchId}")
+            startNextInning(match = match)
+        }
+
         // Validate match and inning state
         validateMatchAndInningState(
             match,
-            inning!!
+            inning
         )
 
         // Ensure ball events are unique and processed in order
@@ -107,22 +107,22 @@ import javax.transaction.Transactional
         bowlerPerformanceRepository.save(bowlerPerformance)
 
         val newTotalRuns =
-                previousScore.totalRuns.plus(batsmanPerformance.runsScored) ?: batsmanPerformance.runsScored
+                previousScore?.totalRuns?.plus(batsmanPerformance.runsScored) ?: batsmanPerformance.runsScored
 
         val newTotalWickets =
                 if (ballEvent.isWicket) {
-                    previousScore.totalWickets.plus(1)
+                    previousScore?.totalWickets?.plus(1) ?: 1
                 } else {
-                    previousScore.totalWickets
+                    previousScore?.totalWickets ?: 0
                 }
 
-        val newTotalExtras = previousScore.totalExtras.plus(totalExtras) ?: totalExtras
+        val newTotalExtras = previousScore?.totalExtras?.plus(totalExtras) ?: totalExtras
 
         // Update Score
         val score = Score(
             matchId = ballEvent.matchId,
             inningId = ballEvent.inningId,
-            batmanId = batsmanPerformance.playerId,
+            batsmanId = batsmanPerformance.playerId,
             bowlerId = bowlerPerformance.playerId,
             batsmanRuns = batsmanPerformance.runsScored,
             extraRuns = totalExtras,
@@ -155,7 +155,8 @@ import javax.transaction.Transactional
         matchRepository.save(match.mapToEntity())
 
         // Call QuestionService to update questions based on the ball event
-        questionService.updateQuestions(ballEvent)
+        val updatedQuestionsResponse = questionService.updateQuestions(score, bowlerPerformance, batsmanPerformance)
+        return updatedQuestionsResponse
     }
 
     private fun calculateRunsConcededByBowler(ballEvent: BallEvent): Int {
@@ -174,15 +175,9 @@ import javax.transaction.Transactional
     }
 
     @Throws(Exception::class) fun startNextInning(
-        matchId: Int
-    ) {
+        match: Match
+    ): Inning {
         try {
-            val match = matchRepository.findById(matchId).orElseThrow {
-                ResourceNotFoundException(
-                    "[EventService] Match not found"
-                )
-            }
-
             val inningNumber = if (match.currentInningId == null) 1 else 2
             val inning = Inning(
                 matchId = match.id,
@@ -191,7 +186,8 @@ import javax.transaction.Transactional
             inningRepository.save(inning)
 
             match.currentInningId = inning.id
-            matchRepository.save(match)
+            matchRepository.save(match.mapToEntity())
+            return inning
         } catch (e: Exception) {
             throw Exception("[EventService] Error saving new innings ${e.message}")
         }
@@ -208,9 +204,12 @@ import javax.transaction.Transactional
         require(ballEvent.wicketType in WicketType.entries.map { it.text }) { "Invalid wicket type" }
 
         // cricket scoring validation
-        require(ballEvent.batsmanRuns == 0 && ballEvent.isWide) { "Wides cannot be scored by batsman" }
-        require(ballEvent.batsmanRuns == 0 && ballEvent.isBye) { "Byes cannot be scored by batsman" }
-
+        if (ballEvent.isWide) {
+            require(ballEvent.batsmanRuns == 0) { "Batsman Run should be 0 on wides" }
+        }
+        if (ballEvent.isBye) {
+            require(ballEvent.batsmanRuns == 0) { "Batsman Run should be 0 on byes" }
+        }
         val extrasCount = listOf(
             ballEvent.isWide,
             ballEvent.isNoBall,
@@ -230,7 +229,7 @@ import javax.transaction.Transactional
         // Additional validations for match and inning states can be added here
     }
 
-    private fun validateBallOrder(ballEvent: BallEvent): Score {
+    private fun validateBallOrder(ballEvent: BallEvent): Score? {
         val previousBall =
                 scoreRepository.findTopByMatchIdAndInningIdOrderByOverNumberDescBallNumberDesc(
                     ballEvent.matchId,
@@ -251,7 +250,8 @@ import javax.transaction.Transactional
             }
         }
 
-        return previousBall!!
+
+        return previousBall
     }
 
     private fun calculateTotalExtras(ballEvent: BallEvent): Int {

@@ -94,7 +94,7 @@ data class MatchEntity(
     val matchType: String? = null,
     val matchLink: String? = null,
     @Column(name = "current_inning_id")
-    var currentInningId: Int = 0,
+    var currentInningId: Int? = null,
     @Column(name = "team1_score")
     val team1Score: Int = 0,
     @Column(name = "team2_score")

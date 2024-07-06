@@ -1,4 +1,4 @@
-package com.hit11.zeus.model
+package com.hit11.zeus.model.response
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

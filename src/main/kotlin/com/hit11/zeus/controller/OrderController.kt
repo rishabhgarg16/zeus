@@ -2,7 +2,7 @@ package com.hit11.zeus.controller
 
 import com.hit11.zeus.adapter.OrderAdapter
 import com.hit11.zeus.exception.Logger
-import com.hit11.zeus.model.ApiResponse
+import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.GetTradeRequest
 import com.hit11.zeus.model.TradeResponse
 import com.hit11.zeus.model.OrderPlaceRequest

@@ -1,8 +1,7 @@
 package com.hit11.zeus.controller
 
-import com.hit11.zeus.model.ApiResponse
+import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.MatchService
-import com.sun.org.apache.xpath.internal.operations.Bool
 import org.springframework.http.HttpStatus
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.SendTo

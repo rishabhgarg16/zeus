@@ -2,7 +2,7 @@ package com.hit11.zeus.controller
 
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.cloud.FirestoreClient
-import com.hit11.zeus.model.ApiResponse
+import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.service.MatchService
 import org.springframework.http.HttpStatus

@@ -13,7 +13,7 @@ enum class QuestionType(val text: String) {
     // batting questions
     TOP_SCORER("top_scorer"),
     SIXES_IN_MATCH("sixes_in_match"),
-    CENTURY_IN_MATCH("century_in_match"),
+    CENTURY_BY_BATSMAN("century_in_match"),
     TEAM_RUNS_IN_MATCH("team_runs_in_match"),
 
     // bowling
@@ -54,8 +54,9 @@ class QuestionDataModel(
     val targetOvers: Int? = 0,
     val targetWickets: Int? = 0,
     val targetSixes: Int? = 0,
-    val specificOver: Int? = 0,
+    val targetSpecificOver: Int? = 0,
     val targetExtras: Int? = 0,
+    val targetWides: Int? = 0,
     val targetBoundaries: Int? = 0,
     val questionType: QuestionType = QuestionType.INVALID,
     val targetBatsmanId: Int? = 0,
@@ -81,9 +82,10 @@ class QuestionDataModel(
             targetOvers = this.targetOvers,
             targetExtras = this.targetExtras,
             targetWickets = this.targetWickets,
+            targetWides = this.targetWides,
             targetSixes = this.targetSixes,
             targetBoundaries = this.targetBoundaries,
-            targetSpecificOver = this.specificOver,
+            targetSpecificOver = this.targetSpecificOver,
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
             questionType = this.questionType.text
@@ -137,6 +139,7 @@ data class QuestionEntity(
     val targetSixes: Int? = 0,
     val targetSpecificOver: Int? = 0,
     val targetExtras: Int? = 0,
+    val targetWides: Int? = 0,
     val targetBoundaries: Int? = 0,
     val questionType: String = "",
 
@@ -186,10 +189,11 @@ data class QuestionEntity(
             targetRuns = this.targetRuns,
             targetOvers = this.targetOvers,
             targetExtras = this.targetExtras,
+            targetWides = this.targetWides,
             targetWickets = this.targetWickets,
             targetSixes = this.targetSixes,
             targetBoundaries = this.targetBoundaries,
-            specificOver = this.targetSpecificOver,
+            targetSpecificOver = this.targetSpecificOver,
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
             questionType = QuestionType.fromText(this.questionType)

@@ -1,6 +1,5 @@
 package com.hit11.zeus.model
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import javax.persistence.*
 
 @Entity
@@ -8,8 +7,8 @@ import javax.persistence.*
 data class Inning(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
-    val matchId: Int,
-    val inningNumber: Int // 1 for first innings, 2 for second innings, etc.
+    val matchId: Int = 0,
+    val inningNumber: Int = 0// 1 for first innings, 2 for second innings, etc.
 )
 
 @Entity
@@ -17,14 +16,14 @@ data class Inning(
 data class Score(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
-    val matchId: Int,
-    val inningId: Int,
-    val batmanId : Int = 0,
-    val bowlerId : Int = 0,
+    val matchId: Int = 0,
+    val inningId: Int = 0,
+    val batsmanId: Int = 0,
+    val bowlerId: Int = 0,
     val batsmanRuns: Int = 0,
     val extraRuns: Int = 0,
-    val overNumber: Int,
-    val ballNumber: Int,
+    val overNumber: Int = 0,
+    val ballNumber: Int = 0,
     val totalRuns: Int = 0, // Total team runs after this ball
     val totalWickets: Int = 0, // Total team wickets after this ball
     val totalExtras: Int = 0, // Total team extras after this ball
@@ -44,9 +43,9 @@ data class Score(
 data class BatsmanPerformance(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
-    val matchId: Int,
-    val inningId: Int,
-    val playerId: Int,
+    val matchId: Int = 0,
+    val inningId: Int = 0,
+    val playerId: Int = 0,
     var ballsFaced: Int = 0,
     var runsScored: Int = 0,
     var fours: Int = 0,
@@ -63,9 +62,9 @@ data class BatsmanPerformance(
 data class BowlerPerformance(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
-    val matchId: Int,
-    val inningId: Int,
-    val playerId: Int,
+    val matchId: Int = 0,
+    val inningId: Int = 0,
+    val playerId: Int = 0,
     var oversBowled: Double = 0.0,
     var runsConceded: Int = 0,
     var wicketsTaken: Int = 0,

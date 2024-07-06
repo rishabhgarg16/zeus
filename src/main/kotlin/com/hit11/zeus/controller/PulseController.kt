@@ -4,6 +4,7 @@ package com.hit11.zeus.controller
 import com.hit11.zeus.adapter.toTradeResponse
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.*
+import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.QuestionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

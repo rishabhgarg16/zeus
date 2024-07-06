@@ -3,7 +3,11 @@ package com.hit11.zeus.service
 import com.hit11.zeus.adapter.OrderAdapter.toTradeResponse
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.*
-import com.hit11.zeus.repository.*
+import com.hit11.zeus.model.response.UpdateQuestionsResponse
+import com.hit11.zeus.repository.BatsmanPerformanceRepository
+import com.hit11.zeus.repository.BowlerPerformanceRepository
+import com.hit11.zeus.repository.QuestionRepository
+import com.hit11.zeus.repository.ScoreRepository
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
@@ -102,73 +106,105 @@ import javax.transaction.Transactional
         return res
     }
 
-    fun updateQuestions(ballEvent: BallEvent) {
+    fun updateQuestions(
+        score: Score,
+        bowlerPerformance: BowlerPerformance,
+        batsmanPerformance: BatsmanPerformance
+    ): UpdateQuestionsResponse {
         val questions = questionRepository.findByMatchIdInAndStatus(
-            listOf(ballEvent.matchId),
+            listOf(score.matchId),
             true
         )?.map { it.mapToQuestionDataModel() }
+
+        val updatedQuestions = mutableListOf<QuestionDataModel>()
+        val notUpdatedQuestions = mutableListOf<QuestionDataModel>()
+        val errors = mutableListOf<String>()
+
         questions?.forEach { question ->
             var questionUpdated = false
             try {
                 questionUpdated = handleQuestionUpdate(
                     question,
-                    ballEvent
+                    batsmanPerformance,
+                    bowlerPerformance,
+                    score
                 )
+                updatedQuestions.add(question)
             } catch (e: Exception) {
+                notUpdatedQuestions.add(question)
+                val errorMessage = "Error updating question id ${question.id}: ${e.message}"
+                errors.add(errorMessage)
                 logger.error(
-                    "Error in updateQuestions for question id ${question.id}",
+                    errorMessage,
                     e
                 )
             }
+
             if (questionUpdated) {
+                updatedQuestions.add(question)
                 questionRepository.save(question.maptoEntity())
+            } else {
+                notUpdatedQuestions.add(question)
             }
         }
+
+        return UpdateQuestionsResponse(
+            updatedQuestions,
+            notUpdatedQuestions,
+            errors
+        )
+
     }
 
     private fun handleQuestionUpdate(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        batsmanPerformance: BatsmanPerformance,
+        bowlerPerformance: BowlerPerformance,
+        score: Score
     ): Boolean {
         return when (question.questionType) {
             QuestionType.MATCH_WINNER -> handleMatchWinnerQuestion(
                 question,
-                ballEvent
+                score
             )
 
             QuestionType.TEAM_RUNS_IN_MATCH -> handleTeamRunsInMatchQuestion(
                 question,
-                ballEvent
+                score
             )
 
             QuestionType.SIXES_IN_MATCH -> handleSixesInMatchQuestion(
                 question,
-                ballEvent
+                score
             )
 
-            QuestionType.CENTURY_IN_MATCH -> handleCenturyInMatchQuestion(
+            QuestionType.CENTURY_BY_BATSMAN -> handleCenturyByBatsmanQuestion(
                 question,
-                ballEvent
+                batsmanPerformance,
+                score
             )
 
             QuestionType.WICKETS_IN_OVER -> handleWicketsInOverQuestion(
                 question,
-                ballEvent
+                bowlerPerformance,
+                score
             )
 
             QuestionType.WICKETS_BY_BOWLER -> handleWicketByBowlerQuestion(
                 question,
-                ballEvent
+                bowlerPerformance,
+                score
             )
 
-            QuestionType.WIDES_IN_MATCH -> handleWidesInMatchQuestion(
+            QuestionType.WIDES_IN_MATCH -> handleWidesByBowlerQuestion(
                 question,
-                ballEvent
+                bowlerPerformance,
+                score
             )
 
             QuestionType.TOTAL_EXTRAS -> handleTotalExtrasQuestion(
                 question,
-                ballEvent
+                score
             )
 
             else -> {
@@ -180,7 +216,7 @@ import javax.transaction.Transactional
 
     private fun handleMatchWinnerQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        score: Score
     ): Boolean {
         // Implementation to check if the match is won by the specified team
         // This will be updated at the end of the match
@@ -189,14 +225,15 @@ import javax.transaction.Transactional
 
     private fun handleTeamRunsInMatchQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        score: Score
     ): Boolean {
         val targetRuns = question.targetRuns!!
 
-        val totalRuns = calculateTotalRuns(
-            ballEvent.matchId,
-            ballEvent.inningId
-        )
+//        val totalRuns = calculateTotalRuns(
+//            score.matchId,
+//            score.inningId
+//        )
+        val totalRuns = score.totalRuns
         if (totalRuns >= targetRuns) {
             return true
         } else {
@@ -206,14 +243,17 @@ import javax.transaction.Transactional
 
     private fun handleWicketByBowlerQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        bowlerPerformance: BowlerPerformance,
+        score: Score
     ): Boolean {
-        val bowlerId = question.targetBowlerId!!
-        if (ballEvent.isWicket && ballEvent.bowlerId == bowlerId) {
-            val wicketsTaken = calculateWicketsTakenByPlayer(
-                ballEvent.bowlerId,
-                ballEvent.matchId
-            )
+        require(question.targetBowlerId != null) { " targetBowlerId should not be null for question ${question.id}" }
+        val bowlerId = question.targetBowlerId
+        if (score.isWicket && score.bowlerId == bowlerId) {
+//            val wicketsTaken = calculateWicketsTakenByPlayer(
+//                score.bowlerId,
+//                score.matchId
+//            )
+            val wicketsTaken = bowlerPerformance.wicketsTaken
             if (wicketsTaken >= question.targetWickets!!) {
                 return true
             }
@@ -223,32 +263,41 @@ import javax.transaction.Transactional
 
     private fun handleWicketsInOverQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        bowlerPerformance: BowlerPerformance,
+        score: Score
     ): Boolean {
-        if (ballEvent.overNumber == question.specificOver &&
-            ballEvent.isWicket &&
-            ballEvent.bowlerId == question.targetBowlerId!!
+        require(question.targetWickets != null) { " targetWickets should not be null for question ${question.id}" }
+        require(question.targetBowlerId != null) { " targetBowlerId should not be null for question ${question.id}" }
+
+        if (score.overNumber == question.targetSpecificOver &&
+            score.isWicket &&
+            score.bowlerId == question.targetBowlerId
         ) {
             val wicketsInOver = calculateWicketsInOver(
-                ballEvent
+                score
             )
-            if (wicketsInOver >= question.targetWickets!!) {
+            if (1 + wicketsInOver == question.targetWickets) {
                 return true
             }
         }
         return false
     }
 
-    private fun handleWidesInMatchQuestion(
+    private fun handleWidesByBowlerQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        bowlerPerformance: BowlerPerformance,
+        score: Score
     ): Boolean {
-        if (ballEvent.isWide && ballEvent.bowlerId == question.targetBowlerId!!) {
-            val widesBowled = calculateWidesBowledByPlayer(
-                ballEvent.bowlerId,
-                ballEvent.matchId
-            )
-            if (widesBowled >= question.targetExtras!!) {
+        require(question.targetBowlerId != null) { " targetBowlerId should not be null for question ${question.id}" }
+        require(question.targetWides != null) { " targetWides should not be null for question ${question.id}" }
+
+        if (score.isWide && score.bowlerId == question.targetBowlerId) {
+//            val widesBowled = calculateWidesBowledByPlayer(
+//                score.bowlerId,
+//                score.matchId
+//            )
+            val widesBowled = bowlerPerformance.wides
+            if (widesBowled == question.targetWides) {
                 return true
             }
         }
@@ -257,28 +306,28 @@ import javax.transaction.Transactional
 
     private fun handleTotalExtrasQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        score: Score
     ): Boolean {
-        val totalExtras = calculateTotalExtras(
-            ballEvent.matchId,
-            ballEvent.inningId
-        )
-        if (totalExtras >= question.targetExtras!!) {
+        require(question.targetExtras != null) { " targetExtras cannot be null for question id ${question.id}" }
+
+        if (score.totalExtras >= question.targetExtras) {
             return true
         }
         return false
     }
 
-    private fun handleCenturyInMatchQuestion(
+    private fun handleCenturyByBatsmanQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        batsmanPerformance: BatsmanPerformance,
+        score: Score
     ): Boolean {
-        if (ballEvent.batsmanId == question.targetBatsmanId!!) {
-            val runsScored = calculateRunsScoredByPlayer(
-                ballEvent.batsmanId,
-                ballEvent.matchId
-            )
-            if (runsScored >= 100) {
+        require(question.targetBatsmanId != null) { " targetBatsmanId cannot be null for question id ${question.id}" }
+        if (score.batsmanId == question.targetBatsmanId) {
+//            val runsScored = calculateRunsScoredByPlayer(
+//                score.batsmanId,
+//                score.matchId
+//            )
+            if (batsmanPerformance.runsScored >= 100) {
                 return true
             }
         }
@@ -287,15 +336,15 @@ import javax.transaction.Transactional
 
     private fun handleSixesInMatchQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        score: Score
     ): Boolean {
-        val targetSixes = question.targetSixes!!
-        if (ballEvent.runsScored == 6) {
+        require(question.targetSixes != null) { " targetSixes cannot be null for question id ${question.id}" }
+        if (score.isSix) {
             val totalSixes = calculateTotalSixes(
-                ballEvent.matchId,
-                ballEvent.inningId
+                score.matchId,
+                score.inningId
             )
-            if (totalSixes >= targetSixes) {
+            if (1 + totalSixes == question.targetSixes) {
                 return true
             }
         }
@@ -304,14 +353,16 @@ import javax.transaction.Transactional
 
     private fun handleRunsScoredByBatsmanQuestion(
         question: QuestionDataModel,
-        ballEvent: BallEvent
+        batsmanPerformance: BatsmanPerformance,
+        score: Score
     ): Boolean {
-        if (ballEvent.batsmanId == question.targetBatsmanId) {
+        require(question.targetBatsmanId != null) { " targetBatsmanId cannot be null for question id ${question.id}" }
+        if (score.batsmanId == question.targetBatsmanId) {
             val runsScored = calculateRunsScoredByPlayer(
-                ballEvent.batsmanId,
-                ballEvent.matchId
+                score.batsmanId,
+                score.matchId
             )
-            if (runsScored >= (question.targetRuns ?: return false)) {
+            if (runsScored + batsmanPerformance.runsScored >= (question.targetRuns ?: return false)) {
                 return true
             }
         }
@@ -322,12 +373,13 @@ import javax.transaction.Transactional
         matchId: Int,
         inningId: Int
     ): Int {
+        // TODO store total sixes as well
         val score = scoreRepository.findByMatchIdAndInningId(
             matchId,
             inningId
         )
 
-        return score?.count { it.isSix } ?: -1
+        return score?.count { it.isSix } ?: 0
     }
 
 
@@ -340,7 +392,7 @@ import javax.transaction.Transactional
             inningId
         )
 
-        return score?.totalRuns ?: -1
+        return score?.totalRuns ?: 0
     }
 
     private fun calculateWicketsTakenByPlayer(
@@ -351,16 +403,16 @@ import javax.transaction.Transactional
             matchId,
             bowlerId
         )
-        return performances?.wicketsTaken ?: -1
+        return performances?.wicketsTaken ?: 0
     }
 
     private fun calculateWicketsInOver(
-        ballEvent: BallEvent,
+        score: Score,
     ): Int {
         val wickets = scoreRepository.findWicketsByMatchIdAndBowlerIdAndOverNumber(
-            ballEvent.matchId,
-            ballEvent.bowlerId,
-            ballEvent.overNumber
+            score.matchId,
+            score.bowlerId,
+            score.overNumber
         )
         return wickets
     }
@@ -373,7 +425,7 @@ import javax.transaction.Transactional
             matchId,
             bowlerId
         )
-        return performances?.wides ?: -1
+        return performances?.wides ?: 0
     }
 
     private fun calculateTotalExtras(
@@ -384,7 +436,7 @@ import javax.transaction.Transactional
             matchId,
             inningId
         )
-        return scores?.totalExtras ?: -1
+        return scores?.totalExtras ?: 0
     }
 
     private fun calculateRunsScoredByPlayer(
@@ -395,6 +447,6 @@ import javax.transaction.Transactional
             matchId,
             batsmanId
         )
-        return performance?.runsScored ?: -1
+        return performance?.runsScored ?: 0
     }
 }

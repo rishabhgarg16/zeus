@@ -1,5 +1,9 @@
 package com.hit11.zeus.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class BallEvent(
     val inningId: Int = 0,
     val teamName: String = "",
@@ -11,10 +15,10 @@ data class BallEvent(
     val overNumber: Int = 0,
     val ballNumber: Int = 0,
     val runsScored: Int = 0,
-    val isWicket: Boolean = false,
     val wicketType: String? = null,
     val fielderId: Int? = null,  // ID of the player who caught the ball, if applicable
     val wicketkeeperCatch: Boolean = false, // true if the catch was taken by the wicketkeeper
+    val isWicket: Boolean = false,
     val isWide: Boolean = false,
     val isNoBall: Boolean = false,
     val isBye: Boolean = false,
