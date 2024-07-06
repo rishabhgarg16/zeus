@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 @Service
 class PlayerService(private val playerRepository: PlayerRepository) {
 
-    fun getPlayerList(): List<Player> {
-        return playerRepository.getPlayerList();
+    fun getPlayerListByCountry(country: String): List<Player> {
+        return playerRepository.findAllByCountry(country) ?: emptyList()
     }
 }
