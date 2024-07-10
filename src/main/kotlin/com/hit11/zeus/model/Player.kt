@@ -36,7 +36,6 @@ enum class PlayerRole(val text: String) {
     ALL_ROUNDER("all_rounder"),
     WICKETKEEPER("wicket_keeper"),
     INVALID("invalid");
-    ;
 
     companion object {
         fun fromText(text: String?): PlayerRole {

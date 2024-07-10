@@ -1,5 +1,6 @@
 package com.hit11.zeus.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import javax.persistence.*
 
 @Entity
@@ -16,6 +17,7 @@ data class Inning(
 data class Score(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
+    val event: String,
     val matchId: Int = 0,
     val inningId: Int = 0,
     val batsmanId: Int = 0,
@@ -53,6 +55,7 @@ data class BatsmanPerformance(
     var howOut: String? = null,
     var bowlerId: Int? = null,
     var fielderId: Int? = null,
+    val strikeRate: Float = 1.0F,
     @Column(name = "wicketkeeper_catch")
     var wicketkeeperCatch: Boolean = false, // true if the catch was taken by the wicketkeeper
 )
@@ -69,5 +72,7 @@ data class BowlerPerformance(
     var runsConceded: Int = 0,
     var wicketsTaken: Int = 0,
     var wides: Int = 0,
-    var noBalls: Int = 0
+    var noBalls: Int = 0,
+    val maidens: Int = 0,
+    val econ: Float = 0.0F,
 )

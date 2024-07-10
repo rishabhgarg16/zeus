@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class BallEvent(
     val inningId: Int = 0,
+    val event: String,
     val teamName: String = "",
     val matchId: Int = 0,
     val batsmanId: Int = 0,
@@ -13,7 +14,7 @@ data class BallEvent(
     val batsmanRuns: Int = 0,
     val extraRuns: Int = 0,
     val overNumber: Int = 0,
-    val ballNumber: Int = 0,
+    val ballNumber: Int? = null,
     val runsScored: Int = 0,
     val wicketType: String? = null,
     val fielderId: Int? = null,  // ID of the player who caught the ball, if applicable
