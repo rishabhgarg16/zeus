@@ -10,18 +10,21 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 class WebSocketConfig : WebSocketMessageBrokerConfigurer {
 
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
-        config.enableSimpleBroker("/topic")  // Enables a simple in-memory message broker to carry the messages back to the client on destinations prefixed with "/topic".
-        config.setApplicationDestinationPrefixes("/app")  // Defines the prefix for messages that are bound for methods annotated with @MessageMapping.
+        config.enableSimpleBroker("/topic")
+        config.setApplicationDestinationPrefixes("/app")
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/testWs").setAllowedOrigins("http://localhost:63342").withSockJS()
-        registry.addEndpoint("/gs-guide-websocket").setAllowedOrigins("http://localhost:63342").withSockJS()
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns(
+                    "http://localhost:[*]",
+                    "http://192.168.*.*:[*]",
+                    "http://10.194.243.29:[*]",
+                    "http://10.*.*.*:[*]",
+                    "capacitor://localhost",
+                    "http://localhost"
+                )
+
+                .withSockJS()
     }
-
-//    @Bean
-//    fun simpMessagingTemplate(brokerChannel: MessageChannel): SimpMessagingTemplate {
-//        return SimpMessagingTemplate(brokerChannel)
-//    }
-
 }

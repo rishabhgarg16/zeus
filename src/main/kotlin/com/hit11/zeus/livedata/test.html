@@ -8,27 +8,57 @@
 </head>
 <body>
 <h1>WebSocket Test</h1>
+<div>
+    <label for="topic">Topic:</label>
+    <input type="text" id="topic" value="match123">
+    <button onclick="subscribe()">Subscribe</button>
+    <button onclick="unsubscribe()">Unsubscribe</button>
+</div>
+<div id="messages"></div>
+
 <script>
-    // Connect to the WebSocket endpoint using SockJS and STOMP
-    var socket = new SockJS('http://localhost:8080/testWs'); // connection made
-    var stompClient = Stomp.over(socket);
+    var stompClient = null;
+    var currentTopic = null;
 
-    stompClient.connect({}, function(frame) {
-        console.log('Connected: ' + frame);
+    function connect() {
+        var socket = new SockJS('http://192.168.0.51:8080/ws');
+        stompClient = Stomp.over(socket);
 
-        // Subscribe to the /topic/event destination
+        stompClient.connect({}, function(frame) {
+            console.log('Connected: ' + frame);
+            document.getElementById('messages').innerHTML += '<p>Connected to WebSocket</p>';
+        });
+    }
 
-<!--        stompClient.subscribe('/topic/event', function(message) {-->
-<!--            console.log('Received message: ' + message.body);-->
-<!--        });-->
+    function subscribe() {
+        if (!stompClient) {
+            connect();
+        }
+        var topic = document.getElementById('topic').value;
+        currentTopic = topic;
 
-        // Send a message to the /app/ws endpoint
-        stompClient.send('/app/ws', {}, 'Hello Server');
-    });
+        stompClient.subscribe('/topic/' + topic, function(message) {
+            console.log('Received message:', message.body);
+            document.getElementById('messages').innerHTML += '<p>Received: ' + message.body + '</p>';
+        });
 
-    stompClient.onclose = function() {
-        console.log("WebSocket connection closed");
-    };
+        var subscribeMessage = JSON.stringify({action: 'subscribe', topic: topic});
+        stompClient.send("/app/ws", {}, subscribeMessage);
+        console.log('Subscribed to:', topic);
+        document.getElementById('messages').innerHTML += '<p>Subscribed to: ' + topic + '</p>';
+    }
+
+    function unsubscribe() {
+        if (currentTopic) {
+            var unsubscribeMessage = JSON.stringify({action: 'unsubscribe', topic: currentTopic});
+            stompClient.send("/app/ws", {}, unsubscribeMessage);
+            console.log('Unsubscribed from:', currentTopic);
+            document.getElementById('messages').innerHTML += '<p>Unsubscribed from: ' + currentTopic + '</p>';
+            currentTopic = null;
+        }
+    }
+
+    connect();
 </script>
 </body>
 </html>
