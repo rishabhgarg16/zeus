@@ -28,7 +28,7 @@ enum class QuestionType(val text: String) {
     INVALID("invalid");
 
     companion object {
-        fun fromText(type: String): QuestionType {
+        fun fromText(type: String?): QuestionType {
             return entries.find { it.text == type } ?: INVALID
         }
     }
@@ -141,7 +141,7 @@ data class QuestionEntity(
     val targetExtras: Int? = 0,
     val targetWides: Int? = 0,
     val targetBoundaries: Int? = 0,
-    val questionType: String = "",
+    val questionType: String? = "",
 
     @Column(
         name = "created_at",

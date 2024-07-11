@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 @RequestMapping("/api/events")
 class EventController(
     private val eventService: EventService,
-    private val messagingTemplate: SimpMessagingTemplate  // Inject SimpMessagingTemplate for WebSocket
+//    private val messagingTemplate: SimpMessagingTemplate  // Inject SimpMessagingTemplate for WebSocke
 ) {
 
     private val restTemplate = RestTemplate()
@@ -48,18 +48,33 @@ class EventController(
     private val topicSubscriptions = ConcurrentHashMap<String, MutableSet<String>>()
 
     @MessageMapping("/ws")
-    fun handleWebSocketMessage(@Payload message: String, headerAccessor: SimpMessageHeaderAccessor) {
+    fun handleWebSocketMessage(
+        @Payload message: String,
+        headerAccessor: SimpMessageHeaderAccessor
+    ) {
+        // app/ws
         val sessionId = headerAccessor.sessionId ?: return
         val messageMap = objectMapper.readValue<Map<String, String>>(message)
 
         when (messageMap["action"]) {
-            "subscribe" -> handleSubscribe(messageMap["topic"], sessionId)
-            "unsubscribe" -> handleUnsubscribe(messageMap["topic"], sessionId)
+            "subscribe" -> handleSubscribe(
+                messageMap["topic"],
+                sessionId
+            )
+
+            "unsubscribe" -> handleUnsubscribe(
+                messageMap["topic"],
+                sessionId
+            )
+
             else -> logger.warn("Unknown action received: ${messageMap["action"]}")
         }
     }
 
-    private fun handleSubscribe(topic: String?, sessionId: String) {
+    private fun handleSubscribe(
+        topic: String?,
+        sessionId: String
+    ) {
         if (topic == null) return
         topicSubscriptions.computeIfAbsent(topic) { ConcurrentHashMap.newKeySet() }.add(sessionId)
         logger.info("Client $sessionId subscribed to topic $topic")
@@ -69,7 +84,10 @@ class EventController(
         }
     }
 
-    private fun handleUnsubscribe(topic: String?, sessionId: String) {
+    private fun handleUnsubscribe(
+        topic: String?,
+        sessionId: String
+    ) {
         if (topic == null) return
         topicSubscriptions[topic]?.remove(sessionId)
         logger.info("Client $sessionId unsubscribed from topic $topic")
@@ -83,7 +101,10 @@ class EventController(
         GlobalScope.launch {
             while (topicSubscriptions.containsKey(topic)) {
                 val message = createMessageForTopic(topic)
-                sendMessageToTopic(topic, message)
+                sendMessageToTopic(
+                    topic,
+                    message
+                )
                 delay(1000) // Send a message every second
             }
         }
@@ -96,39 +117,48 @@ class EventController(
                 val score = "Team A: 100/2 (10.0 ov)"
                 """{"topic": "$topic", "message": "$score"}"""
             }
+
             else -> """{"topic": "$topic", "message": "Update for $topic: ${System.currentTimeMillis()}"}"""
         }
         return messageContent
     }
 
-    private fun sendMessageToTopic(topic: String, message: String) {
-        messagingTemplate.convertAndSend("/topic/$topic", message)
+    private fun sendMessageToTopic(
+        topic: String,
+        message: String
+    ) {
+//        messagingTemplate.convertAndSend(
+//            "/topic/$topic",
+//            message
+//        )
     }
 
 
     private fun broadcastMessage(message: String) {
         // Broadcast the message to all sessions
-        sessions.forEach { session ->
-            messagingTemplate.convertAndSend(
-                "/topic/event2",
-                message
-            )
-        }
+//        sessions.forEach { session ->
+//            messagingTemplate.convertAndSend(
+//                "/topic/event2",
+//                message
+//            )
+//        }
     }
 
-    @MessageMapping("/live/ws")
+    //    @MessageMapping("/live/ws")
+    @GetMapping("/livescorews")
     fun sendLiveScore(message: String) {
         // Add the new session to the set of sessions
-        sessions.add(message) // Assuming 'message' contains session identifier, adapt if necessary
+//        sessions.add(message) // Assuming 'message' contains session identifier, adapt if necessary
 
-        GlobalScope.launch {
-            repeat(100000) { i ->  // Changed to 50 times for practicality
-                val currentTime = Instant.now()
-                println("Iteration $i: Received: $message at $currentTime")
-                broadcastMessage("Received WebSocket message: $message at $currentTime")
-                delay(1000) // Delay for 1 second between iterations
-            }
-        }
+//        GlobalScope.launch {
+//            repeat(100000) { i ->  // Changed to 50 times for practicality
+//                val currentTime = Instant.now()
+//                println("Iteration $i: Received: $message at $currentTime")
+//                myWebSocketHandler.sendMessageToTopic("match{matchId}", "Team A: 100/2 (10.0 ov))")
+////                broadcastMessage("Received WebSocket message: $message at $currentTime")
+//                delay(1000) // Delay for 1 second between iterations
+//            }
+//        }
     }
 
 
@@ -179,10 +209,10 @@ class EventController(
     // Function to send ball event update to WebSocket clients
     private fun sendEventUpdate(ballEvent: BallEvent) {
 //        val updateResponse = eventService.processBallEvent(ballEvent)
-        messagingTemplate.convertAndSend(
-            "/topic/event",
-            ballEvent
-        )
+//        messagingTemplate.convertAndSend(
+//            "/topic/event",
+//            ballEvent
+//        )
     }
 
 

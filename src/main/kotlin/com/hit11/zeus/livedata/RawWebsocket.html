@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Test</title>
+</head>
+<body>
+<h1>WebSocket Test</h1>
+<div>
+    <label for="topic">Topic:</label>
+    <input type="text" id="topic" value="match123">
+    <button onclick="subscribe()">Subscribe</button>
+    <button onclick="unsubscribe()">Unsubscribe</button>
+</div>
+<div id="messages"></div>
+
+<script>
+    var socket = null;
+    var currentTopic = null;
+
+    function connect() {
+        socket = new WebSocket('ws://192.168.0.51:8080/ws');
+
+        socket.onopen = function(event) {
+            console.log('Connected to WebSocket');
+            document.getElementById('messages').innerHTML += '<p>Connected to WebSocket</p>';
+        };
+
+        socket.onmessage = function(event) {
+            console.log('Received message:', event.data);
+            document.getElementById('messages').innerHTML += '<p>Received: ' + event.data + '</p>';
+        };
+
+        socket.onclose = function(event) {
+            console.log('WebSocket connection closed');
+            document.getElementById('messages').innerHTML += '<p>WebSocket connection closed</p>';
+        };
+
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            document.getElementById('messages').innerHTML += '<p>WebSocket error</p>';
+        };
+    }
+
+    function subscribe() {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            connect();
+        }
+        var topic = document.getElementById('topic').value;
+        currentTopic = topic;
+
+        var subscribeMessage = JSON.stringify({action: 'subscribe', topic: topic});
+        socket.send(subscribeMessage);
+        console.log('Subscribed to:', topic);
+        document.getElementById('messages').innerHTML += '<p>Subscribed to: ' + topic + '</p>';
+    }
+
+    function unsubscribe() {
+        if (currentTopic) {
+            var unsubscribeMessage = JSON.stringify({action: 'unsubscribe', topic: currentTopic});
+            socket.send(unsubscribeMessage);
+            console.log('Unsubscribed from:', currentTopic);
+            document.getElementById('messages').innerHTML += '<p>Unsubscribed from: ' + currentTopic + '</p>';
+            currentTopic = null;
+        }
+    }
+
+    connect();
+</script>
+</body>
+</html>
