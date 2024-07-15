@@ -15,6 +15,7 @@ data class Player(
     val credits: Int? = 0,
     val iconUrl: String? = "",
     val country: String? = "",
+    val teamId: Int = 0,
 
     @Column(name = "role")
     private var _role: String? = PlayerRole.BATSMAN.text,

@@ -1,6 +1,6 @@
 package com.hit11.zeus.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import java.math.BigDecimal
 import javax.persistence.*
 
 @Entity
@@ -8,16 +8,32 @@ import javax.persistence.*
 data class Inning(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
-    val matchId: Int = 0,
-    val inningNumber: Int = 0// 1 for first innings, 2 for second innings, etc.
+    var matchId: Int = 0,
+    var inningsNumber: Int = 0,
+    var battingTeamId: Int = 0,
+    var bowlingTeamId: Int = 0,
+    // runs
+    var totalRuns: Int = 0,
+    var totalSixes: Int = 0,
+    var totalFours: Int = 0,
+    // wickets
+    var totalWickets: Int = 0,
+    var overs: BigDecimal = BigDecimal.ZERO,
+    var runRate: Float = 0.0f,
+    // extras
+    var totalExtras: Int = 0,
+    var noBalls: Int = 0,
+    var wides: Int = 0,
+    var byes: Int = 0,
+    var legByes: Int = 0,
+    var penalties: Int = 0,
 )
 
 @Entity
 @Table(name = "scores")
-data class Score(
+data class BallEventEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
-    val event: String,
     val matchId: Int = 0,
     val inningId: Int = 0,
     val batsmanId: Int = 0,
@@ -26,9 +42,6 @@ data class Score(
     val extraRuns: Int = 0,
     val overNumber: Int = 0,
     val ballNumber: Int = 0,
-    val totalRuns: Int = 0, // Total team runs after this ball
-    val totalWickets: Int = 0, // Total team wickets after this ball
-    val totalExtras: Int = 0, // Total team extras after this ball
     val isWicket: Boolean = false,
     val wicketType: String? = null,
     val isWide: Boolean = false,
@@ -52,13 +65,29 @@ data class BatsmanPerformance(
     var runsScored: Int = 0,
     var fours: Int = 0,
     var sixes: Int = 0,
-    var howOut: String? = null,
+    var outDescription: String? = null,
     var bowlerId: Int? = null,
     var fielderId: Int? = null,
-    val strikeRate: Float = 1.0F,
+    var strikeRate: Float = 1.0F,
+//    val battingStatus: BattingStatus = BattingStatus.NOT_OUT,
     @Column(name = "wicketkeeper_catch")
     var wicketkeeperCatch: Boolean = false, // true if the catch was taken by the wicketkeeper
 )
+
+enum class BattingStatus(val value: String) {
+    NOT_OUT("not_out"),
+    OUT("out"),
+    RETIRED_HURT("retired_hurt"),
+    DOUBT_WICKET("doubt_wicket"),
+    CAUGHT_AND_RETIRED("caught_and_retired"),
+    YET_TO_BAT("yet_to_bat");
+
+    companion object {
+        fun fromValue(value: String): BattingStatus? =
+            BattingStatus.values().find { it.value == value }
+    }
+
+}
 
 @Entity
 @Table(name = "bowler_performances")
@@ -73,6 +102,6 @@ data class BowlerPerformance(
     var wicketsTaken: Int = 0,
     var wides: Int = 0,
     var noBalls: Int = 0,
-    val maidens: Int = 0,
-    val econ: Float = 0.0F,
+    var maidens: Int = 0,
+    var economy: BigDecimal = BigDecimal.ZERO,
 )

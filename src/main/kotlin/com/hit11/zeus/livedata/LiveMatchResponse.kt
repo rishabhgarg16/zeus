@@ -11,16 +11,16 @@ data class LiveMatchResponse(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class LiveMatchData(
-    val mid: Int,
+    val matchId: Int,
     val status: Int,
-    @JsonProperty("status_str") val statusStr: String,
-    @JsonProperty("game_state") val gameState: Int,
-    @JsonProperty("game_state_str") val gameStateStr: String,
-    @JsonProperty("status_note") val statusNote: String,
-    @JsonProperty("team_batting") val teamBatting: String,
-    @JsonProperty("team_bowling") val teamBowling: String,
-    @JsonProperty("live_inning_number") val liveInningNumber: Int,
-    @JsonProperty("live_score") val liveScore: LiveScore,
+    val statusStr: String,
+    val gameState: Int,
+    val gameStateStr: String,
+    val statusNote: String,
+    val teamBatting: String,
+    val teamBowling: String,
+    val liveInningNumber: Int,
+    val liveScore: LiveScore,
     val batsmen: List<Batsman>,
     val bowlers: List<Bowler>,
     val commentaries: List<Commentary>
@@ -39,20 +39,20 @@ data class LiveScore(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Batsman(
     val name: String,
-    @JsonProperty("batsman_id") val batsmanId: Int,
+    val batsmanId: Int,
     val runs: Int,
-    @JsonProperty("balls_faced") val ballsFaced: Int,
+    val ballsFaced: Int,
     val fours: Int,
     val sixes: Int,
-    @JsonProperty("strike_rate") val strikeRate: String
+    val strikeRate: String
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Bowler(
     val name: String,
-    @JsonProperty("bowler_id") val bowlerId: Int,
+    val bowlerId: Int,
     val overs: Double,
-    @JsonProperty("runs_conceded") val runsConceded: Int,
+    val runsConceded: Int,
     val wickets: Int,
     val maidens: Int,
     val econ: String
@@ -60,22 +60,22 @@ data class Bowler(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Commentary(
-    @JsonProperty("event_id") val eventId: String?,
+    val eventId: String?,
     val event: String,
-    @JsonProperty("batsman_id") val batsmanId: String,
-    @JsonProperty("bowler_id") val bowlerId: String,
+    val batsmanId: String,
+    val bowlerId: String,
     val over: String,
     val ball: String?,
     val score: String,
     val commentary: String,
     val timestamp: Long,
     val run: Int,
-    val noball: Boolean,
-    val wideball: Boolean,
+    val noBall: Boolean,
+    val wideBall: Boolean,
     val six: Boolean,
     val four: Boolean,
-    val wicket_batsman_id: String?,
-    val how_out: String?,
-    val batsman_runs: String?,
-    val batsman_balls: String?
+    val wicketBatsmanId: String?,
+    val outDescription: String?,
+    val batsmanRuns: String?,
+    val batsmanBalls: String?
 )
