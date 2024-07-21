@@ -1,10 +1,10 @@
 package com.hit11.zeus.adapter
 
 import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionResponse
+import com.hit11.zeus.model.response.QuestionResponse
 import java.time.Instant
 
-fun QuestionDataModel.toTradeResponse(): QuestionResponse {
+fun QuestionDataModel.toOrderResponse(): QuestionResponse {
     return QuestionResponse(
         id = id,
         matchId = matchId,

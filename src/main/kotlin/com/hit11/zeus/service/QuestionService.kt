@@ -1,21 +1,26 @@
 package com.hit11.zeus.service
 
-import com.hit11.zeus.adapter.OrderAdapter.toTradeResponse
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.livedata.BattingPerformance
 import com.hit11.zeus.livedata.BowlingPerformance
 import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.model.*
+import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
+import com.hit11.zeus.model.response.QuestionAnswerUpdateResponse
 import com.hit11.zeus.model.response.UpdateQuestionsResponse
+import com.hit11.zeus.oms.OrderService
+import com.hit11.zeus.oms.Trade
+import com.hit11.zeus.oms.TradeResult
+import com.hit11.zeus.oms.TradeService
 import com.hit11.zeus.repository.BallEventRepository
 import com.hit11.zeus.repository.BatsmanPerformanceRepository
 import com.hit11.zeus.repository.BowlerPerformanceRepository
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
-import javax.transaction.Transactional
 
 @Service
 class QuestionService(
+    private val tradeService: TradeService,
     private val orderService: OrderService,
     private val userService: UserService,
     private val questionRepository: QuestionRepository,
@@ -32,79 +37,17 @@ class QuestionService(
         return activePulse?.map { it.mapToQuestionDataModel() }
     }
 
-    @Transactional
-    fun submitOrder(response: OrderDataModel) {
-        // check pulse is not expired
-//        val pulse = pulseRepositorySql.findByPulseId(response.pulseId)
-        val amountToDeduct = "%.2f".format(response.tradeAmount).toDouble()
-        try {
-            val balanceSuccess = userService.updateBalance(
-                response.userId,
-                -amountToDeduct
-            )
-
-            if (balanceSuccess) {
-                orderService.saveOrder(response)
-            } else {
-                logger.error("Error updating the user wallet for user id ${response.userId}")
-                throw RuntimeException("Error updating the user wallet for user id ${response.userId}")
-            }
-        } catch (e: Exception) {
-            logger.error(
-                "Error in submitUserTrade for user id ${response.userId}",
-                e
-            )
-            throw e
-        }
-    }
-
-    fun getAllTradesByUserAndMatch(
-        userId: Int,
-        matchIdList: List<Int>
-    ): List<TradeResponse>? {
-        try {
-            val allTrades = orderService.getAllTradesByUserIdAndMatchIdIn(
-                userId,
-                matchIdList
-            )
-            val matchQuestions = questionRepository.findAllByMatchIdIn(matchIdList).map { it.mapToQuestionDataModel() }
-
-            val questionIdToQuestionMap: Map<Int, QuestionDataModel> =
-                matchQuestions.associateBy { it.id }.mapValues { it.value }
-
-            return allTrades?.mapNotNull { trade ->
-                questionIdToQuestionMap[trade.pulseId]?.let {
-                    trade.toTradeResponse(
-                        it
-                    )
-                }
-            }
-        } catch (e: Exception) {
-            throw e
-        }
-    }
-
-    fun updatePulseAnswer(answerUpdateRequest: PulseAnswerUpdateRequest): PulseAnswerUpdateResponse {
-        val res = PulseAnswerUpdateResponse()
+    fun updateQuestionAnswer(
+        answerUpdateRequest: QuestionAnswerUpdateRequest
+    ): QuestionAnswerUpdateResponse {
+        val res = QuestionAnswerUpdateResponse()
         try {
             val pulse = questionRepository.getPulseById(answerUpdateRequest.pulseId)
             pulse.pulseResult = answerUpdateRequest.pulseResult
             pulse.status = false
             questionRepository.save(pulse)
 
-            val orders = orderService.getAllTradesByPulseId(answerUpdateRequest.pulseId)
-            orders?.forEach {
-                if (it.userAnswer == answerUpdateRequest.pulseResult) {
-                    it.userResult = "Win"
-                    userService.updateBalance(
-                        it.userId,
-                        it.quantity * 10.0
-                    )
-                } else {
-                    it.userResult = "Lose"
-                }
-                orderService.saveOrder(it)
-            }
+            processPayouts(pulse.mapToQuestionDataModel())
         } catch (e: Exception) {
             throw e
         }
@@ -134,7 +77,11 @@ class QuestionService(
                     liveScoreEvent,
                     ballEventEntity
                 )
-                updatedQuestions.add(question)
+                if (questionUpdated) {
+                    updatedQuestions.add(question)
+                    questionRepository.save(question.maptoEntity())
+                    processPayouts(question)
+                }
             } catch (e: Exception) {
                 notUpdatedQuestions.add(question)
                 val errorMessage = "Error updating question id ${question.id}: ${e.message}"
@@ -143,13 +90,6 @@ class QuestionService(
                     errorMessage,
                     e
                 )
-            }
-
-            if (questionUpdated) {
-                updatedQuestions.add(question)
-                questionRepository.save(question.maptoEntity())
-            } else {
-                notUpdatedQuestions.add(question)
             }
         }
 
@@ -160,6 +100,28 @@ class QuestionService(
         )
 
     }
+
+    private fun processPayouts(question: QuestionDataModel) {
+        val trades = tradeService.getTradesByQuestionId(question.id)
+        trades?.forEach { trade ->
+            if (trade.userAnswer == question.pulseResult) {
+                trade.result = TradeResult.WIN
+                val winnings = calculateWinnings(trade)
+                userService.updateBalance(trade.userId, winnings)
+            } else {
+                trade.result = TradeResult.LOSE
+            }
+            tradeService.updateTrade(trade)
+        }
+        orderService.cancelAllOpenOrders(question.id)
+    }
+
+    private fun calculateWinnings(trade: Trade): Double {
+        // Implement your winnings calculation logic here
+        // This could be based on odds, stake amount, etc.
+        return trade.tradeQuantity * 10.0 // Simple example: 10x the quantity
+    }
+
 
     private fun handleQuestionUpdate(
         question: QuestionDataModel,

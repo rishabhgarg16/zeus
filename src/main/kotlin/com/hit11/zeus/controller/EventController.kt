@@ -20,7 +20,6 @@ class EventController(
 
 
     private val logger = Logger.getLogger(EventController::class.java)
-    private val objectMapper = jacksonObjectMapper()
 
     @PostMapping("/liveScore")
     fun sendMatchData(

@@ -38,6 +38,9 @@ dependencies {
     implementation("redis.clients:jedis")
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.7.6")
     implementation(kotlin("script-runtime"))
+//    AWS SDK v2 dependencies
+    implementation(platform("software.amazon.awssdk:bom:2.17.290"))
+    implementation("software.amazon.awssdk:sqs")
 }
 
 tasks.test {
@@ -71,7 +74,8 @@ publishing {
                 username = "aws"
                 // if getting 401, run
                 // aws codeartifact get-authorization-token --domain hitcentral --domain-owner 590183692348 --region ap-south-1 --query authorizationToken --output text
-                password = "eyJ2ZXIiOjEsImlzdSI6MTcxOTA2MjgxMCwiZW5jIjoiQTEyOEdDTSIsInRhZyI6Ikw0X3N0eVYzeDNPak1jTklFa09FZXciLCJleHAiOjE3MTkxMDYwMTAsImFsZyI6IkExMjhHQ01LVyIsIml2IjoicWZ0T0tiNVVYVW1SYVJxaSJ9.bEpH-2ck07erA-MLlFtBhA.686LFPa2gAbzA0EX.ShcUqTgRTZ53dHf9WPvWHLCl5cGGu8V3nOzG6S_MLitEMFYOmcuVwShoiiYFmCnX5hzUfoq9l20QZrwdHs427S9L1S3Ahi-xZjGY9U7I_6KD40Q3aOwKsp3BMsmvrg9VOPVzf4gq_WCM1lBFO79qdwsEUxL-FQf0tZVj8MMQbfZcnHRKxwIFbEJpMoFllhhXFy-nCXmLJ165r2Enhz5qA-fCe3zwVYJLOzdlIZPkj_FlaJHqp8oxUViJcu2Ik9Op7R8cCYHr2c0vLmSYq-rQhRva0MfITNU1Zdhlwq_WN7SzSmbW2Xatjp0s_5Nd4i-07ujKd8i-YgwglyE8aZGUVhHtCYBmoft7mIpVoV4VWhqwvXEsq12_7Hq-GFAQGeuO5yvKqEfxzPkaDTHS5kLxd5RV4c9yu46yFQSBIOp0HZ4sAMHrV3vjunij5bbY04NB3WTIwJTM2uXc9BEPtPtFRrwKvCLkyBkp0g3WPJ1tE0OQtjxx8bf3HRFJWFSkTNnmJjJDxY0_NTQIHhvaoeMUmPvGU8vEIYreR97qMw6jy1boVUkbcCyjZGmPQihfr3jV4ayiY0xfoY_6hwKYIHpg53bDJtIbDDPqXIGvOMW5z8jG0ivXOHM0pgj72wUEHh1OkUUuwWFFYqGBIZAy-vxXfNIm-w2GMk9JH4yDTAPKoekkpoKvFqBDVtJcRauuH8yH4D-gYPP1Q4onLqpklVcY58nhVEB8MR674taCGFuBQQkaMBnQQt0FkWgw5Kn62toLl0vkX_g4RYmfuQey_M4aVOaWTehamAPfCAcREPA6xxvZrp0LcP7caKFZ_jqwJgdJy8DyiiqZqQu0bBC_Ht9DxXmvTc5MG2XJ-6miFD-0V_4uWwIxKl6nEMmwRkysS9EECAz3xhz4YXPFfxX7SoT_o2TAhLTv-QIK-PYS3LHis1hCH1X6dbDswVGcg1f3fnbxaKHXHT4J4sqWX4GAAgeT4wZRtrGppQGqn-ltXrPvr-IMYCCKMauktXZBWw.-n0SyC2YXMz43B01Bxsr1Q"
+                password =
+                    "eyJ2ZXIiOjEsImlzdSI6MTcxOTA2MjgxMCwiZW5jIjoiQTEyOEdDTSIsInRhZyI6Ikw0X3N0eVYzeDNPak1jTklFa09FZXciLCJleHAiOjE3MTkxMDYwMTAsImFsZyI6IkExMjhHQ01LVyIsIml2IjoicWZ0T0tiNVVYVW1SYVJxaSJ9.bEpH-2ck07erA-MLlFtBhA.686LFPa2gAbzA0EX.ShcUqTgRTZ53dHf9WPvWHLCl5cGGu8V3nOzG6S_MLitEMFYOmcuVwShoiiYFmCnX5hzUfoq9l20QZrwdHs427S9L1S3Ahi-xZjGY9U7I_6KD40Q3aOwKsp3BMsmvrg9VOPVzf4gq_WCM1lBFO79qdwsEUxL-FQf0tZVj8MMQbfZcnHRKxwIFbEJpMoFllhhXFy-nCXmLJ165r2Enhz5qA-fCe3zwVYJLOzdlIZPkj_FlaJHqp8oxUViJcu2Ik9Op7R8cCYHr2c0vLmSYq-rQhRva0MfITNU1Zdhlwq_WN7SzSmbW2Xatjp0s_5Nd4i-07ujKd8i-YgwglyE8aZGUVhHtCYBmoft7mIpVoV4VWhqwvXEsq12_7Hq-GFAQGeuO5yvKqEfxzPkaDTHS5kLxd5RV4c9yu46yFQSBIOp0HZ4sAMHrV3vjunij5bbY04NB3WTIwJTM2uXc9BEPtPtFRrwKvCLkyBkp0g3WPJ1tE0OQtjxx8bf3HRFJWFSkTNnmJjJDxY0_NTQIHhvaoeMUmPvGU8vEIYreR97qMw6jy1boVUkbcCyjZGmPQihfr3jV4ayiY0xfoY_6hwKYIHpg53bDJtIbDDPqXIGvOMW5z8jG0ivXOHM0pgj72wUEHh1OkUUuwWFFYqGBIZAy-vxXfNIm-w2GMk9JH4yDTAPKoekkpoKvFqBDVtJcRauuH8yH4D-gYPP1Q4onLqpklVcY58nhVEB8MR674taCGFuBQQkaMBnQQt0FkWgw5Kn62toLl0vkX_g4RYmfuQey_M4aVOaWTehamAPfCAcREPA6xxvZrp0LcP7caKFZ_jqwJgdJy8DyiiqZqQu0bBC_Ht9DxXmvTc5MG2XJ-6miFD-0V_4uWwIxKl6nEMmwRkysS9EECAz3xhz4YXPFfxX7SoT_o2TAhLTv-QIK-PYS3LHis1hCH1X6dbDswVGcg1f3fnbxaKHXHT4J4sqWX4GAAgeT4wZRtrGppQGqn-ltXrPvr-IMYCCKMauktXZBWw.-n0SyC2YXMz43B01Bxsr1Q"
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.hit11.zeus.livedata
 
+import com.hit11.zeus.model.TeamEntity
 import java.math.BigDecimal
 
 data class Hit11Scorecard(
@@ -25,16 +26,16 @@ data class MatchResult(
     val winByInnings: Boolean
 )
 
-data class Team(
-    val id: Int,
-    val name: String,
-    val shortName: String
-)
+//data class Team(
+//    val id: Int,
+//    val name: String,
+//    val shortName: String
+//)
 
 data class Innings(
     val inningsId: Int,
-    val battingTeam: Team,
-    val bowlingTeam: Team,
+    val battingTeam: TeamEntity,
+    val bowlingTeam: TeamEntity,
     val totalRuns: Int,
     val wickets: Int,
     val totalExtras: Int,

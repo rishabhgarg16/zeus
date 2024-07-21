@@ -1,28 +1,32 @@
-package com.hit11.zeus.model
+package com.hit11.zeus.oms
 
+import java.math.BigDecimal
 import java.time.Instant
 import javax.persistence.*
 
+enum class OrderState {
+    OPEN,
+    PARTIALLY_MATCHED,
+    FULLY_MATCHED,
+    CANCELLED,
+    EXPIRED
+}
+
 data class OrderDataModel(
+    val id : Int = 0,
     val userId: Int = 0,
     val pulseId: Int = 0,
     val matchId: Int = 0,
     val userAnswer: String = "",
     val answerTime: Instant = Instant.now(),
-    val userWager: Double = -1.0,
-    val quantity: Long = 0L,
-    val tradeAmount: Double = 0.0,
-    var userResult: String? = UserResult.ACTIVE.text,
+    @Column(name = "price", precision = 10, scale = 2)
+    val price: BigDecimal = BigDecimal.valueOf(0),
+    var quantity: Long = 0L,
+    val totalAmount: BigDecimal = BigDecimal.valueOf(0),
+    var state: OrderState = OrderState.OPEN,
+    var remainingQuantity: Long = 0L
+) {
 
-    ) {
-    fun checkIfUserWon(userAnswer: String, questionDataModel: QuestionDataModel): String {
-        return when {
-            questionDataModel.enabled -> UserResult.ACTIVE.text
-            questionDataModel.pulseResult.isNullOrBlank() -> UserResult.ACTIVE.text
-            userAnswer == questionDataModel.pulseResult -> UserResult.WIN.text
-            else -> UserResult.LOSE.text
-        }
-    }
 
     fun toEntity(): OrderEntity {
         return OrderEntity(
@@ -31,11 +35,20 @@ data class OrderDataModel(
             matchId = this.matchId,
             userAnswer = this.userAnswer,
             answerTime = Instant.now(),
-            userWager = this.userWager,
-            userResult = this.userResult,
+            price = this.price,
+            state = this.state,
             quantity = this.quantity,
-            tradeAmount = this.tradeAmount
+            remainingQuantity = this.remainingQuantity,
+            totalAmount = this.totalAmount
         )
+    }
+
+    fun updateState() {
+        state = when {
+            remainingQuantity == quantity -> OrderState.FULLY_MATCHED
+            remainingQuantity > 0 -> OrderState.PARTIALLY_MATCHED
+            else -> state
+        }
     }
 }
 
@@ -50,10 +63,12 @@ data class OrderEntity(
     val matchId: Int = 0,
     var userAnswer: String = "",
     val answerTime: Instant = Instant.now(),
-    val userWager: Double = 0.0,
-    var userResult: String? = UserResult.ACTIVE.text,
+    val price: BigDecimal = BigDecimal.valueOf(0),
     var quantity: Long = 0L,
-    var tradeAmount: Double = 0.0,
+    var totalAmount: BigDecimal = BigDecimal.valueOf(0),
+    @Enumerated(EnumType.STRING)
+    var state: OrderState = OrderState.OPEN,
+    var remainingQuantity: Long = 0L,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
@@ -76,15 +91,17 @@ data class OrderEntity(
 
 fun OrderEntity.toDataModel(): OrderDataModel {
     return OrderDataModel(
+        id = this.id,
         userId = this.userId,
         pulseId = this.pulseId,
         matchId = this.matchId,
         userAnswer = this.userAnswer,
         answerTime = this.answerTime,
-        userWager = this.userWager,
-        userResult = this.userResult,
+        price = this.price,
         quantity = this.quantity,
-        tradeAmount = this.tradeAmount,
+        remainingQuantity = this.remainingQuantity,
+        state = this.state,
+        totalAmount = this.totalAmount,
     )
 }
 

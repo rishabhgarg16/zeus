@@ -1,5 +1,6 @@
 package com.hit11.zeus.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.gson.JsonObject
@@ -16,7 +17,9 @@ import javax.annotation.PostConstruct
 
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-class MyWebSocketHandler : TextWebSocketHandler() {
+class MyWebSocketHandler(
+    private val objectMapper: ObjectMapper
+) : TextWebSocketHandler() {
 
     private val sessions = ConcurrentHashMap<String, WebSocketSession>()
 
@@ -39,7 +42,6 @@ class MyWebSocketHandler : TextWebSocketHandler() {
         println("Received message: $payload")
 
         // Parse the message and handle subscriptions/unsubscriptions
-        val objectMapper = jacksonObjectMapper()
         val jsonMessage = objectMapper.readValue<Map<String, String>>(message.payload)
 
         when (jsonMessage["action"]) {
@@ -86,7 +88,7 @@ class MyWebSocketHandler : TextWebSocketHandler() {
     ) {
         if (topic == null) return
         val subscribedTopics =
-                session.attributes.getOrPut("subscribedTopics") { mutableSetOf<String>() } as MutableSet<String>
+            session.attributes.getOrPut("subscribedTopics") { mutableSetOf<String>() } as MutableSet<String>
         subscribedTopics.add(topic)
         println("Session ${session.id} subscribed to topic: $topic")
     }

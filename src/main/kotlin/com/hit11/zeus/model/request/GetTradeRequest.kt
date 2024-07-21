@@ -1,4 +1,4 @@
-package com.hit11.zeus.model
+package com.hit11.zeus.model.request
 
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotEmpty

@@ -14,6 +14,10 @@ data class Match(
     val id: Int = 0,
     val team1: String = "",
     val team2: String = "",
+    val team1ShortName: String = "",
+    val team2ShortName: String = "",
+    val team1ImageUrl: String? = null,
+    val team2ImageUrl: String? = null,
     val matchGroup: String? = null,
     val city: String? = null,
     val stadium: String? = null,
@@ -88,12 +92,16 @@ data class MatchEntity(
     }
 
 
-    fun mapToMatch(): Match {
+    fun mapToMatch(team1: TeamEntity?, team2: TeamEntity?): Match {
         return Match(
             id = this.id,
             matchGroup = this.matchGroup,
             team1 = this.team1,
             team2 = this.team2,
+            team1ShortName = team1?.teamShortName ?: "",
+            team2ShortName = team2?.teamShortName ?: "",
+            team1ImageUrl = team1?.teamImageUrl,
+            team2ImageUrl = team2?.teamImageUrl,
             city = this.city,
             stadium = this.stadium,
             country = this.country,

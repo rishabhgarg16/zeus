@@ -1,4 +1,4 @@
-package com.hit11.zeus.model
+package com.hit11.zeus.oms
 
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotBlank
@@ -26,7 +26,7 @@ class OrderPlaceRequest(
 
     @field:NotNull(message = "User Wager cannot be null")
     @field:Min(value = 1, message = "User Wager must be greater than 0")
-    val userWager: Double = -1.0,
+    val price: Double = -1.0,
 
     @field:Min(value = 1, message = "User Quantity must be greater than 0")
     val userTradeQuantity: Long = 0L,
