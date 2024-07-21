@@ -1,4 +1,6 @@
 from datetime import datetime
+import time
+from datetime import datetime
 import json
 import mysql.connector
 import requests
@@ -66,15 +68,17 @@ def update_table(data):
     try:
         mycursor.execute(sql)
         mydb.commit()
-        print(mycursor.rowcount, "record inserted.")
+        print(f"{mycursor.rowcount} record inserted for externalMatchId {match['matchId']}.")
     except Exception as e:
         print(f"Error updating {match['matchId']} due to {e}")
 
 
-for typeMatch in recent_matches['typeMatches']:
-    if typeMatch['matchType'] in ['International']:
-        for seriesMatch in typeMatch['seriesMatches']:
-            if 'seriesAdWrapper' in seriesMatch:
-                for amatch in seriesMatch['seriesAdWrapper']['matches']:
-                    update_table(amatch)
-
+while True:
+    print(f"Running cron at {datetime.now()}")
+    for typeMatch in recent_matches['typeMatches']:
+        if typeMatch['matchType'] in ['International']:
+            for seriesMatch in typeMatch['seriesMatches']:
+                if 'seriesAdWrapper' in seriesMatch:
+                    for amatch in seriesMatch['seriesAdWrapper']['matches']:
+                        update_table(amatch)
+    time.sleep(10)
