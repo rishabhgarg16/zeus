@@ -1,0 +1,35 @@
+package com.hit11.zeus.question
+
+import com.hit11.zeus.exception.QuestionValidationException
+import com.hit11.zeus.model.MatchState
+import com.hit11.zeus.model.QuestionDataModel
+
+class WidesByBowlerQuestionHandler : QuestionHandler {
+    override fun validate(question: QuestionDataModel) {
+        if (question.targetBowlerId == null) {
+            throw QuestionValidationException("Target bowler ID is required for Wides by Bowler question")
+        }
+        if (question.targetWides == null || question.targetWides <= 0) {
+            throw QuestionValidationException("Target wides must be a positive number for Wides by Bowler question")
+        }
+    }
+
+    override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean {
+        return true // This can be resolved at any time during the match
+    }
+
+    override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+//        val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
+//        val targetWides = question.targetWides ?: return QuestionResolution(false, null)
+//
+//        val bowlerPerformance = matchState.currentInning.bowlingPerformances
+//            .find { it.playerId == targetBowlerId }
+//
+//        val currentWides = bowlerPerformance?.wides ?: 0
+//        val isResolved = currentWides >= targetWides
+//        val result = if (isResolved) "Yes" else "No"
+//
+//        return QuestionResolution(isResolved, result)
+        return QuestionResolution(false, null)
+    }
+}

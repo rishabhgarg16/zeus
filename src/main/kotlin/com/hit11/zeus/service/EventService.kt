@@ -6,7 +6,6 @@ import com.hit11.zeus.livedata.BallEvent
 import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.livedata.Innings
 import com.hit11.zeus.model.*
-import com.hit11.zeus.model.response.UpdateQuestionsResponse
 import com.hit11.zeus.repository.*
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
