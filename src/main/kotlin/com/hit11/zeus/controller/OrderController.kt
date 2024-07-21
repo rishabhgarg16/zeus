@@ -5,10 +5,7 @@ import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.request.GetTradeRequest
 import com.hit11.zeus.model.response.OrderResponse
-import com.hit11.zeus.oms.OrderPlaceRequest
-import com.hit11.zeus.oms.OrderOrchestrator
-import com.hit11.zeus.oms.OrderService
-import com.hit11.zeus.oms.TradeService
+import com.hit11.zeus.oms.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -60,7 +57,7 @@ class OrderController(
     @PostMapping("/trades")
     fun getAllTrades(
         @Valid @RequestBody request: GetTradeRequest
-    ): ResponseEntity<ApiResponse<List<OrderResponse>>> {
+    ): ResponseEntity<ApiResponse<List<TradeResponse>>> {
 
         val response = tradeService.getAllTradesByUserAndMatch(request.userId, request.matchIdList)
         return ResponseEntity.status(HttpStatus.OK).body(

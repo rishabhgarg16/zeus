@@ -1,7 +1,6 @@
 package com.hit11.zeus.oms
 
-import com.hit11.zeus.adapter.OrderAdapter.toOrderResponse
-import com.hit11.zeus.model.response.OrderResponse
+import com.hit11.zeus.adapter.TradeAdapter.toTradeResponse
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
@@ -29,13 +28,13 @@ class TradeService(
     fun getAllTradesByUserAndMatch(
         userId: Int,
         matchIdList: List<Int>
-    ): List<OrderResponse>? {
+    ): List<TradeResponse>? {
         try {
             val allTrades = tradeRepository.findByUserIdAndMatchIdIn(userId, matchIdList)
             val matchQuestions = questionRepository.findAllByMatchIdIn(matchIdList).map { it.mapToQuestionDataModel() }
             val questionIdToQuestionMap = matchQuestions.associateBy { it.id }
             return allTrades.mapNotNull { trade ->
-                questionIdToQuestionMap[trade.pulseId]?.let { trade.toOrderResponse(it) }
+                questionIdToQuestionMap[trade.pulseId]?.let { trade.toTradeResponse(it) }
             }
         } catch (e: Exception) {
             throw e

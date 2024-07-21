@@ -1,10 +1,9 @@
 package com.hit11.zeus.adapter
 
-import com.hit11.zeus.oms.OrderDataModel
 import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.oms.Trade
-import com.hit11.zeus.oms.OrderPlaceRequest
 import com.hit11.zeus.model.response.OrderResponse
+import com.hit11.zeus.oms.OrderDataModel
+import com.hit11.zeus.oms.OrderPlaceRequest
 import java.math.RoundingMode
 import java.time.Instant
 
@@ -40,24 +39,6 @@ object OrderAdapter {
             pulseImageUrl = questionDataModel.pulseImageUrl,
             pulseEndDate = questionDataModel.pulseEndDate,
             userTradeQuantity = quantity,
-            totalTraders = questionDataModel.userACount ?: (questionDataModel.userBCount ?: 0)
-        )
-    }
-
-    fun Trade.toOrderResponse(questionDataModel: QuestionDataModel): OrderResponse {
-        return OrderResponse(
-            userId = userId,
-            pulseId = pulseId,
-            pulseDetail = questionDataModel.pulseQuestion,
-            price = tradePrice,
-            userAnswer = userAnswer,
-            answerTime = tradeTime,
-            matchId = questionDataModel.matchId,
-            state = checkIfUserWon(userAnswer, questionDataModel),
-            isPulseActive = questionDataModel.enabled,
-            pulseImageUrl = questionDataModel.pulseImageUrl,
-            pulseEndDate = questionDataModel.pulseEndDate,
-            userTradeQuantity = tradeQuantity,
             totalTraders = questionDataModel.userACount ?: (questionDataModel.userBCount ?: 0)
         )
     }

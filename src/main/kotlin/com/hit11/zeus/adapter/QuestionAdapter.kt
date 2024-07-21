@@ -4,7 +4,7 @@ import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.response.QuestionResponse
 import java.time.Instant
 
-fun QuestionDataModel.toOrderResponse(): QuestionResponse {
+fun QuestionDataModel.toQuestionResponse(): QuestionResponse {
     return QuestionResponse(
         id = id,
         matchId = matchId,

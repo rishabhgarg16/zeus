@@ -1,7 +1,7 @@
 package com.hit11.zeus.controller
 
 
-import com.hit11.zeus.adapter.toOrderResponse
+import com.hit11.zeus.adapter.toQuestionResponse
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.request.GetActivePulseRequest
 import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
@@ -23,10 +23,13 @@ class QuestionController(private val service: QuestionService) {
     fun getAllOpinions(
         @Valid @RequestBody request: GetActivePulseRequest
     ): ResponseEntity<ApiResponse<List<QuestionResponse>?>> {
-        val response = service.getAllActiveQuestions(request.matchIdList)?.map { it.toOrderResponse() }
+        val response = service.getAllActiveQuestions(request.matchIdList)?.map { it.toQuestionResponse() }
         return ResponseEntity.ok(
             ApiResponse(
-                status = HttpStatus.OK.value(), internalCode = null, message = "Success", data = response
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = response
             )
         )
     }

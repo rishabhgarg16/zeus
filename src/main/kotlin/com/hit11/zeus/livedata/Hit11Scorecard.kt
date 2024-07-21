@@ -26,16 +26,16 @@ data class MatchResult(
     val winByInnings: Boolean
 )
 
-//data class Team(
-//    val id: Int,
-//    val name: String,
-//    val shortName: String
-//)
+data class Team(
+    val id: Int,
+    val name: String,
+    val shortName: String
+)
 
 data class Innings(
     val inningsId: Int,
-    val battingTeam: TeamEntity,
-    val bowlingTeam: TeamEntity,
+    val battingTeam: Team,
+    val bowlingTeam: Team,
     val totalRuns: Int,
     val wickets: Int,
     val totalExtras: Int,
