@@ -23,7 +23,9 @@ class EventService(
     private val logger = Logger.getLogger(EventService::class.java)
 
     @Transactional
-    fun processBallEvent(liveScoreEvent: Hit11Scorecard): UpdateQuestionsResponse {
+    fun processBallEvent(
+        liveScoreEvent: Hit11Scorecard
+    ): UpdateQuestionsResponse {
         // Validate ball event data
         validateBallEvent(liveScoreEvent)
 
@@ -61,86 +63,11 @@ class EventService(
 
         val previousScore = validateBallOrder(match, inningEntity, currentBallEvent)
 
-        // Update Batsman Performance
-        val batsmanPerformanceUpdate = currentInnings.battingPerformances
-        val battingPerformanceEntities =
-            batsmanPerformanceRepository.findByMatchIdAndPlayerIdIn(
-                match.id,
-                batsmanPerformanceUpdate.map { it.playerId })
+        updateBatsmanPerformances(match, currentInnings)
+        updateBowlerPerformances(match, currentInnings)
 
-        val updatedBatsmanPerformances = mutableListOf<BatsmanPerformance>()
-
-        batsmanPerformanceUpdate.forEach { event ->
-            val batsmanPerformanceEntity =
-                battingPerformanceEntities.find { entity -> entity?.playerId == event.playerId }
-            val updatedBatsmanPerformance = batsmanPerformanceEntity?.apply {
-                runsScored += event.runs
-                ballsFaced += event.balls
-                fours += event.fours
-                sixes += event.sixes
-                strikeRate = event.strikeRate
-            } ?: BatsmanPerformance(
-                playerId = event.playerId,
-                runsScored = event.runs,
-                ballsFaced = event.balls,
-                fours = event.fours,
-                sixes = event.sixes,
-                strikeRate = event.strikeRate
-            )
-            updatedBatsmanPerformances.add(updatedBatsmanPerformance)
-        }
-
-        batsmanPerformanceRepository.saveAll(updatedBatsmanPerformances)
-
-        // Update Bowler Performance
-        val updatedBowlerPerformances = mutableListOf<BowlerPerformance>()
-        val bowlerPerformances = currentInnings.bowlingPerformances
-        val bowlingPerformanceEntities =
-            bowlerPerformanceRepository.findByMatchIdAndPlayerIdIn(
-                match.id,
-                bowlerPerformances.map { it.playerId }
-            )
-
-        bowlerPerformances.forEach { event ->
-            val updatedBowlerEntity =
-                bowlingPerformanceEntities.find { entity -> entity?.playerId == event.playerId }
-            val updatedBowlerPerformance = updatedBowlerEntity?.apply {
-                wicketsTaken += event.wickets
-                runsConceded += event.runs
-                wides += event.wides
-                noBalls += event.noBalls
-                maidens += event.maidens
-                economy = event.economy
-            } ?: BowlerPerformance(
-                playerId = event.playerId,
-                wicketsTaken = event.wickets,
-                runsConceded = event.runs,
-                wides = event.wides,
-                noBalls = event.noBalls,
-                maidens = event.maidens,
-                economy = event.economy
-            )
-            updatedBowlerPerformances.add(updatedBowlerPerformance)
-        }
-
-        bowlerPerformanceRepository.saveAll(updatedBowlerPerformances)
-
-        // Calculate Innings
-        inningEntity.apply {
-            matchId = match.id
-            inningsNumber = inningEntity.inningsNumber
-            battingTeamId = currentInnings.battingTeam.id
-            bowlingTeamId = currentInnings.bowlingTeam.id
-            totalRuns += currentInnings.totalRuns
-            totalWickets += currentInnings.wickets
-            overs = currentInnings.overs
-            runRate = currentInnings.runRate
-            totalExtras = currentInnings.totalExtras // cumulative totalExtras
-        }
-
+        updateInningEntity(currentInnings, inningEntity, match.id)
         inningRepository.save(inningEntity)
-
-
 
         // Update Score
         val ballEventEntity = BallEventEntity(
@@ -164,8 +91,6 @@ class EventService(
         )
 
         ballEventRepository.save(ballEventEntity)
-
-
         matchRepository.save(match.mapToEntity())
 
         // Call QuestionService to update questions based on the ball event
@@ -173,6 +98,97 @@ class EventService(
             questionService.updateQuestions(ballEventEntity, inningEntity, liveScoreEvent)
         return updatedQuestionsResponse
     }
+
+    private fun updateInningEntity(currentInnings: Innings, inningEntity: Inning, matchId: Int) {
+        inningEntity.apply {
+            this.matchId = matchId
+            inningsNumber = currentInnings.inningsId
+            battingTeamId = currentInnings.battingTeam.id
+            bowlingTeamId = currentInnings.bowlingTeam.id
+            totalRuns += currentInnings.totalRuns
+            totalWickets += currentInnings.wickets
+            overs = currentInnings.overs
+            runRate = currentInnings.runRate
+            totalExtras = currentInnings.totalExtras
+        }
+    }
+
+    private fun updateBatsmanPerformances(match: Match, currentInnings: Innings) {
+        val batsmanPerformanceUpdate = currentInnings.battingPerformances
+        val battingPerformanceEntities = batsmanPerformanceRepository.findByMatchIdAndPlayerIdIn(
+            match.id, batsmanPerformanceUpdate.map { it.playerId })
+
+        val updatedBatsmanPerformances = batsmanPerformanceUpdate.map { event ->
+            battingPerformanceEntities.find { it?.playerId == event.playerId }?.apply {
+                runsScored += event.runs
+                ballsFaced += event.balls
+                fours += event.fours
+                sixes += event.sixes
+                strikeRate = event.strikeRate
+            } ?: BatsmanPerformance(
+                playerId = event.playerId,
+                runsScored = event.runs,
+                ballsFaced = event.balls,
+                fours = event.fours,
+                sixes = event.sixes,
+                strikeRate = event.strikeRate
+            )
+        }
+
+        batsmanPerformanceRepository.saveAll(updatedBatsmanPerformances)
+    }
+
+    private fun updateBowlerPerformances(match: Match, currentInnings: Innings) {
+        val bowlerPerformances = currentInnings.bowlingPerformances
+        val bowlingPerformanceEntities = bowlerPerformanceRepository.findByMatchIdAndPlayerIdIn(
+            match.id, bowlerPerformances.map { it.playerId })
+
+        val updatedBowlerPerformances = bowlerPerformances.map { event ->
+            bowlingPerformanceEntities.find { it?.playerId == event.playerId }?.apply {
+                wicketsTaken += event.wickets
+                runsConceded += event.runs
+                wides += event.wides
+                noBalls += event.noBalls
+                maidens += event.maidens
+                economy = event.economy
+            } ?: BowlerPerformance(
+                playerId = event.playerId,
+                wicketsTaken = event.wickets,
+                runsConceded = event.runs,
+                wides = event.wides,
+                noBalls = event.noBalls,
+                maidens = event.maidens,
+                economy = event.economy
+            )
+        }
+
+        bowlerPerformanceRepository.saveAll(updatedBowlerPerformances)
+    }
+
+    private fun saveBallEvent(currentBallEvent: BallEvent, matchId: Int, inningsNumber: Int) {
+        val ballEventEntity = BallEventEntity(
+            matchId = matchId,
+            inningId = inningsNumber,
+            batsmanId = currentBallEvent.batsmanId,
+            bowlerId = currentBallEvent.bowlerId,
+            batsmanRuns = currentBallEvent.runsScored,
+            extraRuns = currentBallEvent.extraRuns,
+            overNumber = currentBallEvent.overNumber,
+            ballNumber = currentBallEvent.ballNumber,
+            isWicket = currentBallEvent.isWicket,
+            wicketType = currentBallEvent.wicketType,
+            isWide = currentBallEvent.isWide,
+            isNoBall = currentBallEvent.isNoBall,
+            isBye = currentBallEvent.isBye,
+            isLegBye = currentBallEvent.isLegBye,
+            isPenalty = currentBallEvent.isPenalty,
+            isSix = currentBallEvent.runsScored == 6 || currentBallEvent.extraRuns == 6,
+            isFour = currentBallEvent.runsScored == 4 || currentBallEvent.extraRuns == 4
+        )
+
+        ballEventRepository.save(ballEventEntity)
+    }
+
 
     fun findCurrentInnings(scoreCard: Hit11Scorecard): Innings? {
         if (scoreCard.status == "Complete") {

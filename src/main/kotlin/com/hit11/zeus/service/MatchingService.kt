@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 class MatchingService(
     private val orderRepository: OrderRepository
 ) {
-    fun findMatch(order: OrderDataModel): OrderDataModel? {
+    fun findPotentialMatches(order: OrderDataModel): List<OrderDataModel> {
         val oppositeAnswer = if (order.userAnswer == "YES") "NO" else "YES"
         val complementaryPrice = Constants.BIG_DECIMAL_TEN - order.price
 
@@ -21,7 +21,7 @@ class MatchingService(
             complementaryPrice,
             OrderState.OPEN,
             order.remainingQuantity
-        )?.toDataModel()
+        )?.map{it.toDataModel()} ?: emptyList()
     }
 
     fun calculateMatch(currentOrder: OrderDataModel, matchedOrder: OrderDataModel): MatchResult {

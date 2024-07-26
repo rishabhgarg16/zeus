@@ -19,6 +19,9 @@ data class TeamEntity(
     @Column(name = "team_image_url")
     val teamImageUrl: String? = null,
 
+    @Column(name = "cricbuzz_team_id")
+    val cricbuzzTeamId: Int? = 0,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
     

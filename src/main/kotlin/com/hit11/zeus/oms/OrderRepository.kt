@@ -28,7 +28,7 @@ interface OrderRepository : JpaRepository<OrderEntity, Int> {
         price: BigDecimal,
         state: OrderState,
         quantity: Long
-    ): OrderEntity?
+    ): List<OrderEntity>?
 
     fun findByPulseIdAndState(pulseId: Int, state: OrderState): List<OrderEntity>
 }

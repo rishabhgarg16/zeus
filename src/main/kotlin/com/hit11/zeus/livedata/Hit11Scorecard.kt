@@ -29,7 +29,9 @@ data class MatchResult(
 data class Team(
     val id: Int,
     val name: String,
-    val shortName: String
+    val shortName: String,
+    val teamImageUrl: String,
+    val cricbuzzTeamId: Int
 )
 
 data class Innings(
@@ -92,15 +94,15 @@ data class Partnership(
 )
 
 data class BallEvent(
-    val inningsId: Int,
-    val overNumber: Int,
-    val ballNumber: Int,
-    val batsmanId: Int,
-    val bowlerId: Int,
+    val inningsId: Int, // present in the commentry
+    val overNumber: Int, // present in commentry
+    val ballNumber: Int, // present in commentry
+    val batsmanId: Int,  // striker batsman id
+    val bowlerId: Int, // striker bowler id
     val runsScored: Int,
     val extraType: String?,
     val extraRuns: Int,
-    val isWicket: Boolean,
+    val isWicket: Boolean, // event type NONE, WICKET
     val wicketType: String?,
     val playerOutId: Int?,
     val isWide: Boolean = false,
