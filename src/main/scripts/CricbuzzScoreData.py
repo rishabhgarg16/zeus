@@ -5,6 +5,19 @@ import requests
 import traceback
 import datetime
 
+
+# Database connection
+db_config = {
+    "host":"ls-a6927155ebc8223b62e0da94714b39337fdb981a.c9yg6ks8shtr.ap-south-1.rds.amazonaws.com",
+    "user":"admin",
+    "password":"adminpass",
+    "database":"hit11"
+}
+
+db_connection = mysql.connector.connect(**db_config)
+
+
+
 def get_data():
   return {
       "team_id": None,
@@ -118,6 +131,8 @@ def get_or_create_internal_team_id(external_id, team_name, team_short_name):
     return internal_id
 
 def send_to_zeus(hit11_scorecard):
+    print("before server sending")
+    print(hit11_scorecard)
     headers = {
         "Content-Type": "application/json",
         # "Authorization": f"Bearer {ZEUS_API_KEY}"
@@ -308,10 +323,10 @@ def process_cricbuzz_data(cricbuzz_data):
     try:
         hit11_scorecard = convert_cricbuzz_to_hit11(cricbuzz_data)
         print(hit11_scorecard)
-        # if send_to_zeus(hit11_scorecard):
-        #     print("Data processed and sent to Zeus successfully.")
-        # else:
-        #     print("Failed to send data to Zeus.")
+        if send_to_zeus(hit11_scorecard):
+            print("Data processed and sent to Zeus successfully.")
+        else:
+            print("Failed to send data to Zeus.")
     except Exception as e:
         print(f"Error processing Cricbuzz data: {e}")
         print(traceback.format_exc())
