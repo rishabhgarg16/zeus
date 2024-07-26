@@ -1,110 +1,120 @@
 package com.hit11.zeus.livedata
 
-import com.hit11.zeus.model.TeamEntity
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.math.BigDecimal
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Hit11Scorecard(
-    val matchId: Int,
-    val matchDescription: String,
-    val matchFormat: String,
-    val matchType: String,
-    val startTimestamp: Long,
-    val endTimestamp: Long,
-    val status: String,
-    val result: MatchResult,
-    val team1: Team,
-    val team2: Team,
-    val innings: List<Innings>
+    val matchId: Int = 0,
+    val matchDescription: String = "",
+    val matchFormat: String = "",
+    val matchType: String = "",
+    val startTimestamp: Long = 0,
+    val endTimestamp: Long = 0,
+    val status: String = "",
+    val result: MatchResult = MatchResult(),
+    val team1: Team = Team(),
+    val team2: Team = Team(),
+    val innings: List<Innings> = listOf()
 )
 
 data class MatchResult(
-    val resultType: String,
-    val winningTeam: String,
-    val winningTeamId: Int,
-    val winningMargin: Int,
-    val winByRuns: Boolean,
-    val winByInnings: Boolean
+    val resultType: String = "",
+    val winningTeam: String = "",
+    val winningTeamId: Int = 0,
+    val winningMargin: Int = 0,
+    val winByRuns: Boolean = false,
+    val winByInnings: Boolean = false
 )
 
 data class Team(
-    val id: Int,
-    val name: String,
-    val shortName: String,
-    val teamImageUrl: String,
-    val cricbuzzTeamId: Int
+    val id: Int = 0,
+    val name: String = "",
+    val shortName: String = "",
+    val teamImageUrl: String = "",
+    val cricbuzzTeamId: Int = 0
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Innings(
-    val inningsId: Int,
-    val battingTeam: Team,
-    val bowlingTeam: Team,
-    val totalRuns: Int,
-    val wickets: Int,
-    val totalExtras: Int,
-    val overs: BigDecimal,
-    val runRate: Float,
-    val battingPerformances: List<BattingPerformance>,
-    val bowlingPerformances: List<BowlingPerformance>,
-    val fallOfWickets: List<FallOfWicket>,
-    val partnerships: List<Partnership>,
-    val ballByBallEvents: List<BallEvent>
+    val inningsId: Int = 0,
+    val battingTeam: Team = Team(),
+    val bowlingTeam: Team = Team(),
+    val totalRuns: Int = 0,
+    val wickets: Int = 0,
+    val totalExtras: Int = 0,
+    val overs: BigDecimal = BigDecimal.ZERO,
+    val runRate: Float = 0f,
+    val battingPerformances: List<BattingPerformance> = listOf(),
+    val bowlingPerformances: List<BowlingPerformance> = listOf(),
+    val fallOfWickets: List<FallOfWicket> = listOf(),
+    val partnerships: List<Partnership> = listOf(),
+    val ballByBallEvents: List<BallEvent> = listOf()
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class BattingPerformance(
-    val playerId: Int,
-    val playerName: String,
-    val runs: Int,
-    val balls: Int,
-    val fours: Int,
-    val sixes: Int,
-    val strikeRate: Float,
-    val outDescription: String?,
-    val wicketTaker: Int?
+    val playerId: Int = 0,
+    val playerName: String = "",
+    val runs: Int = 0,
+    val balls: Int = 0,
+    val fours: Int = 0,
+    val sixes: Int = 0,
+    val strikeRate: Float = 0f,
+    val outDescription: String? = null,
+    val wicketTaker: Int? = null,
+    val onStrike: Int? = null
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class BowlingPerformance(
-    val playerId: Int,
-    val playerName: String,
-    val overs: Float,
-    val maidens: Int,
-    val runs: Int,
-    val wickets: Int,
-    val economy: BigDecimal,
-    val noBalls: Int,
-    val wides: Int
+    val playerId: Int = 0,
+    val playerName: String = "",
+    val overs: Float = 0f,
+    val maidens: Int = 0,
+    val runs: Int = 0,
+    val wickets: Int = 0,
+    val economy: BigDecimal = BigDecimal.ZERO,
+    val noBalls: Int = 0,
+    val wides: Int = 0,
+    val onStrike: Int? = null
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class FallOfWicket(
-    val wicketNumber: Int,
-    val playerOut: Int,
-    val playerName: String,
-    val runs: Int,
-    val overs: Float
+    val wicketNumber: Int = 0,
+    val playerOut: Int = 0,
+    val playerName: String = "",
+    val runs: Int = 0,
+    val overs: Float = 0f
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Partnership(
-    val runs: Int,
-    val balls: Int,
-    val player1Id: Int,
-    val player1Name: String,
-    val player1Runs: Int,
-    val player2Id: Int,
-    val player2Name: String,
-    val player2Runs: Int
+    val runs: Int = 0,
+    val balls: Int = 0,
+    val player1Id: Int = 0,
+    val player1Name: String = "",
+    val player1Runs: Int = 0,
+    val player2Id: Int = 0,
+    val player2Name: String = "",
+    val player2Runs: Int = 0
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class BallEvent(
-    val inningsId: Int, // present in the commentry
-    val overNumber: Int, // present in commentry
-    val ballNumber: Int, // present in commentry
-    val batsmanId: Int,  // striker batsman id
-    val bowlerId: Int, // striker bowler id
-    val runsScored: Int,
-    val extraType: String?,
-    val extraRuns: Int,
-    val isWicket: Boolean, // event type NONE, WICKET
-    val wicketType: String?,
-    val playerOutId: Int?,
+    val inningsId: Int = 0,
+    val overNumber: Int = 0,
+    val ballNumber: Int = 0,
+    val batsmanId: Int = 0,
+    val bowlerId: Int = 0,
+    val runsScored: Int = 0,
+    val extraType: String? = null,
+    val extraRuns: Int = 0,
+    val isWicket: Boolean = false,
+    val wicketType: String? = null,
+    val playerOutId: Int? = null,
     val isWide: Boolean = false,
     val isNoBall: Boolean = false,
     val isBye: Boolean = false,

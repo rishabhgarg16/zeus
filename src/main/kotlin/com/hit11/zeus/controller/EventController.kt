@@ -4,6 +4,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.service.EventService
+import com.hit11.zeus.service.QuestionService
+import com.hit11.zeus.service.UpdateQuestionsResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -15,7 +17,8 @@ data class LiveMatchRequest(
 @RequestMapping("/api/events")
 class EventController(
     private val eventService: EventService,
-    private val webSocketHandler: MyWebSocketHandler
+    private val webSocketHandler: MyWebSocketHandler,
+    private val questionService: QuestionService
 ) {
 
 
@@ -35,6 +38,19 @@ class EventController(
             println("${e.message}")
             return ResponseEntity.badRequest().body("Error sending message to WebSocket")
         }
+    }
+
+    @PostMapping("/scorecardV2")
+    fun newSendMatchData(
+        @RequestBody scoreCard: Hit11Scorecard
+    ): ResponseEntity<String> {
+        // Call QuestionService to update questions based on the ball event
+//        val updatedQuestionsResponse =
+//            questionService.updateQuestions(ballEventEntity, inningEntity, liveScoreEvent)
+//        webSocketHandler.sendMessageToTopic(topic, score)
+//        return ResponseEntity.ok(updatedQuestionsResponse)
+        System.out.println("hi i am in the event containing")
+        return ResponseEntity.ok(scoreCard.toString())
     }
 
     @PostMapping("/scorecard")

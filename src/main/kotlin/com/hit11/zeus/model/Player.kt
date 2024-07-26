@@ -17,19 +17,13 @@ data class Player(
     val country: String? = "",
     val teamId: Int = 0,
 
-    @Column(name = "role")
-    private var _role: String? = PlayerRole.BATSMAN.text,
+    @Enumerated
+    @Column(name = "role", columnDefinition = "ENUM('batsman','bowler','all_rounder','wicket_keeper','invalid')")
+    private var role: PlayerRole? = PlayerRole.BATSMAN,
 
     val battingStyle: String? = "",
     val bowlingStyle: String? = "",
-) {
-    var role: PlayerRole
-        get() = PlayerRole.fromText(_role)
-        set(value) {
-            _role = value.text
-        }
-
-}
+)
 
 enum class PlayerRole(val text: String) {
     BATSMAN("batsman"),
