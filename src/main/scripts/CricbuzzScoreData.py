@@ -296,7 +296,6 @@ def convert_team(cricbuzz_team):
 
 
 def convert_innings(miniscore, commentary_list, matchHeader):
-    innings = []
 
     # get bowling team
     batting_team, bowling_team = get_teams(miniscore, matchHeader)
@@ -323,8 +322,7 @@ def convert_innings(miniscore, commentary_list, matchHeader):
         'partnerships': [],  # We don't have this information in the given data
         'ballByBallEvents': convert_ball_events(batting_performance, bowling_performance, commentary_list)
     }
-    innings.append(current_innings)
-    return innings
+    return current_innings
 
 
 def convert_batting_performances(miniscore):
