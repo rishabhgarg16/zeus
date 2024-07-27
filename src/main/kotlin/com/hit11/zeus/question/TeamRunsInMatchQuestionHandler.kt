@@ -27,6 +27,7 @@ class TeamRunsInMatchQuestionHandler : QuestionHandler {
         val currentRuns = matchState.liveScorecard.innings.totalRuns
 
         val isResolved = currentRuns >= targetRuns
+        // check if innings over or chasing in 2nd innings
         val result = if (isResolved) "Yes" else "No"
 
         return QuestionResolution(isResolved, result)

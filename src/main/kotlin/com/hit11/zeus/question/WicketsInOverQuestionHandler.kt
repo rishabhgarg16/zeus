@@ -53,26 +53,26 @@ class WicketsInOverQuestionHandler : QuestionHandler {
         var wicketCount = 0
         val overNumber =
 
-        for (event in commentaryList.reversed()) {
-            val eventOver = event.overNumber.toInt() + 1
-
-            when {
-                eventOver > BigDecimal(targetOver) -> continue
-                eventOver < BigDecimal(targetOver - 1) -> break  // Break if we've gone past the previous over
-                eventOver.toInt() == targetOver - 1 && eventOver.remainder(BigDecimal.ONE) > BigDecimal("0.5") -> {
-                    // Count wickets in the last ball of the previous over (X.6)
-                    if (event.isWicket && isBowlerWicket(event.commText)) {
-                        wicketCount++
-                    }
-                }
-                eventOver.toInt() == targetOver -> {
-                    // Count wickets in the target over
-                    if (event.isWicket && isBowlerWicket(event.commText)) {
-                        wicketCount++
-                    }
-                }
-            }
-        }
+//        for (event in commentaryList.reversed()) {
+//            val eventOver = event.overNumber.toInt() + 1
+//
+//            when {
+//                eventOver > BigDecimal(targetOver) -> continue
+//                eventOver < BigDecimal(targetOver - 1) -> break  // Break if we've gone past the previous over
+//                eventOver.toInt() == targetOver - 1 && eventOver.remainder(BigDecimal.ONE) > BigDecimal("0.5") -> {
+//                    // Count wickets in the last ball of the previous over (X.6)
+//                    if (event.isWicket && isBowlerWicket(event.commText)) {
+//                        wicketCount++
+//                    }
+//                }
+//                eventOver.toInt() == targetOver -> {
+//                    // Count wickets in the target over
+//                    if (event.isWicket && isBowlerWicket(event.commText)) {
+//                        wicketCount++
+//                    }
+//                }
+//            }
+//        }
 
         return wicketCount
     }

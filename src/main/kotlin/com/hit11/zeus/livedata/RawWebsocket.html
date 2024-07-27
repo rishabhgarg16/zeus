@@ -19,7 +19,7 @@
     var currentTopic = null;
 
     function connect() {
-        socket = new WebSocket('ws://192.168.0.51:8080/ws');
+        socket = new WebSocket('ws://192.168.0.103:8080/ws');
 
         socket.onopen = function(event) {
             console.log('Connected to WebSocket');

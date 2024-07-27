@@ -26,6 +26,8 @@ class RunsScoredByBatsmanQuestionHandler : QuestionHandler {
             .find { it.playerId == targetBatsmanId }
 
         val isResolved = batsmanPerformance?.runs?.let { it >= targetRuns } ?: false
+        // check if batsman is out or innning over
+        // or if chasing then runs are less than remaining
         val result = if (isResolved) "Yes" else "No"
 
         return QuestionResolution(isResolved, result)

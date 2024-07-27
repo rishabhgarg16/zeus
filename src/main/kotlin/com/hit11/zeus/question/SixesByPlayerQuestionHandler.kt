@@ -26,6 +26,7 @@ class SixesByPlayerQuestionHandler : QuestionHandler {
             matchState.liveScorecard.innings.battingPerformances.find { it.playerId == targetBatsmanId }?.sixes ?: 0
 
         val isResolved = currentSixes >= targetSixes
+        // check if player got out or innings over
         val result = if (isResolved) "Yes" else "No"
 
         return QuestionResolution(isResolved, result)

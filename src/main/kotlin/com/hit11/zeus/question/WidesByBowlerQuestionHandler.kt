@@ -19,17 +19,24 @@ class WidesByBowlerQuestionHandler : QuestionHandler {
     }
 
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-//        val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
-//        val targetWides = question.targetWides ?: return QuestionResolution(false, null)
-//
-//        val bowlerPerformance = matchState.currentInning.bowlingPerformances
-//            .find { it.playerId == targetBowlerId }
-//
-//        val currentWides = bowlerPerformance?.wides ?: 0
-//        val isResolved = currentWides >= targetWides
-//        val result = if (isResolved) "Yes" else "No"
-//
-//        return QuestionResolution(isResolved, result)
-        return QuestionResolution(false, null)
+        if (!canBeResolved(question, matchState)) {
+            return QuestionResolution(false, null)
+        }
+
+        val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
+        val targetWickets = question.targetWides ?: return QuestionResolution(false, null)
+
+        val currentInnings = matchState.liveScorecard.innings
+        val bowlerPerformance = currentInnings.bowlingPerformances.find { it.playerId == targetBowlerId }
+
+        if (bowlerPerformance == null) {
+            return QuestionResolution(false, null)
+        }
+
+        val wicketsTaken = bowlerPerformance.wides
+
+        val isResolved = wicketsTaken >= targetWickets
+        val result = if (isResolved) "Yes" else "No"
+        return QuestionResolution(isResolved, result)
     }
 }

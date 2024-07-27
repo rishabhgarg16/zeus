@@ -15,12 +15,10 @@ class MatchWinnerQuestionHandler : QuestionHandler {
         matchState.liveScorecard.status == "Complete"
 
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-//        return if (canBeResolved(question, matchState)) {
-//            val result = if (matchState.liveScorecard.result.winner == question.optionA) "Yes" else "No"
-//            QuestionResolution(true, result)
-//        } else {
-//            QuestionResolution(false, null)
-//        }
+        if (canBeResolved(question, matchState)) {
+            val result = if (matchState.liveScorecard.result.winningTeamId == question.targetTeamId) "Yes" else "No"
+            return QuestionResolution(true, result)
+        }
         return QuestionResolution(false, null)
     }
 }

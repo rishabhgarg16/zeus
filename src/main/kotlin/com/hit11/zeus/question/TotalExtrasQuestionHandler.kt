@@ -19,6 +19,7 @@ class TotalExtrasQuestionHandler : QuestionHandler {
         val currentExtras = matchState.liveScorecard.innings.totalExtras
 
         val isResolved = currentExtras >= targetExtras
+        // check for end of innings
         val result = if (isResolved) "Yes" else "No"
 
         return QuestionResolution(isResolved, result)

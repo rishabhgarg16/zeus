@@ -21,7 +21,6 @@ class OrderPlaceRequest(
     @field:NotBlank(message = "User Answer cannot be blank")
     val userAnswer: String = "",
 
-    @field:NotNull(message = "Answer Time cannot be null")
     val answerTime: Long = -1L,
 
     @field:NotNull(message = "User Wager cannot be null")
