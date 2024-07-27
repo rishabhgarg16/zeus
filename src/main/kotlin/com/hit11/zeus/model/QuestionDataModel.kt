@@ -10,7 +10,8 @@ enum class QuestionType(val text: String) {
     RUNS_IN_MATCH("runs_in_match"),
     SUPER_OVER_IN_MATCH("super_over_in_match"),
     WIN_BY_RUNS_MARGIN("win_by_runs_margin"),
-    TOSS_RESULT("toss_result"),
+    TOSS_WINNER("toss_winner"),
+    TOSS_DECISION("toss_decision"),
 
     // batting questions
     TOP_SCORER("top_scorer"),
@@ -65,6 +66,7 @@ class QuestionDataModel(
     val targetBatsmanId: Int? = 0,
     val targetBowlerId: Int? = 0,
     val targetTeamId: Int? = 0,
+    val targetTossDecision: String? = "",
 ) {
 
     fun maptoEntity(): QuestionEntity {
@@ -94,6 +96,7 @@ class QuestionDataModel(
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
             targetTeamId = this.targetTeamId,
+            targetTossDecision = this.targetTossDecision,
             questionType = this.questionType.text
         )
     }
@@ -148,6 +151,8 @@ data class QuestionEntity(
     val targetWides: Int? = 0,
     val targetBoundaries: Int? = 0,
     val targetTeamId: Int? = 0,
+    @Column(name = "target_toss_decision")
+    val targetTossDecision: String? = null,
     val questionType: String? = "",
 
     @Column(
@@ -204,7 +209,8 @@ data class QuestionEntity(
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
             questionType = QuestionType.fromText(this.questionType),
-            targetTeamId = this.targetTeamId
-        )
+            targetTeamId = this.targetTeamId,
+            targetTossDecision = this.targetTossDecision,
+            )
     }
 }

@@ -34,9 +34,7 @@ class WidesByBowlerQuestionHandler : QuestionHandler {
         }
 
         val wicketsTaken = bowlerPerformance.wides
-
-        val isResolved = wicketsTaken >= targetWickets
-        val result = if (isResolved) "Yes" else "No"
-        return QuestionResolution(isResolved, result)
+        val result = if (wicketsTaken >= targetWickets) "Yes" else "No"
+        return QuestionResolution(true, result)
     }
 }

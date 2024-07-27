@@ -34,10 +34,8 @@ class WicketsByBowlerQuestionHandler : QuestionHandler {
         }
 
         val wicketsTaken = bowlerPerformance.wickets
+        val result = if (wicketsTaken >= targetWickets) "Yes" else "No"
 
-        val isResolved = wicketsTaken >= targetWickets
-        val result = if (isResolved) "Yes" else "No"
-
-        return QuestionResolution(isResolved, result)
+        return QuestionResolution(true, result)
     }
 }

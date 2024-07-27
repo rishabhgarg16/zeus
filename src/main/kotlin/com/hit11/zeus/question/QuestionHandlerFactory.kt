@@ -15,7 +15,8 @@ object QuestionHandlerFactory {
         QuestionType.TOTAL_EXTRAS to TotalExtrasQuestionHandler(),
         QuestionType.MAN_OF_THE_MATCH to ManOfTheMatchQuestionHandler(),
         QuestionType.WIN_BY_RUNS_MARGIN to WinByRunsMarginQuestionHandler(),
-        QuestionType.TOSS_RESULT to TossResultQuestionHandler()
+        QuestionType.TOSS_WINNER to TossWinnerQuestionHandler(),
+        QuestionType.TOSS_DECISION to TossDecisionQuestionHandler()
     )
 
     fun getHandler(question: QuestionDataModel): QuestionHandler {

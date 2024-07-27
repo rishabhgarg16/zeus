@@ -38,10 +38,9 @@ class WicketsInOverQuestionHandler : QuestionHandler {
         val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
 
         val wicketsInOver = countWicketsInOver(matchState.liveScorecard, targetBowlerId)
-        val isResolved = wicketsInOver >= targetWickets
-        val result = if (isResolved) "Yes" else "No"
+        val result = if (wicketsInOver >= targetWickets) "Yes" else "No"
 
-        return QuestionResolution(isResolved, result)
+        return QuestionResolution(true, result)
     }
 
     private fun countWicketsInOver(scorecard: Hit11Scorecard, targetBowlerId: Int): Int {
