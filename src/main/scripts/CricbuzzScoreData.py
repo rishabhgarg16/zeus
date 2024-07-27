@@ -240,7 +240,7 @@ def convert_cricbuzz_to_hit11(cricbuzz_data):
     data = cricbuzz_data
 
     match_header = data['matchHeader']
-    miniscore = data['miniscore']
+    miniscore = data.get('miniscore')
     commentary_list = data['commentaryList']
 
     # Get or create match
@@ -296,6 +296,23 @@ def convert_team(cricbuzz_team):
 
 
 def convert_innings(miniscore, commentary_list, matchHeader):
+    if miniscore is None:
+        # Return a default innings object when the match is not live
+        return {
+            'inningsId': 1,  # Default to first innings
+            'battingTeam': convert_team(matchHeader['team1']),
+            'bowlingTeam': convert_team(matchHeader['team2']),
+            'totalRuns': 0,
+            'wickets': 0,
+            'totalExtras': 0,
+            'overs': 0.0,
+            'runRate': 0.0,
+            'battingPerformances': [],
+            'bowlingPerformances': [],
+            'fallOfWickets': [],
+            'partnerships': [],
+            'ballByBallEvents': []
+        }
 
     # get bowling team
     batting_team, bowling_team = get_teams(miniscore, matchHeader)
