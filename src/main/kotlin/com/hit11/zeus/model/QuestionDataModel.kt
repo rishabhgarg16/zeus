@@ -13,7 +13,7 @@ enum class QuestionType(val text: String) {
     // batting questions
     TOP_SCORER("top_scorer"),
     SIXES_IN_MATCH("sixes_in_match"),
-    RUNS_SCORED_BY_BATSMAN("century_in_match"),
+    RUNS_SCORED_BY_BATSMAN("runs_scored_by_batsman"),
     TEAM_RUNS_IN_MATCH("team_runs_in_match"),
 
     // bowling
