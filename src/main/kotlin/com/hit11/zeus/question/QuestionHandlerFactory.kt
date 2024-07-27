@@ -12,7 +12,10 @@ object QuestionHandlerFactory {
         QuestionType.WICKETS_BY_BOWLER to WicketsByBowlerQuestionHandler(),
         QuestionType.WICKETS_IN_OVER to WicketsInOverQuestionHandler(),
         QuestionType.WIDES_IN_MATCH to WidesByBowlerQuestionHandler(),
-        QuestionType.TOTAL_EXTRAS to TotalExtrasQuestionHandler()
+        QuestionType.TOTAL_EXTRAS to TotalExtrasQuestionHandler(),
+        QuestionType.MAN_OF_THE_MATCH to ManOfTheMatchQuestionHandler(),
+        QuestionType.WIN_BY_RUNS_MARGIN to WinByRunsMarginQuestionHandler(),
+        QuestionType.TOSS_RESULT to TossResultQuestionHandler()
     )
 
     fun getHandler(question: QuestionDataModel): QuestionHandler {

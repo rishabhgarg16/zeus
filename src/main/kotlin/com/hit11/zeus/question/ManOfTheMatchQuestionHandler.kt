@@ -4,19 +4,19 @@ import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 
-class MatchWinnerQuestionHandler : QuestionHandler {
+class ManOfTheMatchQuestionHandler : QuestionHandler {
     override fun validate(question: QuestionDataModel) {
-        if (question.optionA.isBlank() || question.optionB.isBlank()) {
-            throw QuestionValidationException("Both team options must be provided for Match Winner question")
+        if (question.targetBatsmanId == 0) {
+            throw QuestionValidationException("Target player must be specified for Man of the Match question")
         }
     }
 
     override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean =
-        matchState.liveScorecard.state == "Complete"
+        matchState.liveScorecard.state == "Complete" && matchState.liveScorecard.playerOfTheMatch != null
 
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         if (canBeResolved(question, matchState)) {
-            val result = if (matchState.liveScorecard.result.winningTeamId == question.targetTeamId) "Yes" else "No"
+            val result = if (matchState.liveScorecard.playerOfTheMatch?.id == question.targetBatsmanId) "Yes" else "No"
             return QuestionResolution(true, result)
         }
         return QuestionResolution(false, null)

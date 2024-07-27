@@ -13,10 +13,26 @@ data class Hit11Scorecard(
     val startTimestamp: Long = 0,
     val endTimestamp: Long = 0,
     val status: String = "",
+    val state: String = "", // Complete, etc ...
     val result: MatchResult = MatchResult(),
     val team1: Team = Team(),
     val team2: Team = Team(),
-    val innings: Innings = Innings()
+    val innings: Innings = Innings(),
+    val playerOfTheMatch: PlayerOfTheMatch = PlayerOfTheMatch(),
+    val tossResult: TossResult? = null
+)
+
+
+data class TossResult(
+    val tossWinnerTeamId: Int = 0,
+    val tossWinnerName: String = "",
+    val tossDecision: String = "",
+)
+
+data class PlayerOfTheMatch(
+    val id: Int = 0,
+    val name: String = "",
+    val teamName: String = ""
 )
 
 data class MatchResult(

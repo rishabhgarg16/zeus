@@ -9,12 +9,15 @@ enum class QuestionType(val text: String) {
     MATCH_WINNER("match_winner"),
     RUNS_IN_MATCH("runs_in_match"),
     SUPER_OVER_IN_MATCH("super_over_in_match"),
+    WIN_BY_RUNS_MARGIN("win_by_runs_margin"),
+    TOSS_RESULT("toss_result"),
 
     // batting questions
     TOP_SCORER("top_scorer"),
     SIXES_IN_MATCH("sixes_in_match"),
     RUNS_SCORED_BY_BATSMAN("runs_scored_by_batsman"),
     TEAM_RUNS_IN_MATCH("team_runs_in_match"),
+    MAN_OF_THE_MATCH("man_of_the_match"),
 
     // bowling
     WICKETS_IN_MATCH("wickets_in_match"),

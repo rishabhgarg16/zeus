@@ -64,7 +64,7 @@ def create_match(cursor, match_header):
         'city': None,  # Not available in the provided data
         'stadium': None,  # Not available in the provided data
         'country': None,  # Not available in the provided data
-        'status': map_match_status(match_header['state']),
+        'status': match_header['status'],
         'tournamentName': match_header.get('seriesName'),
         'matchType': match_header['matchFormat'],
         'matchLink': None,  # Not available in the provided data
@@ -86,7 +86,7 @@ def create_match(cursor, match_header):
 
 def update_match(cursor, match_header, match_id):
     update_data = {
-        'status': map_match_status(match_header['state']),
+        'status': match_header['state'],
         'updated_at': datetime.now(),
         'id': match_id
     }
@@ -98,17 +98,6 @@ def update_match(cursor, match_header, match_id):
     """
     cursor.execute(update_query, update_data)
     print(f"Updated match: {match_id}")
-
-
-def map_match_status(cricbuzz_state):
-    # Map Cricbuzz match state to your MatchStatus enum
-    status_map = {
-        'In Progress': 'Live',
-        'Complete': 'Completed',
-        # Add more mappings as needed
-    }
-    return status_map.get(cricbuzz_state, 'Scheduled')
-
 
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
@@ -135,6 +124,13 @@ def get_internal_team_id(external_id):
     # cursor.close()
     return result[0] if result else None
 
+def get_internal_player_id(external_id):
+    cursor = db_connection.cursor()
+    query = "SELECT id FROM players WHERE cricbuzz_player_id = %s"
+    cursor.execute(query, (external_id,))
+    result = cursor.fetchone()
+    # cursor.close()
+    return result[0] if result else None
 
 def get_or_create_internal_player_id(external_id, player_name, external_team_id):
     conn = db_connection
@@ -254,22 +250,40 @@ def convert_cricbuzz_to_hit11(cricbuzz_data):
         'startTimestamp': match_header['matchStartTimestamp'],
         'endTimestamp': match_header['matchCompleteTimestamp'],
         'status': match_header['status'],
+        'state': match_header['state'],
         'result': convert_result(match_header),
         'team1': convert_team(match_header['team1']),
         'team2': convert_team(match_header['team2']),
-        'innings': convert_innings(miniscore, commentary_list, match_header)
+        'playerOfTheMatch': convert_player_of_the_match(match_header),
+        'innings': convert_innings(miniscore, commentary_list, match_header),
+        'tossResult': convert_toss_result(match_header['tossResults'])
     }
-
     return hit11_scorecard
 
 
+def convert_toss_result(toss_results):
+    return {
+        'tossWinnerTeamId': get_internal_team_id(toss_results['tossWinnerId']),
+        'tossWinnerName': toss_results['tossWinnerName'],
+        'tossDecision': toss_results['decision']
+    }
+
+def convert_player_of_the_match(match_header):
+    if 'playersOfTheMatch' in match_header and match_header['playersOfTheMatch']:
+        player = match_header['playersOfTheMatch'][0]
+        internal_player_id = get_internal_player_id(player['id'])
+        return {
+            'id': internal_player_id,
+            'name': player['name'],
+            'teamName': player['teamName']
+        }
+    return None
+
 def convert_result(match_header):
     cricbuzz_result = match_header['result']
-    winTeamId = cricbuzz_result.get('winningTeamId', 0)
+    winTeamId = cricbuzz_result.get('winningteamId', 0)
     if winTeamId in [match_header['team1']['id'], match_header['team2']['id']]:
-        winTeamDetails = match_header[winTeamId]
-        internal_winning_team_id = get_or_create_internal_team_id(winTeamId, winTeamDetails['name'],
-                                                                  winTeamDetails['shortName'])
+        internal_winning_team_id = get_internal_team_id(winTeamId)
     else:
         internal_winning_team_id = 0
 
