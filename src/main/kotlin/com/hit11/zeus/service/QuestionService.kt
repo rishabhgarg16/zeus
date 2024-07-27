@@ -49,12 +49,10 @@ class QuestionService(
     }
 
     fun updateQuestions(
-        ballEventEntity: BallEventEntity,
-        currentInning: Inning,
         liveScorecard: Hit11Scorecard
     ): UpdateQuestionsResponse {
-        val matchState = MatchState(currentInning, liveScorecard, ballEventEntity)
-        val questions = questionRepository.findByMatchIdInAndStatus(listOf(ballEventEntity.matchId), true)
+        val matchState = MatchState(liveScorecard)
+        val questions = questionRepository.findByMatchIdInAndStatus(listOf(liveScorecard.matchId), true)
             ?.map { it.mapToQuestionDataModel() } ?: listOf()
 
         val updatedQuestions = mutableListOf<QuestionDataModel>()

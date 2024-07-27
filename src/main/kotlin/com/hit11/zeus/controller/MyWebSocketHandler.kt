@@ -1,9 +1,9 @@
 package com.hit11.zeus.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.gson.JsonObject
+import com.hit11.zeus.livedata.Hit11Scorecard
 import org.springframework.beans.factory.config.ConfigurableBeanFactory
 import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Component
@@ -61,7 +61,7 @@ class MyWebSocketHandler(
 
     fun sendMessageToTopic(
         topic: String,
-        message: String
+        message: Hit11Scorecard
     ) {
         println("Attempting to send message. Total sessions: ${sessions.size}. Handler instance: ${this.hashCode()}")
         sessions.values.forEach { session ->
@@ -74,7 +74,7 @@ class MyWebSocketHandler(
                         topic
                     )
                     addProperty("matchId", topic.removePrefix("match"))
-                    addProperty("liveScore", message)
+                    addProperty("liveScore", message.toString())
                 }.toString()
                 session.sendMessage(TextMessage(jsonMessage))
                 println("Sent message to session ${session.id} for topic $topic")

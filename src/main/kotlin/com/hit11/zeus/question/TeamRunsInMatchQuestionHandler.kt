@@ -15,7 +15,7 @@ class TeamRunsInMatchQuestionHandler : QuestionHandler {
     }
 
     override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean {
-        return matchState.currentInning.battingTeamId == question.targetTeamId
+        return matchState.liveScorecard.innings.battingTeam.id == question.targetTeamId
     }
 
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
@@ -24,7 +24,7 @@ class TeamRunsInMatchQuestionHandler : QuestionHandler {
         }
 
         val targetRuns = question.targetRuns ?: return QuestionResolution(false, null)
-        val currentRuns = matchState.currentInning.totalRuns
+        val currentRuns = matchState.liveScorecard.innings.totalRuns
 
         val isResolved = currentRuns >= targetRuns
         val result = if (isResolved) "Yes" else "No"

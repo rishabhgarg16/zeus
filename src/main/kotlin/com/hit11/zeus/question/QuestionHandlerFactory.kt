@@ -7,8 +7,8 @@ object QuestionHandlerFactory {
     private val handlers = mapOf(
         QuestionType.MATCH_WINNER to MatchWinnerQuestionHandler(),
         QuestionType.TEAM_RUNS_IN_MATCH to TeamRunsInMatchQuestionHandler(),
-        QuestionType.SIXES_IN_MATCH to SixesInMatchQuestionHandler(),
-        QuestionType.CENTURY_BY_BATSMAN to CenturyByBatsmanQuestionHandler(),
+        QuestionType.SIXES_IN_MATCH to SixesByPlayerQuestionHandler(),
+        QuestionType.RUNS_SCORED_BY_BATSMAN to RunsScoredByBatsmanQuestionHandler(),
         QuestionType.WICKETS_BY_BOWLER to WicketsByBowlerQuestionHandler(),
         QuestionType.WICKETS_IN_OVER to WicketsInOverQuestionHandler(),
         QuestionType.WIDES_IN_MATCH to WidesByBowlerQuestionHandler(),

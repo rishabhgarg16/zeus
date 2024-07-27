@@ -10,6 +10,7 @@ class MatchWinnerQuestionHandler : QuestionHandler {
             throw QuestionValidationException("Both team options must be provided for Match Winner question")
         }
     }
+
     override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean =
         matchState.liveScorecard.status == "Complete"
 

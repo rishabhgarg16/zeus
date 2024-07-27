@@ -16,7 +16,7 @@ data class Hit11Scorecard(
     val result: MatchResult = MatchResult(),
     val team1: Team = Team(),
     val team2: Team = Team(),
-    val innings: List<Innings> = listOf()
+    val innings: Innings = Innings()
 )
 
 data class MatchResult(

@@ -16,7 +16,7 @@ class TotalExtrasQuestionHandler : QuestionHandler {
 
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val targetExtras = question.targetExtras ?: return QuestionResolution(false, null)
-        val currentExtras = matchState.currentInning.totalExtras
+        val currentExtras = matchState.liveScorecard.innings.totalExtras
 
         val isResolved = currentExtras >= targetExtras
         val result = if (isResolved) "Yes" else "No"
