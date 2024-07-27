@@ -200,7 +200,8 @@ data class QuestionEntity(
             targetSpecificOver = this.targetSpecificOver,
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
-            questionType = QuestionType.fromText(this.questionType)
+            questionType = QuestionType.fromText(this.questionType),
+            targetTeamId = this.targetTeamId
         )
     }
 }
