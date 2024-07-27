@@ -1,4 +1,6 @@
 import json
+import time
+import os
 import mysql.connector
 from decimal import Decimal
 import requests
@@ -16,7 +18,7 @@ db_config = {
 db_connection = mysql.connector.connect(**db_config)
 
 # Zeus API configuration
-ZEUS_API_ENDPOINT = "http://localhost:8080/api/events/scorecardV2"
+ZEUS_API_ENDPOINT = os.getenv("ZEUS_API_ENDPOINT", "http://localhost:8080/api/events/scorecardV2")
 
 
 # ZEUS_API_KEY = "your_api_key_here"
@@ -422,12 +424,18 @@ def process_cricbuzz_data(cricbuzz_data):
         print(traceback.format_exc())
 
 
-try:
-    cricbuzz_data = call_cricbuzz_commentry_api(91992)
-    process_cricbuzz_data(cricbuzz_data)
-except FileNotFoundError:
-    print("Error: cricbuzz_data.json file not found.")
-except json.JSONDecodeError:
-    print("Error: Invalid JSON data in cricbuzz_data.json.")
-except Exception as e:
-    print(f"An unexpected error occurred: {e}")
+while True:
+    try:
+        cricbuzz_data = call_cricbuzz_commentry_api(91992)
+        process_cricbuzz_data(cricbuzz_data)
+    except FileNotFoundError:
+        print("Error: cricbuzz_data.json file not found.")
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON data in cricbuzz_data.json.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+    if os.getenv("PROD", False):
+        time.sleep(3)
+    else:
+        break
