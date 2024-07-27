@@ -95,7 +95,7 @@ class EventService(
 
         // Call QuestionService to update questions based on the ball event
         val updatedQuestionsResponse =
-            questionService.updateQuestions(ballEventEntity, inningEntity, liveScoreEvent)
+            questionService.updateQuestions(liveScoreEvent)
         return updatedQuestionsResponse
     }
 
@@ -195,23 +195,24 @@ class EventService(
             return null
         }
         val inningsList = scoreCard.innings
-        val firstInningsComplete =
-            inningsList[0].wickets == 10 ||
-                    (inningsList[0].overs.toInt() == 20 && scoreCard.matchFormat == "T20")
-
-        return if (!firstInningsComplete) {
-            inningsList[0]
-        } else {
-            inningsList[1]
-        }
+//        val firstInningsComplete =
+//            inningsList[0].wickets == 10 ||
+//                    (inningsList[0].overs.toInt() == 20 && scoreCard.matchFormat == "T20")
+//
+//        return if (!firstInningsComplete) {
+//            inningsList[0]
+//        } else {
+//            inningsList[1]
+//        }
+        return Innings()
     }
 
 
     private fun validateBallEvent(ballEvent: Hit11Scorecard) {
-        requireNotNull(ballEvent.matchId) { "Match ID is required" }
-        require(ballEvent.innings.size == 2) { "Inning ID List Size Should be 2" }
-        require(ballEvent.innings[0].battingPerformances.all { it != null }) { "All Batsman IDs are required" }
-        require(ballEvent.innings[0].bowlingPerformances.all { it != null }) { "All Bowling IDs are required" }
+//        requireNotNull(ballEvent.matchId) { "Match ID is required" }
+//        require(ballEvent.innings.size == 2) { "Inning ID List Size Should be 2" }
+//        require(ballEvent.innings[0].battingPerformances.all { it != null }) { "All Batsman IDs are required" }
+//        require(ballEvent.innings[0].bowlingPerformances.all { it != null }) { "All Bowling IDs are required" }
 //        requireNotNull(ballEvent.overNumber) { "Over number is required" }
 //        require(ballEvent.batsmanRuns in 0..6) { "Batsman runs must be between 0 and 6" }
 //        require(ballEvent.extraRuns >= 0) { "Extra runs must be non-negative" }
