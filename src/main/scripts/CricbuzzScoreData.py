@@ -113,7 +113,7 @@ def map_match_status(cricbuzz_state):
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
     headers = {
-        "x-rapidapi-key": "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9",
+        "x-rapidapi-key": "1c1096fee2msh8653286051bb74fp116c19jsn80f85e04a65b",
         "x-rapidapi-host": "cricbuzz-cricket.p.rapidapi.com"
     }
 
