@@ -14,7 +14,8 @@ class TotalExtrasQuestionHandler : QuestionHandler {
         }
     }
     override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean {
-        return matchState.liveScorecard.innings.bowlingTeam.id == question.targetTeamId
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
+        return currentInnings?.bowlingTeam?.id == question.targetTeamId
     }
 
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
@@ -22,7 +23,8 @@ class TotalExtrasQuestionHandler : QuestionHandler {
             return QuestionResolution(false, null)
         }
         val targetExtras = question.targetExtras ?: return QuestionResolution(false, null)
-        val currentExtras = matchState.liveScorecard.innings.totalExtras
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
+        val currentExtras = currentInnings?.totalExtras ?: -1
 
         // check for end of innings
         val result = if (currentExtras >= targetExtras) "Yes" else "No"

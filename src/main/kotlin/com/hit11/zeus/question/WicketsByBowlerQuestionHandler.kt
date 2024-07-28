@@ -26,8 +26,8 @@ class WicketsByBowlerQuestionHandler : QuestionHandler {
         val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
         val targetWickets = question.targetWickets ?: return QuestionResolution(false, null)
 
-        val currentInnings = matchState.liveScorecard.innings
-        val bowlerPerformance = currentInnings.bowlingPerformances.find { it.playerId == targetBowlerId }
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
+        val bowlerPerformance = currentInnings?.bowlingPerformances?.find { it.playerId == targetBowlerId }
 
         if (bowlerPerformance == null) {
             return QuestionResolution(false, null)

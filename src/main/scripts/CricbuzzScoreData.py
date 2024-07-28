@@ -1,9 +1,8 @@
 import json
-import time
-import os
 import mysql.connector
-from decimal import Decimal
+import os
 import requests
+import time
 import traceback
 from datetime import timezone, datetime
 
@@ -31,8 +30,8 @@ def get_or_create_match(match_header):
     query = "SELECT id FROM matches WHERE cricbuzz_match_id = %s"
     cursor.execute(query, (match_header['matchId'],))
     result = cursor.fetchone()
-    print("inserted match data")
-    print(result)
+    # print("inserted match data")
+    # print(result)
 
     if result:
         match_id = result[0]
@@ -99,6 +98,7 @@ def update_match(cursor, match_header, match_id):
     cursor.execute(update_query, update_data)
     print(f"Updated match: {match_id}")
 
+
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
     headers = {
@@ -124,6 +124,7 @@ def get_internal_team_id(external_id):
     # cursor.close()
     return result[0] if result else None
 
+
 def get_internal_player_id(external_id):
     cursor = db_connection.cursor()
     query = "SELECT id FROM players WHERE cricbuzz_player_id = %s"
@@ -131,6 +132,7 @@ def get_internal_player_id(external_id):
     result = cursor.fetchone()
     # cursor.close()
     return result[0] if result else None
+
 
 def get_or_create_internal_player_id(external_id, player_name, external_team_id):
     conn = db_connection
@@ -200,7 +202,7 @@ def get_or_create_internal_team_id(external_id, team_name, team_short_name):
         INSERT INTO teams (team_name, team_short_name, team_image_url, cricbuzz_team_id, created_at, updated_at)
         VALUES (%(team_name)s, %(team_short_name)s, %(team_image_url)s, %(cricbuzz_team_id)s, %(created_at)s, %(updated_at)s)
         """
-        print(new_team)
+        # print(new_team)
         cursor.execute(insert_query, new_team)
         internal_id = cursor.lastrowid
 
@@ -220,12 +222,11 @@ def send_to_zeus(hit11_scorecard):
         json_data = json.dumps(hit11_scorecard, default=str)
 
         # Print the JSON data for debugging
-        print("JSON data being sent to Zeus:")
-        print(json_data)
+        print(f"JSON data being sent to Zeus:{json_data}")
 
         response = requests.post(ZEUS_API_ENDPOINT, data=json_data, headers=headers)
         response.raise_for_status()
-        print(f"Data sent successfully to Zeus. Response: {response.text}")
+        print(f"Data sent successfully to Zeus")
         return True
     except requests.exceptions.RequestException as e:
         print(f"Error sending data to Zeus: {e}")
@@ -255,7 +256,7 @@ def convert_cricbuzz_to_hit11(cricbuzz_data):
         'team1': convert_team(match_header['team1']),
         'team2': convert_team(match_header['team2']),
         'playerOfTheMatch': convert_player_of_the_match(match_header),
-        'innings': convert_innings(miniscore, commentary_list, match_header),
+        'innings': convert_all_innings(miniscore, commentary_list, match_header),
         'tossResult': convert_toss_result(match_header['tossResults'])
     }
     return hit11_scorecard
@@ -267,6 +268,7 @@ def convert_toss_result(toss_results):
         'tossWinnerName': toss_results['tossWinnerName'],
         'tossDecision': toss_results['decision']
     }
+
 
 def convert_player_of_the_match(match_header):
     if 'playersOfTheMatch' in match_header and match_header['playersOfTheMatch']:
@@ -298,7 +300,7 @@ def convert_result(match_header):
 
 
 def convert_team(cricbuzz_team):
-    print(cricbuzz_team)
+    # print(cricbuzz_team)
     name = cricbuzz_team['name']
     shortName = cricbuzz_team['shortName']
     internal_id = get_or_create_internal_team_id(cricbuzz_team['id'], name, shortName)
@@ -309,11 +311,52 @@ def convert_team(cricbuzz_team):
     }
 
 
-def convert_innings(miniscore, commentary_list, matchHeader):
+def convert_all_innings(miniscore, commentary_list, match_header):
+    all_innings = []
+
+    # Convert completed innings from matchScoreDetails
+    if miniscore and 'matchScoreDetails' in miniscore:
+        innings_score_list = miniscore['matchScoreDetails'].get('inningsScoreList', [])
+        current_innings_id = miniscore.get('inningsId')
+        print(current_innings_id)
+        for innings in innings_score_list:
+            if innings['inningsId'] == current_innings_id:
+                # This is the current innings, use detailed conversion
+                all_innings.append(convert_current_innings(miniscore, commentary_list, match_header))
+                print(f"current innings {all_innings}")
+            else:
+                # This is a completed innings
+                all_innings.append(convert_completed_innings(innings, match_header))
+                print(f"completed innings {all_innings}")
+
+    return all_innings
+
+
+def convert_completed_innings(innings, match_header):
+    return {
+        'inningsId': innings['inningsId'],
+        'isCurrentInnings': False,
+        'battingTeam': None,
+        'bowlingTeam': None,
+        'totalRuns': innings.get('score', 0),
+        'wickets': innings.get('wickets', 0),
+        'totalExtras': 0,  # We don't have this information
+        'overs': float(innings.get('overs', 0)),
+        'runRate': round(innings.get('score', 0) / float(innings.get('overs', 1)), 2) if float(
+            innings.get('overs', 0)) > 0 else 0,
+        'battingPerformances': [],
+        'bowlingPerformances': [],
+        'fallOfWickets': [],
+        'partnerships': [],
+        'ballByBallEvents': []
+    }
+
+def convert_current_innings(miniscore, commentary_list, matchHeader):
     if miniscore is None:
         # Return a default innings object when the match is not live
         return {
             'inningsId': 1,  # Default to first innings
+            'isCurrentInnings': False,
             'battingTeam': convert_team(matchHeader['team1']),
             'bowlingTeam': convert_team(matchHeader['team2']),
             'totalRuns': 0,
@@ -340,6 +383,7 @@ def convert_innings(miniscore, commentary_list, matchHeader):
 
     current_innings = {
         'inningsId': miniscore['inningsId'],
+        'isCurrentInnings': True,
         'battingTeam': batting_team,
         'bowlingTeam': bowling_team,
         'totalRuns': miniscore['batTeam']['teamScore'],
@@ -386,8 +430,8 @@ def get_teams(miniscore, match_header):
 
 
 def convert_bowling_performances(miniscore, bowling_team):
-    print('bowling_performances')
-    print(miniscore)
+    # print('bowling_performances')
+    # print(miniscore)
     performances = []
     criccbuzz_team_id = bowling_team['id']
 

@@ -22,13 +22,13 @@ class SixesByPlayerQuestionHandler : QuestionHandler {
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val targetSixes = question.targetSixes ?: return QuestionResolution(false, null)
         val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, null)
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
         val currentSixes =
-            matchState.liveScorecard.innings.battingPerformances.find { it.playerId == targetBatsmanId }?.sixes ?: 0
+            currentInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }?.sixes ?: 0
 
-        val isResolved = currentSixes >= targetSixes
         // check if player got out or innings over
-        val result = if (isResolved) "Yes" else "No"
+        val result = if (currentSixes >= targetSixes) "Yes" else "No"
 
-        return QuestionResolution(isResolved, result)
+        return QuestionResolution(true, result)
     }
 }

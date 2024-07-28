@@ -103,8 +103,8 @@ class EventService(
         inningEntity.apply {
             this.matchId = matchId
             inningsNumber = currentInnings.inningsId
-            battingTeamId = currentInnings.battingTeam.id
-            bowlingTeamId = currentInnings.bowlingTeam.id
+            battingTeamId = currentInnings.battingTeam?.id
+            bowlingTeamId = currentInnings.bowlingTeam?.id
             totalRuns += currentInnings.totalRuns
             totalWickets += currentInnings.wickets
             overs = currentInnings.overs

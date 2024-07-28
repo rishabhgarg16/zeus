@@ -43,7 +43,8 @@ class EventController(
         @RequestBody scoreCard: Hit11Scorecard
     ): ResponseEntity<UpdateQuestionsResponse> {
         // Call QuestionService to update questions based on the ball event
-        val latestBallEvent = scoreCard.innings.ballByBallEvents.sortedByDescending { it.ballNumber }
+        val currentInnings = scoreCard.innings.find{ it.isCurrentInnings == true}
+        val latestBallEvent = currentInnings?.ballByBallEvents?.sortedByDescending { it.ballNumber }
         logger.info("[QuestionUpdate] processing scorecard for match ${scoreCard.matchId} and ball number $latestBallEvent")
         val updatedQuestionsResponse =
             questionService.updateQuestions(scoreCard)

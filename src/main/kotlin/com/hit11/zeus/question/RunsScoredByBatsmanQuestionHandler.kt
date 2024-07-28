@@ -21,9 +21,8 @@ class RunsScoredByBatsmanQuestionHandler : QuestionHandler {
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, null)
         val targetRuns = question.targetRuns ?: return QuestionResolution(false, null)
-
-        val batsmanPerformance = matchState.liveScorecard.innings.battingPerformances
-            .find { it.playerId == targetBatsmanId }
+        val currentInnings = matchState.liveScorecard.innings.find{ it.isCurrentInnings }
+        val batsmanPerformance = currentInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
 
         val isResolved = batsmanPerformance?.runs?.let { it >= targetRuns } ?: false
         // check if batsman is out or innning over

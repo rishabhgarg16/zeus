@@ -10,8 +10,8 @@ data class Inning(
     val id: Int = 0,
     var matchId: Int = 0,
     var inningsNumber: Int = 0,
-    var battingTeamId: Int = 0,
-    var bowlingTeamId: Int = 0,
+    var battingTeamId: Int? = null,
+    var bowlingTeamId: Int? = null,
     // runs
     var totalRuns: Int = 0,
     var totalSixes: Int = 0,

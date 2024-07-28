@@ -21,9 +21,10 @@ class WicketsInOverQuestionHandler : QuestionHandler {
 
     override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean {
         val targetOvers = question.targetOvers
-        val currentOver = matchState.liveScorecard.innings.overs
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
+        val currentOver = currentInnings?.overs
         return when {
-            targetOvers != null -> currentOver.toInt() + 1 == targetOvers
+            targetOvers != null -> (currentOver?.toInt()?.plus(1) ?: -1) == targetOvers
             else -> false
         }
     }
@@ -44,11 +45,11 @@ class WicketsInOverQuestionHandler : QuestionHandler {
     }
 
     private fun countWicketsInOver(scorecard: Hit11Scorecard, targetBowlerId: Int): Int {
-        val commentaryList = scorecard.innings.ballByBallEvents
-        val bowlerId = scorecard.innings.bowlingPerformances.find {it.onStrike == 1}?.playerId ?: -1
-        if(targetBowlerId != bowlerId) {
-            throw QuestionValidationException("Target bowler ID is different to bolwer on strike")
-        }
+//        val commentaryList = scorecard.innings.ballByBallEvents
+//        val bowlerId = scorecard.innings.bowlingPerformances.find {it.onStrike == 1}?.playerId ?: -1
+//        if(targetBowlerId != bowlerId) {
+//            throw QuestionValidationException("Target bowler ID is different to bolwer on strike")
+//        }
         var wicketCount = 0
         val overNumber =
 

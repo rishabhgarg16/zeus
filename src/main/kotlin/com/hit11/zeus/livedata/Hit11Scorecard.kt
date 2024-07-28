@@ -1,7 +1,7 @@
 package com.hit11.zeus.livedata
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.math.BigDecimal
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -17,7 +17,7 @@ data class Hit11Scorecard(
     val result: MatchResult = MatchResult(),
     val team1: Team = Team(),
     val team2: Team = Team(),
-    val innings: Innings = Innings(),
+    val innings: List<Innings> = listOf(),
     val playerOfTheMatch: PlayerOfTheMatch = PlayerOfTheMatch(),
     val tossResult: TossResult? = null
 )
@@ -55,8 +55,9 @@ data class Team(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Innings(
     val inningsId: Int = 0,
-    val battingTeam: Team = Team(),
-    val bowlingTeam: Team = Team(),
+    @JsonProperty("isCurrentInnings") val isCurrentInnings: Boolean = false,
+    val battingTeam: Team? = null,
+    val bowlingTeam: Team? = null,
     val totalRuns: Int = 0,
     val wickets: Int = 0,
     val totalExtras: Int = 0,

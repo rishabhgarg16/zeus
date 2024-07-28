@@ -15,7 +15,8 @@ class TeamRunsInMatchQuestionHandler : QuestionHandler {
     }
 
     override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean {
-        return matchState.liveScorecard.innings.battingTeam.id == question.targetTeamId
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
+        return currentInnings?.battingTeam?.id == question.targetTeamId
     }
 
     override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
@@ -24,12 +25,12 @@ class TeamRunsInMatchQuestionHandler : QuestionHandler {
         }
 
         val targetRuns = question.targetRuns ?: return QuestionResolution(false, null)
-        val currentRuns = matchState.liveScorecard.innings.totalRuns
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
+        val currentRuns = currentInnings?.totalRuns ?: -1
 
-        val isResolved = currentRuns >= targetRuns
         // check if innings over or chasing in 2nd innings
-        val result = if (isResolved) "Yes" else "No"
+        val result = if (currentRuns >= targetRuns) "Yes" else "No"
 
-        return QuestionResolution(isResolved, result)
+        return QuestionResolution(true, result)
     }
 }
