@@ -263,8 +263,11 @@ def convert_cricbuzz_to_hit11(cricbuzz_data):
 
 
 def convert_toss_result(toss_results):
+    tossWinnerTeamId = 0
+    if 'tossWinnerId' in toss_results:
+        tossWinnerTeamId = get_internal_team_id(toss_results['tossWinnerId'])
     return {
-        'tossWinnerTeamId': get_internal_team_id(toss_results['tossWinnerId']),
+        'tossWinnerTeamId': tossWinnerTeamId,
         'tossWinnerName': toss_results['tossWinnerName'],
         'tossDecision': toss_results['decision']
     }
@@ -499,7 +502,7 @@ def process_cricbuzz_data(cricbuzz_data):
 
 while True:
     try:
-        cricbuzz_data = call_cricbuzz_commentry_api(101535)
+        cricbuzz_data = call_cricbuzz_commentry_api(101540)
         process_cricbuzz_data(cricbuzz_data)
     except FileNotFoundError:
         print("Error: cricbuzz_data.json file not found.")
