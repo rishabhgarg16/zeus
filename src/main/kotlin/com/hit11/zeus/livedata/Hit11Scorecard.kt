@@ -18,7 +18,7 @@ data class Hit11Scorecard(
     val team1: Team = Team(),
     val team2: Team = Team(),
     val innings: List<Innings> = listOf(),
-    val playerOfTheMatch: PlayerOfTheMatch = PlayerOfTheMatch(),
+    val playerOfTheMatch: PlayerOfTheMatch? = null,
     val tossResult: TossResult? = null
 )
 
