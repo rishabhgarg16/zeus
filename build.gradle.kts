@@ -34,8 +34,13 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("redis.clients:jedis")
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.7.6")
     implementation(kotlin("script-runtime"))
+//    AWS SDK v2 dependencies
+    implementation(platform("software.amazon.awssdk:bom:2.17.290"))
+    implementation("software.amazon.awssdk:sqs")
 }
 
 tasks.test {
@@ -59,7 +64,7 @@ publishing {
             groupId = "ai.hit11"
             artifactId = "zeus"
             // if getting 409, bump the version
-            version = "0.5.1"
+            version = "0.6.2"
         }
     }
     repositories {
@@ -69,7 +74,8 @@ publishing {
                 username = "aws"
                 // if getting 401, run
                 // aws codeartifact get-authorization-token --domain hitcentral --domain-owner 590183692348 --region ap-south-1 --query authorizationToken --output text
-                password = "eyJ2ZXIiOjEsImlzdSI6MTcxOTA2MjgxMCwiZW5jIjoiQTEyOEdDTSIsInRhZyI6Ikw0X3N0eVYzeDNPak1jTklFa09FZXciLCJleHAiOjE3MTkxMDYwMTAsImFsZyI6IkExMjhHQ01LVyIsIml2IjoicWZ0T0tiNVVYVW1SYVJxaSJ9.bEpH-2ck07erA-MLlFtBhA.686LFPa2gAbzA0EX.ShcUqTgRTZ53dHf9WPvWHLCl5cGGu8V3nOzG6S_MLitEMFYOmcuVwShoiiYFmCnX5hzUfoq9l20QZrwdHs427S9L1S3Ahi-xZjGY9U7I_6KD40Q3aOwKsp3BMsmvrg9VOPVzf4gq_WCM1lBFO79qdwsEUxL-FQf0tZVj8MMQbfZcnHRKxwIFbEJpMoFllhhXFy-nCXmLJ165r2Enhz5qA-fCe3zwVYJLOzdlIZPkj_FlaJHqp8oxUViJcu2Ik9Op7R8cCYHr2c0vLmSYq-rQhRva0MfITNU1Zdhlwq_WN7SzSmbW2Xatjp0s_5Nd4i-07ujKd8i-YgwglyE8aZGUVhHtCYBmoft7mIpVoV4VWhqwvXEsq12_7Hq-GFAQGeuO5yvKqEfxzPkaDTHS5kLxd5RV4c9yu46yFQSBIOp0HZ4sAMHrV3vjunij5bbY04NB3WTIwJTM2uXc9BEPtPtFRrwKvCLkyBkp0g3WPJ1tE0OQtjxx8bf3HRFJWFSkTNnmJjJDxY0_NTQIHhvaoeMUmPvGU8vEIYreR97qMw6jy1boVUkbcCyjZGmPQihfr3jV4ayiY0xfoY_6hwKYIHpg53bDJtIbDDPqXIGvOMW5z8jG0ivXOHM0pgj72wUEHh1OkUUuwWFFYqGBIZAy-vxXfNIm-w2GMk9JH4yDTAPKoekkpoKvFqBDVtJcRauuH8yH4D-gYPP1Q4onLqpklVcY58nhVEB8MR674taCGFuBQQkaMBnQQt0FkWgw5Kn62toLl0vkX_g4RYmfuQey_M4aVOaWTehamAPfCAcREPA6xxvZrp0LcP7caKFZ_jqwJgdJy8DyiiqZqQu0bBC_Ht9DxXmvTc5MG2XJ-6miFD-0V_4uWwIxKl6nEMmwRkysS9EECAz3xhz4YXPFfxX7SoT_o2TAhLTv-QIK-PYS3LHis1hCH1X6dbDswVGcg1f3fnbxaKHXHT4J4sqWX4GAAgeT4wZRtrGppQGqn-ltXrPvr-IMYCCKMauktXZBWw.-n0SyC2YXMz43B01Bxsr1Q"
+                password =
+                    "eyJ2ZXIiOjEsImlzdSI6MTcyMjE2Nzc1MSwiZW5jIjoiQTEyOEdDTSIsInRhZyI6ImRPU05ZUENVU1JwZDRvNnIyclFMNUEiLCJleHAiOjE3MjIyMTA5NTEsImFsZyI6IkExMjhHQ01LVyIsIml2IjoiUjNqWEtaWUFNYm94cWlqOSJ9.TuGcKTf-T6wUdfIAH8GGfQ.DqiFF1tjKXPbFWve.CjYQwQ34JiUkyFhEZT8SDQhJzoi-agu11yb16JmR6Dvzu_NnS6xgAciB-s2CJ9i0cA-WS-Vb-TgUiC50-8IRF4lHNO7rpcYrbW2YGGWJnjW2RfQ81sSW-1_QW1XZFQjKYynd_jZji9NhYRrKA6NZzPT3NSaJbIAnaXXgubCuH80Miruz2UNqU5KYlu3UM6xN0D3huwzsWxm5la0AofSMuCB8Xz5Od65mNw0puh23K-hBxcdlM84nlO5fmagTNkLN3kvsrEC6SRFmx7TMmWOFLH7PH0aVGuzv4_pIhn7nPwarR9NKXQ3kGhXZ4lsQGiAEs_-WzlMvXUlEi9SE5vFy-MBmeC1cuKpuy5mBW2I-ZaYv4WqaaSDk2uah_5HJobxbRw_5GdarpcErZfT5ffD7xqhmb0TxjUPVOiP6ZNnVm-3pKqQueq6bISC7hsmCJ15tq72mkcTLdc4H2-nwFWviKr--oY8RYpj6PT4l5JxQ8n8uwMPXgy0RBy5VdPSTy0R70J-kN5y1hJa-hdmwTjDTOHPsECxVJ2LWp9cCjkVzyQbodgMgT2JPoPLHdp-NbZ9J8mY4Ywqvk_MO13BPDY_GldV8V2ZVT8VZPYeRbudZh9Fy_u72w08zEJoF9jVCZ5qJoNOUVQVPFlBl5EAoW5-WJoB4DSV23DxOTXIl4RP0FHbRRMatPgLZbwaCPRcg599SF_PFY8u_PMtiRPR5-CXM6NS1FyF1UKjOW_Ovw10JpJXOqK8HvP0Uk-b6ZMd_puLBVSdgpd96wpmy8GRYjZzGhxgYMCn1__rGzbnk-5_nzoIfvgieagSmwH5V5QNkNEJKduDIck8LrXfGkKqKxxJd_lsxdypRZcBOdamJdek-G1BkA1xeewTYSLyulFmthOKZae0X03VoCbDyBseUmK4brUh5El0DLD3iwqnZk58Spg9-IjJkljHa_rMEDhY1ZdILgQ7D2Sx59zKTleSc_RsC5Q.K-DWQ4TmSWRsrxmbeeC1ng"
             }
         }
     }

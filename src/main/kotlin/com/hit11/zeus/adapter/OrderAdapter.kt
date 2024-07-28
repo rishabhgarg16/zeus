@@ -1,6 +1,10 @@
 package com.hit11.zeus.adapter
 
-import com.hit11.zeus.model.*
+import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.response.OrderResponse
+import com.hit11.zeus.oms.OrderDataModel
+import com.hit11.zeus.oms.OrderPlaceRequest
+import java.math.RoundingMode
 import java.time.Instant
 
 object OrderAdapter {
@@ -12,23 +16,25 @@ object OrderAdapter {
             matchId = request.matchId,
             userAnswer = request.userAnswer,
             answerTime = Instant.ofEpochMilli(request.answerTime),
-            userWager = request.userWager,
+            price = request.price.toBigDecimal()
+                .setScale(2, RoundingMode.HALF_UP),
             quantity = request.userTradeQuantity,
-            tradeAmount = request.userTradeQuantity * request.userWager
+            totalAmount = request.userTradeQuantity.toBigDecimal() * request.price.toBigDecimal()
+                .setScale(2, RoundingMode.HALF_UP)
         )
     }
 
     // combines user response + pulse data together
-    fun OrderDataModel.toTradeResponse(questionDataModel: QuestionDataModel): TradeResponse {
-        return TradeResponse(
+    fun OrderDataModel.toOrderResponse(questionDataModel: QuestionDataModel): OrderResponse {
+        return OrderResponse(
             userId = userId,
             pulseId = pulseId,
             pulseDetail = questionDataModel.pulseQuestion,
-            userWager = userWager,
+            price = price,
             userAnswer = userAnswer,
             answerTime = answerTime,
             matchId = questionDataModel.matchId,
-            userResult = checkIfUserWon(userAnswer, questionDataModel),
+            state = state.name,
             isPulseActive = questionDataModel.enabled,
             pulseImageUrl = questionDataModel.pulseImageUrl,
             pulseEndDate = questionDataModel.pulseEndDate,

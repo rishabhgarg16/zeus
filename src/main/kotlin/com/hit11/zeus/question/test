@@ -1,0 +1,615 @@
+  "commentaryList":[
+    {
+      "commText":"India make a mockery of another opposition to reach yet another final of the Women's Asia Cup. Who'll they face in the finale? The second semifinal between Sri Lanka and Pakistan will commence shortly here at the same venue. Let's hope that we are treated to a thriller. See you there. For now, goodbye...",
+      "timestamp":1721992447046,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":"B0$ Our bowlers did a great job. Whatever we spoke in the team meeting, they did the same. Really proud of the way they are bowling. A lot of pressure on us because we have been dominating Asian cricket. For us, things are simple. We want to go out there and express. We prepare ourselves hard in the nets. (On the bowling unit) Every day, they are coming up with positive approaches. They are coming up with nice ideas. They are giving me confidence. They are always there for the team. (Improvement) Consistency is something which is very important for us. We want to keep doing what we've been doing. We'll watch the game (Sri Lanka vs Pakistan) tonight and see whoever is there and prepare accordingly.",
+      "timestamp":1721992240173,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "Harmanpreet Kaur:"
+          ]
+        }
+      }
+    },
+    {
+      "commText":"B0$ Very happy. It was an important match, pleased to perform well here. I focused on my basics. Whatever I prepared yesterday,  I executed that. There was help with the strong breeze. I love to bowl with the new ball.",
+      "timestamp":1721992139454,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "Renuka Thakur Singh | Player of the Match:"
+          ]
+        }
+      }
+    },
+    {
+      "commText":"B0$ We couldn't get the ideal start what we wanted. Losing so many runs in the powerplay and not getting runs, it's pretty difficult to move on. It's a mental aspect. When they played against India, they played differently. We need to to work on our batting unit. Just because of that, we are losing so many games. The coaching staff will come up with a good plan. It's a good experience for us. Before World Cup, we'll try to rectify our mistakes.",
+      "timestamp":1721991952187,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "Nigar Sultana:"
+          ]
+        }
+      }
+    },
+    {
+      "commText":"B0$ Ninth edition of the Women's Asia Cup and India enter the final for the ninth time! Barring the toss, everything went right for them today. Renuka Thakur Singh got them off to a brilliant start by removing the top three Bangladeshi batters cheaply. The 2018 champions struggled to find any sort of momentum with the bat. Not only were boundaries tough to find, they also struggled to rotate strike. Nigar Sultana and Shorna Akter were the only Bangladesh batters to get to double-digits. Radha Yadav capped off the innings with a double-wicket maiden and India restricted Bangladesh 80/8. The chase, as expected, turned out to be a cakewalk for the defending champions. Smriti Mandhana hit a flurry of boundaries and India wiped off more than 50 percent of the target inside 5 overs. The result was a foregone conclusion. Jahanara had Mandhana caught at backward point on 35 but the pacer had overstepped by a long way. Shafali Verma, not at her fluent best today, was dropped in the following over. The stylish left-hander finished it off in style. A hat-trick of boundaries and got to her fifty in the process as well as India romped home with 9 overs to spare.",
+      "timestamp":1721991390358,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "16:26 Local Time, 10:56 GMT, 16:26 IST:"
+          ]
+        }
+      }
+    },
+    {
+      "commText":" Nahida Akter to Mandhana, B0$, overpitched, Mandhana backs away and hammers it over extra cover. Probably a half-chance and the ball went through the fingertips of the fielder before racing away to the fence. B1$ ",
+      "timestamp":1721991337795,
+      "ballNbr":66,
+      "overNumber":10.6,
+      "inningsId":2,
+      "event":"over-break,FOUR",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$",
+            "B1$"
+          ],
+          "formatValue":[
+            "FOUR",
+            "India enter the final with a thumping 10-wicket win"
+          ]
+        }
+      },
+      "overSeparator":{
+        "score":83,
+        "wickets":0,
+        "inningsId":2,
+        "o_summary":"1 0 0 4 4 4 ",
+        "runs":13,
+        "batStrikerIds":[
+          10012
+        ],
+        "batStrikerNames":[
+          "Smriti Mandhana"
+        ],
+        "batStrikerRuns":55,
+        "batStrikerBalls":39,
+        "batNonStrikerIds":[
+          14825
+        ],
+        "batNonStrikerNames":[
+          "Shafali Verma"
+        ],
+        "batNonStrikerRuns":26,
+        "batNonStrikerBalls":28,
+        "bowlIds":[
+          11380
+        ],
+        "bowlNames":[
+          "Nahida Akter"
+        ],
+        "bowlOvers":3.0,
+        "bowlMaidens":0,
+        "bowlRuns":34,
+        "bowlWickets":0,
+        "timestamp":1721991337795,
+        "overNum":10.6,
+        "batTeamName":"INDW",
+        "event":"over-break"
+      }
+    },
+    {
+      "commText":" Nahida Akter to Mandhana, B0$, deft touch now! Stays leg-side, opens her bat-face and runs this length ball down to third man. The boundary brings up B1$ ",
+      "timestamp":1721991300752,
+      "ballNbr":65,
+      "overNumber":10.5,
+      "inningsId":2,
+      "event":"FIFTY",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$",
+            "B1$"
+          ],
+          "formatValue":[
+            "FOUR",
+            "Smriti Mandhana's half-century!"
+          ]
+        }
+      }
+    },
+    {
+      "commText":" Nahida Akter to Mandhana, B0$, full and in the slot, Mandhana gets down to slogsweep. Splits the gap between deep backward square leg and deep midwicket perfectly for a one-bounce four ",
+      "timestamp":1721991258835,
+      "ballNbr":64,
+      "overNumber":10.4,
+      "inningsId":2,
+      "event":"FOUR",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "FOUR"
+          ]
+        }
+      }
+    },
+    {
+      "commText":" Nahida Akter to Mandhana, no run, makes room and chops this length ball to cover ",
+      "timestamp":1721991236132,
+      "ballNbr":63,
+      "overNumber":10.3,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":"Nahida Akter to Mandhana, no run, flighted ball on the stumps, Mandhana blocks",
+      "timestamp":1721991219376,
+      "ballNbr":62,
+      "overNumber":10.2,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":" Nahida Akter to Shafali Verma, 1 run, miscues the slogsweep to deep midwicket ",
+      "timestamp":1721991189552,
+      "ballNbr":61,
+      "overNumber":10.1,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":"B0$",
+      "timestamp":1721991176708,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "Nahida Akter [2.0-0-21-0] is back into the attack"
+          ]
+        }
+      }
+    },
+    {
+      "commText":"B0$ are on the field now!",
+      "timestamp":1721990957446,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "Drinks"
+          ]
+        }
+      }
+    },
+    {
+      "commText":" Rumana Ahmed to Shafali Verma, 1 run, no pace to work with. Shafali Verma skips down the pitch, waits and cuts it through extra cover off the lower part of the bat ",
+      "timestamp":1721990954446,
+      "ballNbr":60,
+      "overNumber":9.6,
+      "inningsId":2,
+      "event":"over-break",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      },
+      "overSeparator":{
+        "score":70,
+        "wickets":0,
+        "inningsId":2,
+        "o_summary":"1 1 1 1 0 1 ",
+        "runs":5,
+        "batStrikerIds":[
+          14825
+        ],
+        "batStrikerNames":[
+          "Shafali Verma"
+        ],
+        "batStrikerRuns":25,
+        "batStrikerBalls":27,
+        "batNonStrikerIds":[
+          10012
+        ],
+        "batNonStrikerNames":[
+          "Smriti Mandhana"
+        ],
+        "batNonStrikerRuns":43,
+        "batNonStrikerBalls":34,
+        "bowlIds":[
+          11382
+        ],
+        "bowlNames":[
+          "Rumana Ahmed"
+        ],
+        "bowlOvers":1.0,
+        "bowlMaidens":0,
+        "bowlRuns":5,
+        "bowlWickets":0,
+        "timestamp":1721990954446,
+        "overNum":9.6,
+        "batTeamName":"INDW",
+        "event":"over-break"
+      }
+    },
+    {
+      "commText":" Rumana Ahmed to Shafali Verma, no run, fullish on off, Shafali Verma tries to reverse-sweep and gets an inside edge that brushes the pad and goes between her legs ",
+      "timestamp":1721990929194,
+      "ballNbr":59,
+      "overNumber":9.5,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":" Rumana Ahmed to Mandhana, 1 run, more air and fuller, Mandhana eases the drive to long-off ",
+      "timestamp":1721990906932,
+      "ballNbr":58,
+      "overNumber":9.4,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":" Rumana Ahmed to Shafali Verma, 1 run, pushed through quicker and flatter, Shafali Verma punches to long-off ",
+      "timestamp":1721990888436,
+      "ballNbr":57,
+      "overNumber":9.3,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":" Rumana Ahmed to Mandhana, 1 run, slow leggie, chopped to the left of extra cover ",
+      "timestamp":1721990864993,
+      "ballNbr":56,
+      "overNumber":9.2,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":" Rumana Ahmed to Shafali Verma, 1 run, pulled through midwicket off the back foot ",
+      "timestamp":1721990833991,
+      "ballNbr":55,
+      "overNumber":9.1,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        
+      }
+    },
+    {
+      "commText":"B0$",
+      "timestamp":1721990822415,
+      "ballNbr":0,
+      "inningsId":2,
+      "event":"NONE",
+      "batTeamName":"INDW",
+      "commentaryFormats":{
+        "bold":{
+          "formatId":[
+            "B0$"
+          ],
+          "formatValue":[
+            "Rumana Ahmed, right-arm leg break, comes into the attack"
+          ]
+        }
+      }
+    }
+  ],
+  "matchHeader":{
+    "matchId":91992,
+    "matchDescription":"1st Semi Final (A1 v B2)",
+    "matchFormat":"T20",
+    "matchType":"International",
+    "complete":true,
+    "domestic":false,
+    "matchStartTimestamp":1721982600000,
+    "matchCompleteTimestamp":1721991346122,
+    "dayNight":false,
+    "year":2024,
+    "state":"Complete",
+    "status":"India Women won by 10 wkts",
+    "tossResults":{
+      "tossWinnerId":329,
+      "tossWinnerName":"Bangladesh Women",
+      "decision":"Batting"
+    },
+    "result":{
+      "resultType":"win",
+      "winningTeam":"India Women",
+      "winningteamId":97,
+      "winningMargin":10,
+      "winByRuns":false,
+      "winByInnings":false
+    },
+    "revisedTarget":{
+      "reason":""
+    },
+    "playersOfTheMatch":[
+      {
+        "id":14491,
+        "name":"Renuka Singh",
+        "fullName":"Renuka Thakur Singh",
+        "nickName":"Renuka Singh",
+        "captain":false,
+        "keeper":false,
+        "substitute":false,
+        "teamName":"India Women Green",
+        "faceImageId":254924
+      }
+    ],
+    "playersOfTheSeries":[
+      
+    ],
+    "matchTeamInfo":[
+      {
+        "battingTeamId":329,
+        "battingTeamShortName":"BANW",
+        "bowlingTeamId":97,
+        "bowlingTeamShortName":"INDW"
+      },
+      {
+        "battingTeamId":97,
+        "battingTeamShortName":"INDW",
+        "bowlingTeamId":329,
+        "bowlingTeamShortName":"BANW"
+      }
+    ],
+    "isMatchNotCovered":false,
+    "team1":{
+      "id":97,
+      "name":"India Women",
+      "playerDetails":[
+        
+      ],
+      "shortName":"INDW"
+    },
+    "team2":{
+      "id":329,
+      "name":"Bangladesh Women",
+      "playerDetails":[
+        
+      ],
+      "shortName":"BANW"
+    },
+    "seriesDesc":"Womens Asia Cup T20, 2024",
+    "seriesId":7765,
+    "seriesName":"Womens Asia Cup T20, 2024",
+    "alertType":"auto",
+    "livestreamEnabled":false
+  },
+  "miniscore":{
+    "inningsId":2,
+    "batsmanStriker":{
+      "batBalls":28,
+      "batDots":8,
+      "batFours":2,
+      "batId":14825,
+      "batName":"Shafali Verma",
+      "batMins":47,
+      "batRuns":26,
+      "batSixes":0,
+      "batStrikeRate":92.86
+    },
+    "batsmanNonStriker":{
+      "batBalls":39,
+      "batDots":16,
+      "batFours":9,
+      "batId":10012,
+      "batName":"Smriti Mandhana",
+      "batMins":47,
+      "batRuns":55,
+      "batSixes":1,
+      "batStrikeRate":141.03
+    },
+    "batTeam":{
+      "teamId":97,
+      "teamScore":83,
+      "teamWkts":0
+    },
+    "bowlerStriker":{
+      "bowlId":11382,
+      "bowlName":"Rumana Ahmed",
+      "bowlMaidens":0,
+      "bowlNoballs":0,
+      "bowlOvs":1.0,
+      "bowlRuns":5,
+      "bowlWides":0,
+      "bowlWkts":0,
+      "bowlEcon":5.0
+    },
+    "bowlerNonStriker":{
+      "bowlId":11380,
+      "bowlName":"Nahida Akter",
+      "bowlMaidens":0,
+      "bowlNoballs":0,
+      "bowlOvs":3.0,
+      "bowlRuns":34,
+      "bowlWides":0,
+      "bowlWkts":0,
+      "bowlEcon":11.33
+    },
+    "overs":10.6,
+    "recentOvsStats":"...  | 1 1 1 1 0 1  | 1 0 0 4 4 4",
+    "target":81,
+    "partnerShip":{
+      "balls":67,
+      "runs":83
+    },
+    "currentRunRate":7.55,
+    "requiredRunRate":0.0,
+    "matchScoreDetails":{
+      "matchId":91992,
+      "inningsScoreList":[
+        {
+          "inningsId":2,
+          "batTeamId":97,
+          "batTeamName":"INDW",
+          "score":83,
+          "wickets":0,
+          "overs":10.6,
+          "isDeclared":false,
+          "isFollowOn":false,
+          "ballNbr":66
+        },
+        {
+          "inningsId":1,
+          "batTeamId":329,
+          "batTeamName":"BANW",
+          "score":80,
+          "wickets":8,
+          "overs":19.6,
+          "isDeclared":false,
+          "isFollowOn":false,
+          "ballNbr":120
+        }
+      ],
+      "tossResults":{
+        "tossWinnerId":329,
+        "tossWinnerName":"Bangladesh Women",
+        "decision":"Batting"
+      },
+      "matchTeamInfo":[
+        {
+          "battingTeamId":329,
+          "battingTeamShortName":"BANW",
+          "bowlingTeamId":97,
+          "bowlingTeamShortName":"INDW"
+        },
+        {
+          "battingTeamId":97,
+          "battingTeamShortName":"INDW",
+          "bowlingTeamId":329,
+          "bowlingTeamShortName":"BANW"
+        }
+      ],
+      "isMatchNotCovered":false,
+      "matchFormat":"T20",
+      "state":"Complete",
+      "customStatus":"India Women won by 10 wkts",
+      "highlightedTeamId":97
+    },
+    "latestPerformance":[
+      {
+        "runs":37,
+        "wkts":0,
+        "label":"Last 5 overs"
+      },
+      {
+        "runs":25,
+        "wkts":0,
+        "label":"Last 3 overs"
+      }
+    ],
+    "ppData":{
+      "pp_1":{
+        "ppId":2,
+        "ppOversFrom":0.1,
+        "ppOversTo":6.0,
+        "ppType":"mandatory",
+        "runsScored":46
+      }
+    },
+    "overSummaryList":[
+      
+    ],
+    "status":"India Women won by 10 wkts",
+    "remRunsToWin":0,
+    "responseLastUpdated":1721994683,
+    "event":"FOUR,OVER-BREAK"
+  },
+  "commentarySnippetList":[
+    
+  ],
+  "page":"commentary",
+  "enableNoContent":false,
+  "matchVideos":[
+    
+  ],
+  "responseLastUpdated":1721994683
+}
+Error processing Cricbuzz data: the JSON object must be str, bytes or bytearray, not Response

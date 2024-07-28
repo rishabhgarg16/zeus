@@ -1,0 +1,19 @@
+package com.hit11.zeus.model.response
+
+import java.time.Instant
+
+class QuestionResponse(
+    var id: Int = 0,
+    val matchId: Int = 0,
+    var pulseDetails: String = "",
+    var optionA: String = "",
+    var optionAWager: Long = -1L,
+    var optionB: String = "",
+    var optionBWager: Long = -1L,
+    var userACount: Long = -1L,
+    var userBCount: Long = -1L,
+    var category: List<String> = ArrayList(),
+    var enabled: Boolean = false,
+    var pulseImageUrl: String = "",
+    var pulseEndDate: Instant = Instant.now(),
+)

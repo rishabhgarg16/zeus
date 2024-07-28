@@ -18,13 +18,13 @@ import org.springframework.stereotype.Repository
 }
 
 @Repository interface InningRepository : JpaRepository<Inning, Int> {
-    fun findByMatchIdAndInningNumber(matchId: Int, inningNumber: Int): Inning?
+    fun findByMatchIdAndInningsNumber(matchId: Int, inningsNumber: Int): Inning?
 }
 
-@Repository interface ScoreRepository : JpaRepository<Score, Int> {
+@Repository interface BallEventRepository : JpaRepository<BallEventEntity, Int> {
 
     @Query(
-        "SELECT COUNT(*) FROM Score " +
+        "SELECT COUNT(*) FROM BallEventEntity " +
         "WHERE matchId = :matchId " +
         "AND bowlerId = :bowlerId " +
         "AND overNumber = :overNumber " +
@@ -39,13 +39,13 @@ import org.springframework.stereotype.Repository
     fun findTopByMatchIdAndInningIdOrderByOverNumberDescBallNumberDesc(
         matchId: Int,
         inningId: Int
-    ): Score?
+    ): BallEventEntity?
 
-    @Query("SELECT s FROM Score s WHERE s.matchId = :matchId AND s.inningId = :inningId")
+    @Query("SELECT s FROM BallEventEntity s WHERE s.matchId = :matchId AND s.inningId = :inningId")
     fun findByMatchIdAndInningId(
         matchId: Int,
         inningId: Int
-    ): List<Score>?
+    ): List<BallEventEntity>?
 }
 
 @Repository interface BatsmanPerformanceRepository : JpaRepository<BatsmanPerformance, Int> {
@@ -53,6 +53,11 @@ import org.springframework.stereotype.Repository
         matchId: Int,
         playerId: Int
     ): BatsmanPerformance?
+
+    fun findByMatchIdAndPlayerIdIn(
+        matchId: Int,
+        playerIds: List<Int>
+    ): List<BatsmanPerformance?>
 }
 
 @Repository interface BowlerPerformanceRepository : JpaRepository<BowlerPerformance, Int> {
@@ -60,4 +65,9 @@ import org.springframework.stereotype.Repository
         matchId: Int,
         playerId: Int
     ): BowlerPerformance?
+
+    fun findByMatchIdAndPlayerIdIn(
+        matchId: Int,
+        playerIds: List<Int>
+    ) : List<BowlerPerformance?>
 }

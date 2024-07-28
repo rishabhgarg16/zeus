@@ -9,12 +9,16 @@ enum class QuestionType(val text: String) {
     MATCH_WINNER("match_winner"),
     RUNS_IN_MATCH("runs_in_match"),
     SUPER_OVER_IN_MATCH("super_over_in_match"),
+    WIN_BY_RUNS_MARGIN("win_by_runs_margin"),
+    TOSS_WINNER("toss_winner"),
+    TOSS_DECISION("toss_decision"),
 
     // batting questions
     TOP_SCORER("top_scorer"),
     SIXES_IN_MATCH("sixes_in_match"),
-    CENTURY_BY_BATSMAN("century_in_match"),
+    RUNS_SCORED_BY_BATSMAN("runs_scored_by_batsman"),
     TEAM_RUNS_IN_MATCH("team_runs_in_match"),
+    MAN_OF_THE_MATCH("man_of_the_match"),
 
     // bowling
     WICKETS_IN_MATCH("wickets_in_match"),
@@ -46,8 +50,8 @@ class QuestionDataModel(
     val userACount: Long? = -1L,
     val userBCount: Long? = -1L,
     val category: List<String>? = ArrayList(),
-    val enabled: Boolean = false,
-    val pulseResult: String? = "",
+    var enabled: Boolean = false,
+    var pulseResult: String? = "",
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
     val targetRuns: Int? = 0,
@@ -60,8 +64,11 @@ class QuestionDataModel(
     val targetBoundaries: Int? = 0,
     val questionType: QuestionType = QuestionType.INVALID,
     val targetBatsmanId: Int? = 0,
-    val targetBowlerId: Int? = 0
+    val targetBowlerId: Int? = 0,
+    val targetTeamId: Int? = 0,
+    val targetTossDecision: String? = "",
 ) {
+
     fun maptoEntity(): QuestionEntity {
         return QuestionEntity(
             id = this.id,
@@ -88,6 +95,8 @@ class QuestionDataModel(
             targetSpecificOver = this.targetSpecificOver,
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
+            targetTeamId = this.targetTeamId,
+            targetTossDecision = this.targetTossDecision,
             questionType = this.questionType.text
         )
     }
@@ -141,6 +150,9 @@ data class QuestionEntity(
     val targetExtras: Int? = 0,
     val targetWides: Int? = 0,
     val targetBoundaries: Int? = 0,
+    val targetTeamId: Int? = 0,
+    @Column(name = "target_toss_decision")
+    val targetTossDecision: String? = null,
     val questionType: String? = "",
 
     @Column(
@@ -196,7 +208,9 @@ data class QuestionEntity(
             targetSpecificOver = this.targetSpecificOver,
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
-            questionType = QuestionType.fromText(this.questionType)
-        )
+            questionType = QuestionType.fromText(this.questionType),
+            targetTeamId = this.targetTeamId,
+            targetTossDecision = this.targetTossDecision,
+            )
     }
 }
