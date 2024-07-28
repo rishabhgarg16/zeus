@@ -36,8 +36,8 @@ class OrderOrchestrator(
 //        }
 
         // TODO order processing logic
-        orderService.createNewOrder(currentOrder)
-        tradeService.createTrade(currentOrder, currentOrder.quantity)
+        val createdOrder = orderService.createNewOrder(currentOrder)
+        tradeService.createTrade(createdOrder, createdOrder.quantity)
     }
 
 //    @Transactional
