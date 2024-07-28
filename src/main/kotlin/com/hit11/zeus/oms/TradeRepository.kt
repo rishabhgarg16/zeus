@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface TradeRepository : JpaRepository<Trade, Long> {
     fun findByUserIdAndPulseIdIn(userId: Int, pulseIds: List<Int>): List<Trade>
-    fun findByUserIdAndMatchIdIn(userId: Int, pulseIds: List<Int>): List<Trade>
+    fun findByUserIdAndMatchIdInOrderByCreatedAtDesc(userId: Int, pulseIds: List<Int>): List<Trade>
     fun findByPulseId(pulseId: Int): List<Trade>
 }

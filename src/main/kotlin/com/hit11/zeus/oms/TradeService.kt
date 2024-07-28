@@ -30,7 +30,7 @@ class TradeService(
         matchIdList: List<Int>
     ): List<TradeResponse>? {
         try {
-            val allTrades = tradeRepository.findByUserIdAndMatchIdIn(userId, matchIdList)
+            val allTrades = tradeRepository.findByUserIdAndMatchIdInOrderByCreatedAtDesc(userId, matchIdList)
             val matchQuestions = questionRepository.findAllByMatchIdIn(matchIdList).map { it.mapToQuestionDataModel() }
             val questionIdToQuestionMap = matchQuestions.associateBy { it.id }
             return allTrades.mapNotNull { trade ->
