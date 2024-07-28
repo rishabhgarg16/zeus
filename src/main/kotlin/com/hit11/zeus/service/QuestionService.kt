@@ -3,18 +3,11 @@ package com.hit11.zeus.service
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.livedata.Hit11Scorecard
-import com.hit11.zeus.model.BallEventEntity
-import com.hit11.zeus.model.Inning
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
 import com.hit11.zeus.model.response.QuestionAnswerUpdateResponse
-import com.hit11.zeus.oms.OrderService
-import com.hit11.zeus.oms.TradeService
 import com.hit11.zeus.question.QuestionHandlerFactory
-import com.hit11.zeus.repository.BallEventRepository
-import com.hit11.zeus.repository.BatsmanPerformanceRepository
-import com.hit11.zeus.repository.BowlerPerformanceRepository
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
 
@@ -68,7 +61,9 @@ class QuestionService(
                         question.pulseResult = resolution.result
                         question.enabled = false
                         questionRepository.save(question.maptoEntity())
-                        payoutService.processPayouts(question)
+                        if (resolution.result != null) {
+                            payoutService.processPayouts(question)
+                        }
                         updatedQuestions.add(question)
                     } else {
                         notUpdatedQuestions.add(question)
