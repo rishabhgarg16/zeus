@@ -11,6 +11,7 @@ Original file is located at
 
 import json
 import time
+import sys
 import mysql.connector
 import requests
 from datetime import datetime
@@ -90,4 +91,5 @@ def call_schedule_api():
 
 while True:
     call_schedule_api()
+    sys.stdout.flush()
     time.sleep(21600) # 6 hours
