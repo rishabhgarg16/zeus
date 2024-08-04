@@ -125,6 +125,13 @@ def get_internal_team_id(external_id):
     # cursor.close()
     return result[0] if result else None
 
+def get_internal_player_by_name(player_name, team_id):
+    cursor = db_connection.cursor()
+    query = "SELECT id FROM players WHERE name = %s AND team_id = %s"
+    cursor.execute(query, (player_name, team_id))
+    result = cursor.fetchone()
+    # cursor.close()
+    return result[0] if result else None
 
 def get_internal_player_id(external_id):
     cursor = db_connection.cursor()
@@ -423,6 +430,7 @@ def parse_last_wicket(last_wicket):
 def convert_batting_performances(miniscore, commentary_list):
     performances = []
     cricbuzz_team_id = miniscore['batTeam']['teamId']
+    internal_team_id = get_internal_team_id(cricbuzz_team_id)
 
     # Parse the last wicket information
     last_wicket_info = parse_last_wicket(miniscore.get('lastWicket', ''))
@@ -447,7 +455,7 @@ def convert_batting_performances(miniscore, commentary_list):
 
     # Add performance for the last dismissed player if not already in performances
     if last_wicket_info and last_wicket_info['player_name'] not in [p['playerName'] for p in performances]:
-        internal_id = get_or_create_internal_player_id(0, last_wicket_info['player_name'], cricbuzz_team_id)
+        internal_id = get_internal_player_by_name(last_wicket_info['player_name'], internal_team_id)
         performances.append({
             'playerId': internal_id,
             'playerName': last_wicket_info['player_name'],
@@ -466,7 +474,7 @@ def convert_batting_performances(miniscore, commentary_list):
         if comm['event'] == 'WICKET':
             wicket_info = parse_last_wicket(comm['commText'])
             if wicket_info and wicket_info['player_name'] not in [p['playerName'] for p in performances]:
-                internal_id = get_or_create_internal_player_id(0, wicket_info['player_name'], cricbuzz_team_id)
+                internal_id = get_internal_player_by_name(last_wicket_info['player_name'], internal_team_id)
                 performances.append({
                     'playerId': internal_id,
                     'playerName': wicket_info['player_name'],
