@@ -8,7 +8,6 @@ Original file is located at
 """
 
 # !pip install mysql-connector-python
-
 import json
 import time
 import sys
@@ -61,6 +60,41 @@ def update_table(match_row):
     else:
         print(f"Match already exist with externalid {match_row['cricbuzz_match_id']}")
 
+def get_or_create_internal_team_id(external_id, team_name, team_short_name):
+    cursor = mycursor
+
+    # Try to get existing team
+    query = "SELECT id as internal_id FROM teams WHERE cricbuzz_team_id = %s"
+    cursor.execute(query, (external_id,))
+    result = cursor.fetchone()
+
+    if result:
+        internal_id = result[0]
+    else:
+        # Team not found, create new entry in Zeus
+        new_team = {
+            'cricbuzz_team_id': external_id,
+            'team_name': team_name,
+            'team_short_name': team_short_name,
+            'team_image_url': None,  # We don't have this info from Cricbuzz
+            'created_at': datetime.now(),
+            'updated_at': datetime.now()
+        }
+
+        # Insert new team into Zeus
+        insert_query = """
+        INSERT INTO teams (team_name, team_short_name, team_image_url, cricbuzz_team_id, created_at, updated_at)
+        VALUES (%(team_name)s, %(team_short_name)s, %(team_image_url)s, %(cricbuzz_team_id)s, %(created_at)s, %(updated_at)s)
+        """
+        # print(new_team)
+        cursor.execute(insert_query, new_team)
+        internal_id = cursor.lastrowid
+
+        mydb.commit()
+        print(f"Created new team: {team_name} with internal ID: {internal_id}")
+
+    # cursor.close()
+    return internal_id
 
 def call_schedule_api():
     response = requests.request("GET", url, headers=headers)
@@ -70,6 +104,8 @@ def call_schedule_api():
         if 'scheduleAdWrapper' in matchList:
             for match in matchList['scheduleAdWrapper']['matchScheduleList']:
                 for matchInfo in match['matchInfo']:
+                    team1_id = get_or_create_internal_team_id(matchInfo['team1']['teamId'], matchInfo['team1']['teamName'], matchInfo['team1']['teamSName'])
+                    team2_id = get_or_create_internal_team_id(matchInfo['team2']['teamId'], matchInfo['team2']['teamName'], matchInfo['team2']['teamSName'])
                     match_row = {
                         'cricbuzz_match_id': matchInfo['matchId'],
                         'team1': matchInfo['team1']['teamName'],
@@ -77,19 +113,20 @@ def call_schedule_api():
                         'stadium': matchInfo['venueInfo']['ground'],
                         'city': matchInfo['venueInfo']['city'],
                         'country': matchInfo['venueInfo']['country'],
-                        'match_type': matchInfo['matchFormat'],
+                        'match_type': match['seriesCategory'],
+                        'match_format': matchInfo['matchFormat'],
                         'start_date': datetime.fromtimestamp(int(int(matchInfo['startDate'])/1000)),
                         'end_date': datetime.fromtimestamp(int(int(matchInfo['endDate'])/1000)),
-                        'status': "SCHEDULED",
+                        'status': "Scheduled",
                         'tournament_name': match['seriesName'],
                         'created_at': datetime.now(),
                         'updated_at': datetime.now(),
-                        'team1_id': matchInfo['team1']['teamId'],
-                        'team2_id': matchInfo['team2']['teamId']
+                        'team1_id': team1_id,
+                        'team2_id': team2_id
                     }
                     update_table(match_row)
 
-while True:
-    call_schedule_api()
-    sys.stdout.flush()
-    time.sleep(21600) # 6 hours
+
+call_schedule_api()
+sys.stdout.flush()
+time.sleep(21600) # 6 hours
