@@ -39,6 +39,7 @@ enum class QuestionType(val text: String) {
 }
 enum class QuestionStatus {
     SYSTEM_GENERATED,  // Newly created by the system, waiting for review
+    DISABLED,
     MANUAL_DRAFT,      // Manually created, not yet approved
     LIVE,              // Currently active
     RESOLVED,          // Question has been answered/resolved

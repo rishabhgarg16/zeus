@@ -23,6 +23,29 @@ ZEUS_API_ENDPOINT = os.getenv("ZEUS_API_ENDPOINT", "http://localhost:8080/api/ev
 
 # ZEUS_API_KEY = "your_api_key_here"
 
+def disable_all_active_questions(match_id):
+    conn = db_connection
+    cursor = conn.cursor()
+
+    try:
+        # Update all live questions to disabled
+        update_query = """
+        UPDATE pulse_questions
+        SET status = 'DISABLED'
+        WHERE match_id = %s AND status = 'LIVE'
+        """
+        cursor.execute(update_query, (match_id,))
+
+        affected_rows = cursor.rowcount
+        conn.commit()
+
+        print(f"Successfully disabled {affected_rows} active questions for match {match_id}")
+    except mysql.connector.Error as err:
+        print(f"Error disabling questions for match {match_id}: {err}")
+        conn.rollback()
+    finally:
+        cursor.close()
+
 def get_or_create_match(match_header):
     conn = db_connection
     cursor = db_connection.cursor()
@@ -249,10 +272,15 @@ def convert_cricbuzz_to_hit11(cricbuzz_data):
     commentary_list = data['commentaryList']
 
     # Get or create match
-    match_id = get_or_create_match(match_header)
+    internal_match_id = get_or_create_match(match_header)
+
+    # Check if the match has ended
+    if match_header['state'] in ['Complete', 'Cancelled', 'Abandoned']:
+        # Directly disable all active questions in the database
+        disable_all_active_questions(internal_match_id)
 
     hit11_scorecard = {
-        'matchId': match_id,
+        'matchId': internal_match_id,
         'matchDescription': match_header['matchDescription'],
         'matchFormat': match_header['matchFormat'],
         'matchType': match_header['matchType'],

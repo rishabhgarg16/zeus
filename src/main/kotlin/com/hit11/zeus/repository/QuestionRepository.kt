@@ -12,6 +12,11 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
         status: QuestionStatus
     ): List<QuestionEntity>?
 
+    fun findByMatchIdAndStatusIn(
+        matchIdList: Int,
+        status: List<QuestionStatus>
+    ): List<QuestionEntity>?
+
     // Match Winner
     fun existsByMatchIdAndQuestionTypeAndTargetTeamId(
         matchId: Int,

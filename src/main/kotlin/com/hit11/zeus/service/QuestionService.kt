@@ -73,8 +73,8 @@ class QuestionService(
         matchState: MatchState
     ): UpdateQuestionsResponse {
         val matchId = matchState.liveScorecard.matchId
-        val questions = questionRepository.findByMatchIdInAndStatus(
-            listOf(matchId), QuestionStatus.LIVE
+        val questions = questionRepository.findByMatchIdAndStatusIn(
+            matchId, listOf(QuestionStatus.LIVE, QuestionStatus.DISABLED)
         )?.map { it.mapToQuestionDataModel() } ?: listOf()
 
         val updatedQuestions = mutableListOf<QuestionDataModel>()
