@@ -85,8 +85,11 @@ class MatchWinnerQuestionValidator : QuestionValidator {
 }
 
 class MatchWinnerResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean =
-        (matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE || matchState.liveScorecard.result != null)
+    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
+        return (matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE ||
+                matchState.liveScorecard.result != null && matchState.liveScorecard.result.winningTeamId > 0)
+    }
+
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val result = if (matchState.liveScorecard.result?.winningTeamId == question.targetTeamId) "Yes" else "No"
