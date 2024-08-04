@@ -14,6 +14,7 @@ import com.hit11.zeus.model.mapToUser
 import com.hit11.zeus.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.sql.SQLIntegrityConstraintViolationException
 
 
@@ -51,8 +52,8 @@ class UserService(
                 email = firebaseUser.email,
                 firebaseUser.displayName,
                 firebaseUser.phoneNumber,
-                500.0,
-                0.0
+                BigDecimal(500),
+                BigDecimal.ZERO
             )
             try {
                 val createdUser = userRepository.save(newUser)
@@ -72,8 +73,8 @@ class UserService(
             throw UserNotFoundException("User not found with ID: $userId")
         }
 
-        val newBalance = user.walletBalance + amount
-        if (newBalance < 0) {
+        val newBalance = user.walletBalance.plus(amount.toBigDecimal().setScale(2))
+        if (newBalance < BigDecimal.ZERO) {
             throw InsufficientBalanceException("Insufficient Balance for user with ID: $userId")
         }
 

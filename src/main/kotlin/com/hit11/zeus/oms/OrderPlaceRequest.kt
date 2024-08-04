@@ -1,5 +1,6 @@
 package com.hit11.zeus.oms
 
+import java.time.Instant
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
@@ -21,7 +22,7 @@ class OrderPlaceRequest(
     @field:NotBlank(message = "User Answer cannot be blank")
     val userAnswer: String = "",
 
-    val answerTime: Long = -1L,
+    val answerTime: String = "",
 
     @field:NotNull(message = "User Wager cannot be null")
     @field:Min(value = 1, message = "User Wager must be greater than 0")

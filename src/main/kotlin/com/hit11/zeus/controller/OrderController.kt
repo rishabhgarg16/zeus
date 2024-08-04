@@ -2,9 +2,9 @@ package com.hit11.zeus.controller
 
 import com.hit11.zeus.adapter.OrderAdapter
 import com.hit11.zeus.exception.Logger
-import com.hit11.zeus.model.response.ApiResponse
+import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.request.GetTradeRequest
-import com.hit11.zeus.model.response.OrderResponse
+import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.oms.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -41,8 +41,16 @@ class OrderController(
                     data = true
                 )
             )
+        } catch (e: OrderValidationException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse(
+                    status = HttpStatus.BAD_REQUEST.value(),
+                    internalCode = null,
+                    message = e.message ?: "Order validation failed",
+                    data = false
+                )
+            )
         } catch (e: Exception) {
-            logger.error("Error processing order: ${e.message}", e)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ApiResponse(
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),

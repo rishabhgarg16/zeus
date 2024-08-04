@@ -1,12 +1,14 @@
 package com.hit11.zeus.adapter
 
+import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionStatus
 import com.hit11.zeus.model.response.OrderResponse
 import com.hit11.zeus.oms.OrderDataModel
 import com.hit11.zeus.oms.OrderPlaceRequest
-import java.math.RoundingMode
+import com.hit11.zeus.utils.Constants
 import java.time.Instant
+import java.time.format.DateTimeParseException
 
 object OrderAdapter {
 
@@ -16,12 +18,16 @@ object OrderAdapter {
             pulseId = request.pulseId,
             matchId = request.matchId,
             userAnswer = request.userAnswer,
-            answerTime = Instant.ofEpochMilli(request.answerTime),
+            answerTime = try {
+                Instant.parse(request.answerTime)
+            } catch (e: DateTimeParseException) {
+                throw OrderValidationException("Invalid answer time format")
+            },
             price = request.price.toBigDecimal()
-                .setScale(2, RoundingMode.HALF_UP),
+                .setScale(Constants.DEFAULT_SCALE, Constants.ROUNDING_MODE),
             quantity = request.userTradeQuantity,
             totalAmount = request.userTradeQuantity.toBigDecimal() * request.price.toBigDecimal()
-                .setScale(2, RoundingMode.HALF_UP)
+                .setScale(Constants.DEFAULT_SCALE, Constants.ROUNDING_MODE),
         )
     }
 

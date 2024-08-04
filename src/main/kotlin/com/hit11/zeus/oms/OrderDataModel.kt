@@ -19,8 +19,10 @@ data class OrderDataModel(
     val matchId: Int = 0,
     val userAnswer: String = "",
     val answerTime: Instant = Instant.now(),
+
     @Column(name = "price", precision = 10, scale = 2)
     val price: BigDecimal = BigDecimal.valueOf(0),
+
     var quantity: Long = 0L,
     val totalAmount: BigDecimal = BigDecimal.valueOf(0),
     var state: OrderState = OrderState.OPEN,

@@ -31,4 +31,5 @@ interface OrderRepository : JpaRepository<OrderEntity, Int> {
     ): List<OrderEntity>?
 
     fun findByPulseIdAndState(pulseId: Int, state: OrderState): List<OrderEntity>
+    fun findByUserIdAndPulseIdAndUserAnswer(userId: Int, pulseId: Int, userAnswer: String): List<OrderEntity>?
 }

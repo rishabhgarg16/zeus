@@ -9,4 +9,6 @@ class OrderNotSaveException (message: String) : RuntimeException(message)
 class ResourceNotFoundException (message: String) : RuntimeException(message)
 class UserNotFoundException(message: String) : RuntimeException(message)
 class QuestionValidationException(message: String) : RuntimeException(message)
+class OrderValidationException(message: String) : RuntimeException(message)
+
 
