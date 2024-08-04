@@ -1,16 +1,16 @@
 package com.hit11.zeus.question
 
 import com.hit11.zeus.model.QuestionType
-import com.hit11.zeus.question.*
+import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class QuestionConfig {
+class QuestionConfig(private val questionRepository: QuestionRepository) {
 
     // Trigger Conditions
     @Bean
-    fun teamRunsInMatchTrigger() = TeamRunsInMatchTrigger(5)
+    fun teamRunsInMatchTrigger() = TeamRunsInMatchTrigger(1)
 
     @Bean
     fun sixesByPlayerTriggerCondition() = SixesByPlayerTriggerCondition()
@@ -28,7 +28,7 @@ class QuestionConfig {
     fun matchWinnerTriggerCondition() = MatchWinnerTriggerCondition()
 
     @Bean
-    fun widesByBowlerTriggerCondition() = WidesByBowlerTriggerCondition(2)
+    fun widesByBowlerTriggerCondition() = WidesByBowlerTriggerCondition()
 
     @Bean
     fun tossWinnerTriggerCondition() = TossWinnerTriggerCondition()
@@ -138,52 +138,62 @@ class QuestionConfig {
         TeamRunsInMatchQuestionGenerator(
             triggerCondition = teamRunsInMatchTrigger,
             parameterGenerator = teamRunsInMatchParameterGenerator,
-            validator = teamRunsInMatchQuestionValidator
+            validator = teamRunsInMatchQuestionValidator,
+            questionRepository = questionRepository
         ),
         SixesByPlayerQuestionGenerator(
             triggerCondition = sixesByPlayerTriggerCondition,
             parameterGenerator = sixesByPlayerParameterGenerator,
-            validator = sixesByPlayerQuestionValidator
+            validator = sixesByPlayerQuestionValidator,
+            questionRepository = questionRepository
         ),
         RunsScoredByBatsmanQuestionGenerator(
             triggerCondition = runsScoredByBatsmanTriggerCondition,
             parameterGenerator = runsScoredByBatsmanParameterGenerator,
-            validator = runsScoredByBatsmanQuestionValidator
+            validator = runsScoredByBatsmanQuestionValidator,
+            questionRepository = questionRepository
         ),
         WicketsByBowlerQuestionGenerator(
             triggerCondition = wicketsByBowlerTriggerCondition,
             parameterGenerator = wicketsByBowlerParameterGenerator,
-            validator = wicketsByBowlerQuestionValidator
+            validator = wicketsByBowlerQuestionValidator,
+            questionRepository = questionRepository
         ),
         WinByRunsMarginQuestionGenerator(
             triggerCondition = winByRunsMarginTriggerCondition,
             parameterGenerator = winByRunsMarginParameterGenerator,
-            validator = winByRunsMarginQuestionValidator
+            validator = winByRunsMarginQuestionValidator,
+            questionRepository = questionRepository
         ),
         MatchWinnerQuestionGenerator(
             triggerCondition = matchWinnerTriggerCondition,
             parameterGenerator = matchWinnerParameterGenerator,
-            validator = matchWinnerQuestionValidator
+            validator = matchWinnerQuestionValidator,
+            questionRepository = questionRepository
         ),
         WidesByBowlerQuestionGenerator(
             triggerCondition = widesByBowlerTriggerCondition,
             parameterGenerator = widesByBowlerParameterGenerator,
-            validator = widesByBowlerQuestionValidator
+            validator = widesByBowlerQuestionValidator,
+            questionRepository = questionRepository
         ),
         TossWinnerQuestionGenerator(
             triggerCondition = tossWinnerTriggerCondition,
             parameterGenerator = tossWinnerParameterGenerator,
-            validator = tossWinnerQuestionValidator
+            validator = tossWinnerQuestionValidator,
+            questionRepository = questionRepository
         ),
         TossDecisionQuestionGenerator(
             triggerCondition = tossDecisionTriggerCondition,
             parameterGenerator = tossDecisionParameterGenerator,
-            validator = tossDecisionQuestionValidator
+            validator = tossDecisionQuestionValidator,
+            questionRepository = questionRepository
         ),
         WicketsInOverQuestionGenerator(
             triggerCondition = wicketsInOverTriggerCondition,
             parameterGenerator = wicketsInOverParameterGenerator,
-            validator = wicketsInOverQuestionValidator
+            validator = wicketsInOverQuestionValidator,
+            questionRepository = questionRepository
         )
     )
 

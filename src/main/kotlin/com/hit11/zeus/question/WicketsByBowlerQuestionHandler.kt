@@ -2,6 +2,7 @@ package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
+import com.hit11.zeus.repository.QuestionRepository
 
 data class WicketsByBowlerParameter(
     val targetBowlerId: Int,
@@ -31,12 +32,21 @@ class WicketsByBowlerParameterGenerator : QuestionParameterGenerator<WicketsByBo
 }
 
 class WicketsByBowlerQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<WicketsByBowlerParameter>,
     override val validator: WicketsByBowlerQuestionValidator
-) : BaseQuestionGenerator<WicketsByBowlerParameter>() {
+) : BaseQuestionGenerator<WicketsByBowlerParameter>(questionRepository) {
     override val type = QuestionType.WICKETS_BY_BOWLER
 
+    override fun questionExists(param: WicketsByBowlerParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWickets(
+            state.liveScorecard.matchId,
+            QuestionType.WICKETS_BY_BOWLER.text,
+            param.targetBowlerId,
+            param.targetWickets
+        )
+    }
     override fun createQuestion(param: WicketsByBowlerParameter, state: MatchState): QuestionDataModel? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
         val bowler = currentInnings.bowlingPerformances.find { it.playerId == param.targetBowlerId } ?: return null
@@ -105,23 +115,42 @@ class WicketsByBowlerResolutionStrategy : ResolutionStrategy {
     override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
         val targetBowlerId = question.targetBowlerId ?: return false
         val targetWickets = question.targetWickets ?: return false
-        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val bowlerPerformance = currentInnings?.bowlingPerformances?.find { it.playerId == targetBowlerId }
 
-        return bowlerPerformance != null &&
-                (bowlerPerformance.wickets >= targetWickets ||
-                        // match has been completed
-                        matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE)
+        // Find the relevant innings (current or completed) where this bowler bowled
+        val relevantInnings = matchState.liveScorecard.innings.find { innings ->
+            innings.bowlingPerformances.any { it.playerId == targetBowlerId }
+        }
+
+        // Check if the bowler's performance can be found
+        val bowlerPerformance = relevantInnings?.bowlingPerformances?.find { it.playerId == targetBowlerId }
+
+        return bowlerPerformance != null && (
+                bowlerPerformance.wickets >= targetWickets ||  // Target achieved
+                        !relevantInnings.isCurrentInnings ||  // Innings has ended
+                        matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE  // Match has ended
+                )
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
         val targetWickets = question.targetWickets ?: return QuestionResolution(false, null)
-        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val bowlerPerformance = currentInnings?.bowlingPerformances?.find { it.playerId == targetBowlerId }
 
-        val result = bowlerPerformance?.wickets?.let { it >= targetWickets } ?: false
-        return QuestionResolution(true, if (result) "Yes" else "No")
+        // Find the relevant innings where this bowler bowled
+        val relevantInnings = matchState.liveScorecard.innings.find { innings ->
+            innings.bowlingPerformances.any { it.playerId == targetBowlerId }
+        }
+        val bowlerPerformance = relevantInnings?.bowlingPerformances?.find { it.playerId == targetBowlerId }
+
+        if (bowlerPerformance == null) {
+            return QuestionResolution(false, null)
+        }
+
+        val wicketsTaken = bowlerPerformance.wickets
+        val result = if (wicketsTaken >= targetWickets) "Yes" else "No"
+
+        // Always resolve if the innings or match has ended
+        return QuestionResolution(true, result)
     }
+
 
 }

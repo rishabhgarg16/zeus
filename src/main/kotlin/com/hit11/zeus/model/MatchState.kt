@@ -10,6 +10,9 @@ data class MatchState(
 )
 
 enum class CricbuzzMatchPlayingState(val state: String) {
+    @JsonProperty("Innings Break")
+    INNINGS_BREAK("Innings Break"),
+
     @JsonProperty("Preview")
     PREVIEW("Preview"),
 

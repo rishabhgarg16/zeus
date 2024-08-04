@@ -5,6 +5,7 @@ import com.hit11.zeus.model.CricbuzzMatchPlayingState
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.repository.QuestionRepository
 
 data class ManOfTheMatchParameter(val targetPlayerId: Int) : QuestionParameter()
 
@@ -45,12 +46,21 @@ class ManOfTheMatchParameterGenerator : QuestionParameterGenerator<ManOfTheMatch
 
 
 class ManOfTheMatchQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<ManOfTheMatchParameter>,
     override val validator: ManOfTheMatchQuestionValidator
-) : BaseQuestionGenerator<ManOfTheMatchParameter>() {
+) : BaseQuestionGenerator<ManOfTheMatchParameter>(questionRepository) {
     override val type = QuestionType.MAN_OF_THE_MATCH
 
+    override fun questionExists(param: ManOfTheMatchParameter, state: MatchState): Boolean {
+        // TOOD we are using batsman id instead od player id, man of the match can be bowler as well
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBatsmanId(
+            state.liveScorecard.matchId,
+            QuestionType.MATCH_WINNER.text,
+            param.targetPlayerId
+        )
+    }
     override fun createQuestion(param: ManOfTheMatchParameter, state: MatchState): QuestionDataModel? {
         val battingPlayers = state.liveScorecard.innings.flatMap { it.battingPerformances }
         val player = battingPlayers.find { it.playerId == param.targetPlayerId }

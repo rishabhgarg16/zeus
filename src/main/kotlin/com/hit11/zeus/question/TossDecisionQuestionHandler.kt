@@ -5,6 +5,7 @@ import com.hit11.zeus.model.CricbuzzMatchPlayingState
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.repository.QuestionRepository
 
 data class TossDecisionParameter(val targetDecision: String) : QuestionParameter()
 
@@ -37,11 +38,20 @@ class TossDecisionParameterGenerator : QuestionParameterGenerator<TossDecisionPa
 }
 
 class TossDecisionQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<TossDecisionParameter>,
     override val validator: TossDecisionQuestionValidator
-) : BaseQuestionGenerator<TossDecisionParameter>() {
+) : BaseQuestionGenerator<TossDecisionParameter>(questionRepository) {
     override val type = QuestionType.TOSS_DECISION
+
+    override fun questionExists(param: TossDecisionParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTossDecision(
+            state.liveScorecard.matchId,
+            QuestionType.TOSS_DECISION.text,
+            param.targetDecision
+        )
+    }
 
     override fun createQuestion(param: TossDecisionParameter, state: MatchState): QuestionDataModel {
         return createDefaultQuestionDataModel(

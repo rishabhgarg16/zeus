@@ -81,8 +81,9 @@ data class BattingPerformance(
     val sixes: Int = 0,
     val strikeRate: Float = 0f,
     val outDescription: String? = null,
-    val wicketTaker: Int? = null,
-    val onStrike: Int? = null
+    val wicketTaker: String? = null,
+    val onStrike: Int? = null,
+    val dismissed: Boolean = false
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -5,6 +5,7 @@ import com.hit11.zeus.model.CricbuzzMatchPlayingState
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.repository.QuestionRepository
 
 data class MatchWinnerParameter(val targetTeamId: Int) : QuestionParameter()
 
@@ -37,11 +38,20 @@ class MatchWinnerParameterGenerator : QuestionParameterGenerator<MatchWinnerPara
 }
 
 class MatchWinnerQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<MatchWinnerParameter>,
     override val validator: MatchWinnerQuestionValidator
-) : BaseQuestionGenerator<MatchWinnerParameter>() {
+) : BaseQuestionGenerator<MatchWinnerParameter>(questionRepository) {
     override val type = QuestionType.MATCH_WINNER
+
+    override fun questionExists(param: MatchWinnerParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamId(
+            state.liveScorecard.matchId,
+            QuestionType.MATCH_WINNER.text,
+            param.targetTeamId
+        )
+    }
 
     override fun createQuestion(param: MatchWinnerParameter, state: MatchState): QuestionDataModel? {
         val teams = listOf(state.liveScorecard.team1, state.liveScorecard.team2)

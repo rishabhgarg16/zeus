@@ -1,9 +1,11 @@
 package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
+import com.hit11.zeus.model.CricbuzzMatchPlayingState
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.repository.QuestionRepository
 
 data class SixesByPlayerParameter(
     val batsmanId: Long, val targetSixes: Int
@@ -45,11 +47,21 @@ class SixesByPlayerParameterGenerator : QuestionParameterGenerator<SixesByPlayer
 }
 
 class SixesByPlayerQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<SixesByPlayerParameter>,
     override val validator: SixesByPlayerQuestionValidator
-) : BaseQuestionGenerator<SixesByPlayerParameter>() {
+) : BaseQuestionGenerator<SixesByPlayerParameter>(questionRepository) {
     override val type = QuestionType.SIX_BY_PLAYER
+
+    override fun questionExists(param: SixesByPlayerParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBatsmanIdAndTargetSixes(
+            state.liveScorecard.matchId,
+            QuestionType.SIX_BY_PLAYER.text,
+            param.batsmanId.toInt(),
+            param.targetSixes
+        )
+    }
 
     override fun createQuestion(
         param: SixesByPlayerParameter, state: MatchState
@@ -120,22 +132,43 @@ class SixesByPlayerQuestionValidator : QuestionValidator {
 
 class SixesByPlayerResolutionStrategy : ResolutionStrategy {
     override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
-        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val batsmanPerformance = currentInnings?.battingPerformances?.find { it.playerId == question.targetBatsmanId }
+        val targetBatsmanId = question.targetBatsmanId ?: return false
+        val targetSixes = question.targetSixes ?: return false
 
-        return batsmanPerformance != null &&
-                (batsmanPerformance.sixes >= (question.targetSixes ?: 0) ||
-                        batsmanPerformance.outDescription != null ||
-                        !currentInnings.isCurrentInnings)
+        // Find the relevant innings (current or completed) where this batsman batted
+        val relevantInnings = matchState.liveScorecard.innings.find { innings ->
+            innings.battingPerformances.any { it.playerId == targetBatsmanId }
+        }
+
+        // Check if the batsman's performance can be found
+        val batsmanPerformance = relevantInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
+
+        return batsmanPerformance != null && (
+                batsmanPerformance.sixes >= targetSixes ||  // Target achieved
+                        batsmanPerformance.outDescription != null ||  // Batsman is out
+                        !relevantInnings.isCurrentInnings ||  // Innings has ended
+                        matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE  // Match has ended
+                )
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val targetSixes = question.targetSixes ?: return QuestionResolution(false, null)
         val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, null)
-        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val currentSixes = currentInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }?.sixes ?: 0
+        val targetSixes = question.targetSixes ?: return QuestionResolution(false, null)
 
-        val result = if (currentSixes >= targetSixes) "Yes" else "No"
+        // Find the relevant innings where this batsman batted
+        val relevantInnings = matchState.liveScorecard.innings.find { innings ->
+            innings.battingPerformances.any { it.playerId == targetBatsmanId }
+        }
+        val batsmanPerformance = relevantInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
+
+        if (batsmanPerformance == null) {
+            return QuestionResolution(false, null)
+        }
+
+        val sixesHit = batsmanPerformance.sixes
+        val result = if (sixesHit >= targetSixes) "Yes" else "No"
+
+        // Always resolve if the batsman is out, innings has ended, or match has ended
         return QuestionResolution(true, result)
     }
 }

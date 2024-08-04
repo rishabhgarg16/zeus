@@ -3,6 +3,7 @@ import mysql.connector
 import os
 import requests
 import time
+import re
 import traceback
 from datetime import timezone, datetime
 
@@ -326,11 +327,11 @@ def convert_all_innings(miniscore, commentary_list, match_header):
             if innings['inningsId'] == current_innings_id:
                 # This is the current innings, use detailed conversion
                 all_innings.append(convert_current_innings(miniscore, commentary_list, match_header))
-                print(f"current innings {all_innings}")
+                # print(f"current innings {all_innings}")
             else:
                 # This is a completed innings
                 all_innings.append(convert_completed_innings(innings, match_header))
-                print(f"completed innings {all_innings}")
+                # print(f"completed innings {all_innings}")
 
     return all_innings
 
@@ -381,7 +382,7 @@ def convert_current_innings(miniscore, commentary_list, matchHeader):
     batting_team = convert_team(batting_team)
     bowling_team = convert_team(bowling_team)
 
-    batting_performance = convert_batting_performances(miniscore)
+    batting_performance = convert_batting_performances(miniscore, commentary_list)
     bowling_performance = convert_bowling_performances(miniscore, bowling_team)
 
     current_innings = {
@@ -403,13 +404,34 @@ def convert_current_innings(miniscore, commentary_list, matchHeader):
     return current_innings
 
 
-def convert_batting_performances(miniscore):
-    performances = []
-    criccbuzz_team_id = miniscore['batTeam']['teamId']
+def parse_last_wicket(last_wicket):
+    # Regular expression to match different formats of lastWicket
+    pattern = r"(.*?)\s+(?:c\s+.*?\s+b|lbw\s+b|b)\s+(.*?)\s+(\d+)\((\d+)\)\s+-\s+(\d+)/(\d+)\s+in\s+([\d.]+)\s+ov\."
+    match = re.match(pattern, last_wicket)
+    if match:
+        return {
+            'player_name': match.group(1).strip(),
+            'bowler': match.group(2),
+            'runs': int(match.group(3)),
+            'balls': int(match.group(4)),
+            'team_score': int(match.group(5)),
+            'wicket_number': int(match.group(6)),
+            'over': float(match.group(7))
+        }
+    return None
 
+def convert_batting_performances(miniscore, commentary_list):
+    performances = []
+    cricbuzz_team_id = miniscore['batTeam']['teamId']
+
+    # Parse the last wicket information
+    last_wicket_info = parse_last_wicket(miniscore.get('lastWicket', ''))
+
+    # Process current batsmen
     for batsman in [miniscore['batsmanStriker'], miniscore['batsmanNonStriker']]:
         player_name = batsman['batName']
-        internal_id = get_or_create_internal_player_id(batsman['batId'], player_name, criccbuzz_team_id)
+        internal_id = get_or_create_internal_player_id(batsman['batId'], player_name, cricbuzz_team_id)
+
         performances.append({
             'playerId': internal_id,
             'playerName': player_name,
@@ -419,10 +441,46 @@ def convert_batting_performances(miniscore):
             'sixes': batsman['batSixes'],
             'strikeRate': float(batsman['batStrikeRate']),
             'outDescription': None,
-            'wicketTaker': None
+            'wicketTaker': None,
+            'dismissed': False
         })
-    return performances
 
+    # Add performance for the last dismissed player if not already in performances
+    if last_wicket_info and last_wicket_info['player_name'] not in [p['playerName'] for p in performances]:
+        internal_id = get_or_create_internal_player_id(0, last_wicket_info['player_name'], cricbuzz_team_id)
+        performances.append({
+            'playerId': internal_id,
+            'playerName': last_wicket_info['player_name'],
+            'runs': last_wicket_info['runs'],
+            'balls': last_wicket_info['balls'],
+            'fours': 0,  # We don't have this information
+            'sixes': 0,  # We don't have this information
+            'strikeRate': (last_wicket_info['runs'] / last_wicket_info['balls']) * 100 if last_wicket_info['balls'] > 0 else 0,
+            'outDescription': miniscore['lastWicket'],
+            'wicketTaker': last_wicket_info['bowler'],
+            'dismissed': True
+        })
+
+    # Add performances for other dismissed players from commentary
+    for comm in reversed(commentary_list):
+        if comm['event'] == 'WICKET':
+            wicket_info = parse_last_wicket(comm['commText'])
+            if wicket_info and wicket_info['player_name'] not in [p['playerName'] for p in performances]:
+                internal_id = get_or_create_internal_player_id(0, wicket_info['player_name'], cricbuzz_team_id)
+                performances.append({
+                    'playerId': internal_id,
+                    'playerName': wicket_info['player_name'],
+                    'runs': wicket_info['runs'],
+                    'balls': wicket_info['balls'],
+                    'fours': 0,  # We don't have this information
+                    'sixes': 0,  # We don't have this information
+                    'strikeRate': (wicket_info['runs'] / wicket_info['balls']) * 100 if wicket_info['balls'] > 0 else 0,
+                    'outDescription': comm['commText'],
+                    'wicketTaker': wicket_info['bowler'],
+                    'dismissed': True
+                })
+
+    return performances
 
 def get_teams(miniscore, match_header):
     bat_team_id = miniscore['batTeam']['teamId']

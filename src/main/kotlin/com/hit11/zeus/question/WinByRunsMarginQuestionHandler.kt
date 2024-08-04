@@ -2,6 +2,7 @@ package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
+import com.hit11.zeus.repository.QuestionRepository
 
 data class WinByRunsMarginParameter(
     val targetTeamId: Int,
@@ -58,10 +59,20 @@ class WinByRunsMarginParameterGenerator : QuestionParameterGenerator<WinByRunsMa
 
 class WinByRunsMarginQuestionGenerator(
     override val parameterGenerator: QuestionParameterGenerator<WinByRunsMarginParameter>,
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val validator: WinByRunsMarginQuestionValidator
-) : BaseQuestionGenerator<WinByRunsMarginParameter>() {
+) : BaseQuestionGenerator<WinByRunsMarginParameter>(questionRepository) {
     override val type = QuestionType.WIN_BY_RUNS_MARGIN
+
+    override fun questionExists(param: WinByRunsMarginParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRuns(
+            state.liveScorecard.matchId,
+            QuestionType.WIN_BY_RUNS_MARGIN.text,
+            param.targetTeamId,
+            param.targetMargin
+        )
+    }
 
     override fun createQuestion(param: WinByRunsMarginParameter, state: MatchState): QuestionDataModel? {
         val battingTeam = state.liveScorecard.innings.find { it.isCurrentInnings }?.battingTeam

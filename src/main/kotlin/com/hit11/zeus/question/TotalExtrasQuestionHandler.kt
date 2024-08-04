@@ -5,6 +5,7 @@ import com.hit11.zeus.model.CricbuzzMatchPlayingState
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.repository.QuestionRepository
 
 data class TotalExtrasParameter(
     val targetTeamId: Int,
@@ -45,11 +46,21 @@ class TotalExtrasParameterGenerator : QuestionParameterGenerator<TotalExtrasPara
 }
 
 class TotalExtrasQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<TotalExtrasParameter>,
     override val validator: TotalExtrasQuestionValidator
-) : BaseQuestionGenerator<TotalExtrasParameter>() {
+) : BaseQuestionGenerator<TotalExtrasParameter>(questionRepository) {
     override val type = QuestionType.TOTAL_EXTRAS
+
+    override fun questionExists(param: TotalExtrasParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetExtras(
+            state.liveScorecard.matchId,
+            QuestionType.TOTAL_EXTRAS.text,
+            param.targetTeamId,
+            param.targetExtras
+        )
+    }
 
     override fun createQuestion(param: TotalExtrasParameter, state: MatchState): QuestionDataModel? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null

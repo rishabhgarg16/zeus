@@ -1,0 +1,622 @@
+{
+    "commentaryList": [
+        {
+            "commText": "B0$",
+            "timestamp": 1722782031809,
+            "ballNbr": 0,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$"
+                    ],
+                    "formatValue": [
+                        "Axar Patel, left handed bat, comes to the crease"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": " Vandersay to Shivam Dube, B0$ Lbw!! That's plumb in front. Again Shivam Dube not reading the ball from the hand. Had no clue this was a leggie and was stuck on the crease. Tried to read it off the pitch but it spun sharply into him and left no time for any adjustment. Impact right in front of middle and off and Virat said don't bother reviewing it. B1$ ",
+            "timestamp": 1722781958674,
+            "ballNbr": 107,
+            "overNumber": 17.5,
+            "inningsId": 2,
+            "event": "WICKET",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$",
+                        "B1$"
+                    ],
+                    "formatValue": [
+                        "out",
+                        "Shivam Dube lbw b Vandersay 0(4)"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": " Vandersay to Shivam Dube, B0$ Lbw!! ",
+            "timestamp": 1722781955026,
+            "ballNbr": 0,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$"
+                    ],
+                    "formatValue": [
+                        "THATS OUT!!"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": " Vandersay to Shivam Dube, no run, oh B0$! Googly outside off stump, Dube looks to play from the crease, read that googly off the pitch and got beaten ",
+            "timestamp": 1722781920765,
+            "ballNbr": 106,
+            "overNumber": 17.4,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$"
+                    ],
+                    "formatValue": [
+                        "beaten"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": "Leg slip added",
+            "timestamp": 1722781892180,
+            "ballNbr": 0,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": " Vandersay to Shivam Dube, no run, watchful defence to the on-side ",
+            "timestamp": 1722781889180,
+            "ballNbr": 105,
+            "overNumber": 17.3,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": " Vandersay to Shivam Dube, no run, pushed back to the bowler ",
+            "timestamp": 1722781871947,
+            "ballNbr": 104,
+            "overNumber": 17.2,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": "B0$",
+            "timestamp": 1722781838676,
+            "ballNbr": 0,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$"
+                    ],
+                    "formatValue": [
+                        "Shivam Dube, left handed bat, comes to the crease"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": " Vandersay to Shubman Gill, B0$ Caught by Kamindu Mendis!! One-handed stunner at slip from Kamindu and Vandersay gets his second wicket. Flighted delivery spinning away outside off stump, Gill plays the drive, bit lose, thick outside edge flew to the right of slip. Kamindu stuck his right hand out and caught the ball. Sri Lanka have their second and India have promoted Dube up the order. He is walking in. B1$ ",
+            "timestamp": 1722781754429,
+            "ballNbr": 103,
+            "overNumber": 17.1,
+            "inningsId": 2,
+            "event": "WICKET",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$",
+                        "B1$"
+                    ],
+                    "formatValue": [
+                        "out",
+                        "Shubman Gill c Kamindu Mendis b Vandersay 35(44) [4s-3]"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": " Vandersay to Shubman Gill, B0$ Caught!! ",
+            "timestamp": 1722781751495,
+            "ballNbr": 0,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$"
+                    ],
+                    "formatValue": [
+                        "THATS OUT!!"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": " Dananjaya to Kohli, no run, has Kusal Mendis dropped this? There was a sound as the ball passed the bat but it stayed low and made life difficult for the keeper. Shortish and turning away, Virat shaped up for the cut. Need another look to see if there was actually an edge on this ",
+            "timestamp": 1722781691997,
+            "ballNbr": 102,
+            "overNumber": 16.6,
+            "inningsId": 2,
+            "event": "over-break",
+            "batTeamName": "IND",
+            "commentaryFormats": {},
+            "overSeparator": {
+                "score": 116,
+                "wickets": 1,
+                "inningsId": 2,
+                "o_summary": "0 1 1 0 0 0 ",
+                "runs": 2,
+                "batStrikerIds": [
+                    1413
+                ],
+                "batStrikerNames": [
+                    "Virat Kohli"
+                ],
+                "batStrikerRuns": 14,
+                "batStrikerBalls": 15,
+                "batNonStrikerIds": [
+                    11808
+                ],
+                "batNonStrikerNames": [
+                    "Shubman Gill"
+                ],
+                "batNonStrikerRuns": 35,
+                "batNonStrikerBalls": 43,
+                "bowlIds": [
+                    8483
+                ],
+                "bowlNames": [
+                    "Akila Dananjaya"
+                ],
+                "bowlOvers": 4.0,
+                "bowlMaidens": 0,
+                "bowlRuns": 29,
+                "bowlWickets": 0,
+                "timestamp": 1722781691997,
+                "overNum": 16.6,
+                "batTeamName": "IND",
+                "event": "over-break"
+            }
+        },
+        {
+            "commText": " Dananjaya to Kohli, no run, very full, dug out to mid-wicket ",
+            "timestamp": 1722781678966,
+            "ballNbr": 101,
+            "overNumber": 16.5,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": " Dananjaya to Kohli, no run, fullish delivery, Virat wanted to cover-drive, mistimed it back to the bowler ",
+            "timestamp": 1722781666004,
+            "ballNbr": 100,
+            "overNumber": 16.4,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": " Dananjaya to Shubman Gill, 1 run, leans forward and flicks this flighted delivery to backward square leg ",
+            "timestamp": 1722781642692,
+            "ballNbr": 99,
+            "overNumber": 16.3,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": " Dananjaya to Kohli, 1 run, shortish delivery, Virat flicks it to mid-wicket ",
+            "timestamp": 1722781618361,
+            "ballNbr": 98,
+            "overNumber": 16.2,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": " Dananjaya to Kohli, no run, flatter delivery, Virat defends ",
+            "timestamp": 1722781599745,
+            "ballNbr": 97,
+            "overNumber": 16.1,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": "More on that Kohli LBW being overturned. Before the UltraEdge came up there seemed to be a slight deviation as the ball passed the bat and UltraEdge picked up a spike. The reaction from Sri Lanka was obviously because Virat didn't feel that edge and took a while to review. But sometimes batters don't feel edges and this was pretty thin",
+            "timestamp": 1722781540318,
+            "ballNbr": 0,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        },
+        {
+            "commText": "B0$ are on the field now! If you look at the scorecard, India are definitely on top, thanks to Rohit's second fifty in as many matches. With the Indian captain dismissed, Sri Lanka wil try to replicate what they did in the previous match",
+            "timestamp": 1722781414665,
+            "ballNbr": 0,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {
+                "bold": {
+                    "formatId": [
+                        "B0$"
+                    ],
+                    "formatValue": [
+                        "Drinks"
+                    ]
+                }
+            }
+        },
+        {
+            "commText": " Vandersay to Kohli, 1 run, tossed up, full in length and Kohli bends forward to slap-drive it. Vandersay manages to somehow deflect it towards long-off with his boot. Saved three runs there did the bowler ",
+            "timestamp": 1722781411665,
+            "ballNbr": 96,
+            "overNumber": 15.6,
+            "inningsId": 2,
+            "event": "over-break",
+            "batTeamName": "IND",
+            "commentaryFormats": {},
+            "overSeparator": {
+                "score": 114,
+                "wickets": 1,
+                "inningsId": 2,
+                "o_summary": "L1 1 0 1 0 1 ",
+                "runs": 4,
+                "batStrikerIds": [
+                    1413
+                ],
+                "batStrikerNames": [
+                    "Virat Kohli"
+                ],
+                "batStrikerRuns": 13,
+                "batStrikerBalls": 10,
+                "batNonStrikerIds": [
+                    11808
+                ],
+                "batNonStrikerNames": [
+                    "Shubman Gill"
+                ],
+                "batNonStrikerRuns": 34,
+                "batNonStrikerBalls": 42,
+                "bowlIds": [
+                    10469
+                ],
+                "bowlNames": [
+                    "Jeffrey Vandersay"
+                ],
+                "bowlOvers": 3.0,
+                "bowlMaidens": 0,
+                "bowlRuns": 14,
+                "bowlWickets": 1,
+                "timestamp": 1722781411665,
+                "overNum": 15.6,
+                "batTeamName": "IND",
+                "event": "over-break"
+            }
+        },
+        {
+            "commText": " Vandersay to Kohli, no run, 82kph, gets forward and defends off the inner edge ",
+            "timestamp": 1722781392583,
+            "ballNbr": 95,
+            "overNumber": 15.5,
+            "inningsId": 2,
+            "event": "NONE",
+            "batTeamName": "IND",
+            "commentaryFormats": {}
+        }
+    ],
+    "matchHeader": {
+        "matchId": 101550,
+        "matchDescription": "2nd ODI",
+        "matchFormat": "ODI",
+        "matchType": "International",
+        "complete": false,
+        "domestic": false,
+        "matchStartTimestamp": 1722762000000,
+        "matchCompleteTimestamp": 1722787200000,
+        "dayNight": false,
+        "year": 2024,
+        "state": "In Progress",
+        "status": "India need 125 runs",
+        "tossResults": {
+            "tossWinnerId": 5,
+            "tossWinnerName": "Sri Lanka",
+            "decision": "Batting"
+        },
+        "result": {
+            "winningTeam": "",
+            "winByRuns": false,
+            "winByInnings": false
+        },
+        "revisedTarget": {
+            "reason": ""
+        },
+        "playersOfTheMatch": [],
+        "playersOfTheSeries": [],
+        "matchTeamInfo": [
+            {
+                "battingTeamId": 5,
+                "battingTeamShortName": "SL",
+                "bowlingTeamId": 2,
+                "bowlingTeamShortName": "IND"
+            },
+            {
+                "battingTeamId": 2,
+                "battingTeamShortName": "IND",
+                "bowlingTeamId": 5,
+                "bowlingTeamShortName": "SL"
+            }
+        ],
+        "isMatchNotCovered": false,
+        "team1": {
+            "id": 5,
+            "name": "Sri Lanka",
+            "playerDetails": [],
+            "shortName": "SL"
+        },
+        "team2": {
+            "id": 2,
+            "name": "India",
+            "playerDetails": [],
+            "shortName": "IND"
+        },
+        "seriesDesc": "India tour of Sri Lanka, 2024",
+        "seriesId": 8528,
+        "seriesName": "India tour of Sri Lanka, 2024",
+        "alertType": "auto",
+        "livestreamEnabled": false
+    },
+    "miniscore": {
+        "inningsId": 2,
+        "batsmanStriker": {
+            "batBalls": 0,
+            "batDots": 0,
+            "batFours": 0,
+            "batId": 8808,
+            "batName": "Axar Patel",
+            "batMins": 0,
+            "batRuns": 0,
+            "batSixes": 0,
+            "batStrikeRate": 0.0
+        },
+        "batsmanNonStriker": {
+            "batBalls": 15,
+            "batDots": 7,
+            "batFours": 2,
+            "batId": 1413,
+            "batName": "Virat Kohli",
+            "batMins": 19,
+            "batRuns": 14,
+            "batSixes": 0,
+            "batStrikeRate": 93.33
+        },
+        "batTeam": {
+            "teamId": 2,
+            "teamScore": 116,
+            "teamWkts": 3
+        },
+        "bowlerStriker": {
+            "bowlId": 10469,
+            "bowlName": "Jeffrey Vandersay",
+            "bowlMaidens": 0,
+            "bowlNoballs": 0,
+            "bowlOvs": 3.5,
+            "bowlRuns": 14,
+            "bowlWides": 0,
+            "bowlWkts": 3,
+            "bowlEcon": 3.65
+        },
+        "bowlerNonStriker": {
+            "bowlId": 8483,
+            "bowlName": "Akila Dananjaya",
+            "bowlMaidens": 0,
+            "bowlNoballs": 0,
+            "bowlOvs": 4.0,
+            "bowlRuns": 29,
+            "bowlWides": 0,
+            "bowlWkts": 0,
+            "bowlEcon": 7.25
+        },
+        "overs": 17.5,
+        "recentOvsStats": "... 1  | 0 1 1 0 0 0  | W 0 0 0 W",
+        "target": 241,
+        "partnerShip": {
+            "balls": 0,
+            "runs": 0
+        },
+        "currentRunRate": 6.5,
+        "requiredRunRate": 3.89,
+        "lastWicket": "Shivam Dube  lbw b Vandersay 0(4)  - 116/3 in 17.5 ov.",
+        "matchScoreDetails": {
+            "matchId": 101550,
+            "inningsScoreList": [
+                {
+                    "inningsId": 2,
+                    "batTeamId": 2,
+                    "batTeamName": "IND",
+                    "score": 116,
+                    "wickets": 3,
+                    "overs": 17.5,
+                    "isDeclared": false,
+                    "isFollowOn": false,
+                    "ballNbr": 107
+                },
+                {
+                    "inningsId": 1,
+                    "batTeamId": 5,
+                    "batTeamName": "SL",
+                    "score": 240,
+                    "wickets": 9,
+                    "overs": 49.6,
+                    "isDeclared": false,
+                    "isFollowOn": false,
+                    "ballNbr": 300
+                }
+            ],
+            "tossResults": {
+                "tossWinnerId": 5,
+                "tossWinnerName": "Sri Lanka",
+                "decision": "Batting"
+            },
+            "matchTeamInfo": [
+                {
+                    "battingTeamId": 5,
+                    "battingTeamShortName": "SL",
+                    "bowlingTeamId": 2,
+                    "bowlingTeamShortName": "IND"
+                },
+                {
+                    "battingTeamId": 2,
+                    "battingTeamShortName": "IND",
+                    "bowlingTeamId": 5,
+                    "bowlingTeamShortName": "SL"
+                }
+            ],
+            "isMatchNotCovered": false,
+            "matchFormat": "ODI",
+            "state": "In Progress",
+            "customStatus": "India need 125 runs",
+            "highlightedTeamId": 2
+        },
+        "latestPerformance": [
+            {
+                "runs": 22,
+                "wkts": 3,
+                "label": "Last 5 overs"
+            },
+            {
+                "runs": 58,
+                "wkts": 3,
+                "label": "Last 10 overs"
+            }
+        ],
+        "ppData": {
+            "pp_1": {
+                "ppId": 6,
+                "ppOversFrom": 0.1,
+                "ppOversTo": 10.0,
+                "ppType": "mandatory",
+                "runsScored": 76
+            }
+        },
+        "matchUdrs": {
+            "matchId": 101550,
+            "inningsId": 2,
+            "timestamp": "2024-08-04T14:18:52.166Z",
+            "team1Id": 5,
+            "team1Remaining": 2,
+            "team1Successful": 0,
+            "team1Unsuccessful": 0,
+            "team2Id": 2,
+            "team2Remaining": 2,
+            "team2Successful": 1,
+            "team2Unsuccessful": 0
+        },
+        "overSummaryList": [],
+        "status": "India need 125 runs",
+        "lastWicketScore": 0,
+        "remRunsToWin": 125,
+        "responseLastUpdated": 1722782042,
+        "event": "WICKET"
+    },
+    "commentarySnippetList": [],
+    "page": "commentary",
+    "enableNoContent": false,
+    "matchVideos": [
+        {
+            "infraType": "Content_Promotion - Video",
+            "headline": "Fantasy Handbook: India tour of Sri Lanka, 2nd ODI",
+            "commTimestamp": "1722658514745",
+            "itemId": "1_cwr30ce0",
+            "appLinkUrl": "cricbuzz://video?id=1_cwr30ce0&name=Fantasy Handbook: India tour of Sri Lanka, 2nd ODI",
+            "imageId": 536051,
+            "mappingId": "1_cwr30ce0",
+            "videoUrl": "https://cdnapisec.kaltura.com/p/1999781/sp/199978100/playManifest/entryId/1_nrs36kl5/format/applehttp/protocol/https/a.m3u8",
+            "adTag": "vast-Fantasy-Handbook",
+            "language": "English",
+            "planId": 1,
+            "premiumVideoUrl": "https://cdnapisec.kaltura.com/p/1999781/sp/199978100/playManifest/entryId/1_cwr30ce0/format/applehttp/protocol/https/a.m3u8?ks=djJ8MTk5OTc4MXzk9RUK_i82EQ6-mJX2wuAQmXgghhk5aKIU7N1KLlCOr_CwY3cvE4feRKlmPwXyizewNYi_VAIQ2KitnMwoz6fOMYVshsv_LiomREgsyND_YorO1bhYOEs3FdgJL8d_iRM=",
+            "videoId": 103045,
+            "videoType": "Fantasy Handbook",
+            "category": [
+                {
+                    "id": 36,
+                    "name": "Fantasy Handbook",
+                    "imageID": 247830
+                }
+            ],
+            "tags": [
+                {
+                    "itemName": "India tour of Sri Lanka, 2024",
+                    "itemType": "series",
+                    "itemId": "8528"
+                },
+                {
+                    "itemName": "Sri Lanka",
+                    "itemType": "team",
+                    "itemId": "5"
+                },
+                {
+                    "itemName": "India",
+                    "itemType": "team",
+                    "itemId": "2"
+                },
+                {
+                    "itemName": "Rohit Sharma",
+                    "itemType": "player",
+                    "itemId": "576"
+                },
+                {
+                    "itemName": "Pathum Nissanka",
+                    "itemType": "player",
+                    "itemId": "13682"
+                },
+                {
+                    "itemName": "India tour of Sri Lanka, 2024, 2nd ODI",
+                    "itemType": "match",
+                    "itemId": "101550"
+                }
+            ]
+        }
+    ],
+    "responseLastUpdated": 1722782042
+}

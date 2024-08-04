@@ -1,10 +1,13 @@
 package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
+import com.hit11.zeus.livedata.BattingPerformance
+import com.hit11.zeus.livedata.Innings
 import com.hit11.zeus.model.CricbuzzMatchPlayingState
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.repository.QuestionRepository
 
 data class RunsScoredByBatsmanParameter(
     val targetBatsmanId: Int,
@@ -12,6 +15,7 @@ data class RunsScoredByBatsmanParameter(
 ) : QuestionParameter()
 
 class RunsScoredByBatsmanTriggerCondition : TriggerCondition {
+
     override fun shouldTrigger(currentState: MatchState, previousState: MatchState?): Boolean {
         val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
         val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
@@ -24,31 +28,67 @@ class RunsScoredByBatsmanTriggerCondition : TriggerCondition {
     }
 }
 
-class RunsScoredByBatsmanParameterGenerator
-    : QuestionParameterGenerator<RunsScoredByBatsmanParameter> {
+class RunsScoredByBatsmanParameterGenerator : QuestionParameterGenerator<RunsScoredByBatsmanParameter> {
     override fun generateParameters(
         currentState: MatchState, previousState: MatchState?
     ): List<RunsScoredByBatsmanParameter> {
         val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings } ?: return emptyList()
-        val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
+        val previousInnings = currentState.liveScorecard.innings.find { !it.isCurrentInnings }
 
         return currentInnings.battingPerformances.mapNotNull { currentBatsman ->
-            val previousBatsman = previousInnings?.battingPerformances?.find { it.playerId == currentBatsman.playerId }
-            val runsDifference = currentBatsman.runs - (previousBatsman?.runs ?: 0)
+            val previousBatsmanState = previousState?.liveScorecard?.innings
+                ?.find { it.isCurrentInnings }
+                ?.battingPerformances
+                ?.find { it.playerId == currentBatsman.playerId }
 
-            if (runsDifference > 0 && (currentBatsman.runs % 25 == 0 || runsDifference >= 10)) {
-                RunsScoredByBatsmanParameter(currentBatsman.playerId, currentBatsman.runs + 25)
+            val runsDifference = currentBatsman.runs - (previousBatsmanState?.runs ?: 0)
+
+            if (runsDifference > 0 && (currentBatsman.runs % 20 == 0 || runsDifference >= 10)) {
+                val maxPossibleRuns = calculateMaxPossibleRuns(currentInnings, previousInnings, currentBatsman)
+                val targetRuns = minOf(currentBatsman.runs + 20, maxPossibleRuns)
+
+                if (targetRuns > currentBatsman.runs) {
+                    RunsScoredByBatsmanParameter(currentBatsman.playerId, targetRuns)
+                } else null
             } else null
         }
+    }
+
+    private fun calculateMaxPossibleRuns(
+        currentInnings: Innings,
+        previousInnings: Innings?,
+        batsman: BattingPerformance
+    ): Int {
+        val totalInningsRuns = currentInnings.totalRuns
+        val batsmanCurrentRuns = batsman.runs
+
+        // If there's a previous innings, use its total as the target score
+        val targetScore = previousInnings?.let { it.totalRuns + 1 } ?: Int.MAX_VALUE
+
+        val remainingTeamRuns = targetScore - totalInningsRuns
+        val maxPossibleIndividualRuns = batsmanCurrentRuns + remainingTeamRuns
+
+        // Consider a realistic upper limit, say 250 runs for a single batsman in any format
+        return minOf(maxPossibleIndividualRuns, 250)
     }
 }
 
 class RunsScoredByBatsmanQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<RunsScoredByBatsmanParameter>,
     override val validator: RunsScoredByBatsmanQuestionValidator
-) : BaseQuestionGenerator<RunsScoredByBatsmanParameter>() {
+) : BaseQuestionGenerator<RunsScoredByBatsmanParameter>(questionRepository) {
     override val type = QuestionType.RUNS_SCORED_BY_BATSMAN
+
+    override fun questionExists(param: RunsScoredByBatsmanParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBatsmanIdAndTargetRuns(
+            state.liveScorecard.matchId,
+            QuestionType.RUNS_SCORED_BY_BATSMAN.text,
+            param.targetBatsmanId,
+            param.targetRuns
+        )
+    }
 
     override fun createQuestion(param: RunsScoredByBatsmanParameter, state: MatchState): QuestionDataModel? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
@@ -122,24 +162,46 @@ class RunsScoredByBatsmanResolutionStrategy : ResolutionStrategy {
     override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
         val targetBatsmanId = question.targetBatsmanId ?: return false
         val targetRuns = question.targetRuns ?: return false
-        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val batsmanPerformance = currentInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
 
-        return batsmanPerformance != null &&
-                (batsmanPerformance.runs >= targetRuns ||
-                        batsmanPerformance.outDescription != null ||
-                        matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE)
+        // Find the relevant innings (current or completed) where this batsman batted
+        val relevantInnings = matchState.liveScorecard.innings.find { innings ->
+            innings.battingPerformances.any { it.playerId == targetBatsmanId }
+        }
+
+        // Check if the batsman's performance can be found
+        val batsmanPerformance = relevantInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
+
+        return batsmanPerformance != null && (
+                batsmanPerformance.runs >= targetRuns ||  // Target achieved
+                        batsmanPerformance.dismissed ||  // Batsman is out
+                        !relevantInnings.isCurrentInnings ||  // Innings has ended
+                        matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE  // Match has ended
+                )
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, null)
         val targetRuns = question.targetRuns ?: return QuestionResolution(false, null)
-        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val batsmanPerformance = currentInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
 
-        val isResolved = batsmanPerformance?.runs?.let { it >= targetRuns } ?: false
-        val result = if (isResolved) "Yes" else "No"
+        // Find the relevant innings where this batsman batted
+        val relevantInnings = matchState.liveScorecard.innings.find { innings ->
+            innings.battingPerformances.any { it.playerId == targetBatsmanId }
+        }
+        val batsmanPerformance = relevantInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
 
-        return QuestionResolution(true, result)
+        if (batsmanPerformance == null) {
+            return QuestionResolution(false, null)
+        }
+
+        val runsScored = batsmanPerformance.runs
+        val result = if (runsScored >= targetRuns) "Yes" else "No"
+
+        // Resolve if the target is met, batsman is dismissed, innings has ended, or match has ended
+        val canResolve = runsScored >= targetRuns ||
+                batsmanPerformance.dismissed ||
+                !relevantInnings.isCurrentInnings ||
+                matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE
+
+        return QuestionResolution(canResolve, if (canResolve) result else null)
     }
 }

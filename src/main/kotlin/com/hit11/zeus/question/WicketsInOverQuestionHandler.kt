@@ -5,6 +5,7 @@ import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.repository.QuestionRepository
 
 data class WicketsInOverParameter(val targetBowlerId: Int, val targetOver: Int, val targetWickets: Int) :
     QuestionParameter()
@@ -34,11 +35,22 @@ class WicketsInOverParameterGenerator : QuestionParameterGenerator<WicketsInOver
 }
 
 class WicketsInOverQuestionGenerator(
+    questionRepository: QuestionRepository,
     override val triggerCondition: TriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<WicketsInOverParameter>,
     override val validator: WicketsInOverQuestionValidator
-) : BaseQuestionGenerator<WicketsInOverParameter>() {
+) : BaseQuestionGenerator<WicketsInOverParameter>(questionRepository) {
     override val type = QuestionType.WICKETS_IN_OVER
+
+    override fun questionExists(param: WicketsInOverParameter, state: MatchState): Boolean {
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWicketsAndTargetSpecificOver(
+            state.liveScorecard.matchId,
+            QuestionType.WICKETS_IN_OVER.text,
+            param.targetBowlerId,
+            param.targetWickets,
+            param.targetOver
+        )
+    }
 
     override fun createQuestion(param: WicketsInOverParameter, state: MatchState): QuestionDataModel? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null

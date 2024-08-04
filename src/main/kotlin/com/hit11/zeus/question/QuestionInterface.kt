@@ -4,7 +4,7 @@ import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.QuestionStatus
 import com.hit11.zeus.model.QuestionType
-import com.hit11.zeus.question.QuestionParameter
+import com.hit11.zeus.repository.QuestionRepository
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -29,14 +29,21 @@ interface QuestionGenerator<T : QuestionParameter> {
 
         val parameters = parameterGenerator.generateParameters(currentState, previousState)
         return parameters.mapNotNull { param ->
-            createQuestion(param, currentState)?.takeIf { validator.validateQuestion(it) }
+            if (!questionExists(param, currentState)) {
+                createQuestion(param, currentState)?.takeIf { validator.validateQuestion(it) }
+            } else {
+                null
+            }
         }
     }
 
     fun createQuestion(param: T, state: MatchState): QuestionDataModel?
+    abstract fun questionExists(param: T, state: MatchState): Boolean
 }
 
-abstract class BaseQuestionGenerator<T : QuestionParameter> : QuestionGenerator<T> {
+abstract class BaseQuestionGenerator<T : QuestionParameter>(
+    protected val questionRepository: QuestionRepository
+) : QuestionGenerator<T> {
     open fun calculateInitialWagers(param: T, state: MatchState): Pair<Long, Long> {
         // Default implementation: even odds
         return Pair(5L, 5L)
