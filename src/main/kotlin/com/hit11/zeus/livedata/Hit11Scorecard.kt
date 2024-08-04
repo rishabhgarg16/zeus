@@ -2,26 +2,27 @@ package com.hit11.zeus.livedata
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.hit11.zeus.model.CricbuzzMatchPlayingState
+import com.hit11.zeus.model.MatchFormat
 import java.math.BigDecimal
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Hit11Scorecard(
     val matchId: Int = 0,
     val matchDescription: String = "",
-    val matchFormat: String = "",
     val matchType: String = "",
+    val matchFormat: MatchFormat = MatchFormat.T20,
     val startTimestamp: Long = 0,
     val endTimestamp: Long = 0,
     val status: String = "",
-    val state: String = "", // Complete, etc ...
-    val result: MatchResult = MatchResult(),
+    val state: CricbuzzMatchPlayingState = CricbuzzMatchPlayingState.IN_PROGRESS,
+    val result: MatchResult? = null,
     val team1: Team = Team(),
     val team2: Team = Team(),
     val innings: List<Innings> = listOf(),
     val playerOfTheMatch: PlayerOfTheMatch? = null,
     val tossResult: TossResult? = null
 )
-
 
 data class TossResult(
     val tossWinnerTeamId: Int = 0,

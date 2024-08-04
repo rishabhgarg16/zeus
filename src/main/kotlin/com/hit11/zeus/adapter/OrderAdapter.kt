@@ -1,6 +1,7 @@
 package com.hit11.zeus.adapter
 
 import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.QuestionStatus
 import com.hit11.zeus.model.response.OrderResponse
 import com.hit11.zeus.oms.OrderDataModel
 import com.hit11.zeus.oms.OrderPlaceRequest
@@ -35,7 +36,8 @@ object OrderAdapter {
             answerTime = answerTime,
             matchId = questionDataModel.matchId,
             state = state.name,
-            isPulseActive = questionDataModel.enabled,
+            // TODO change it may be not sure to send complete status to UI or partial
+            isPulseActive = questionDataModel.status == QuestionStatus.LIVE,
             pulseImageUrl = questionDataModel.pulseImageUrl,
             pulseEndDate = questionDataModel.pulseEndDate,
             userTradeQuantity = quantity,

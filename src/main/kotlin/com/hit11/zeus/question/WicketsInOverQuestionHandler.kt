@@ -4,84 +4,109 @@ import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.model.MatchState
 import com.hit11.zeus.model.QuestionDataModel
-import java.math.BigDecimal
+import com.hit11.zeus.model.QuestionType
 
-class WicketsInOverQuestionHandler : QuestionHandler {
-    override fun validate(question: QuestionDataModel) {
-        if (question.targetSpecificOver == null || question.targetSpecificOver < 0) {
-            throw QuestionValidationException("Target over must be a non-negative number for Wickets in Over question")
-        }
-        if (question.targetWickets == null || question.targetWickets <= 0) {
-            throw QuestionValidationException("Target wickets must be a positive number for Wickets in Over question")
+data class WicketsInOverParameter(val targetBowlerId: Int, val targetOver: Int, val targetWickets: Int) :
+    QuestionParameter()
+
+class WicketsInOverTriggerCondition : TriggerCondition {
+    override fun shouldTrigger(currentState: MatchState, previousState: MatchState?): Boolean {
+        val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
+        val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
+
+        return currentInnings?.overs?.toInt() != previousInnings?.overs?.toInt()
+    }
+}
+
+class WicketsInOverParameterGenerator : QuestionParameterGenerator<WicketsInOverParameter> {
+    override fun generateParameters(
+        currentState: MatchState, previousState: MatchState?
+    ): List<WicketsInOverParameter> {
+        val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings } ?: return emptyList()
+        val currentOver = currentInnings.overs.toInt()
+        val bowler = currentInnings.bowlingPerformances.find { it.onStrike == 1 } ?: return emptyList()
+
+        return listOf(
+            WicketsInOverParameter(bowler.playerId, currentOver + 1, 1),
+            WicketsInOverParameter(bowler.playerId, currentOver + 1, 2)
+        )
+    }
+}
+
+class WicketsInOverQuestionGenerator(
+    override val triggerCondition: TriggerCondition,
+    override val parameterGenerator: QuestionParameterGenerator<WicketsInOverParameter>,
+    override val validator: WicketsInOverQuestionValidator
+) : BaseQuestionGenerator<WicketsInOverParameter>() {
+    override val type = QuestionType.WICKETS_IN_OVER
+
+    override fun createQuestion(param: WicketsInOverParameter, state: MatchState): QuestionDataModel? {
+        val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
+        val bowler = currentInnings.bowlingPerformances.find { it.playerId == param.targetBowlerId } ?: return null
+        return createDefaultQuestionDataModel(
+            matchId = state.liveScorecard.matchId,
+            pulseQuestion = "Will ${bowler.playerName} take ${param.targetWickets} or more wickets in the ${param.targetOver}th over?",
+            optionA = "Yes",
+            optionB = "No",
+            category = listOf("Bowling"),
+            questionType = QuestionType.WICKETS_IN_OVER,
+            targetBowlerId = param.targetBowlerId,
+            targetWickets = param.targetWickets,
+            targetSpecificOver = param.targetOver,
+            param = param,
+            state = state
+        )
+    }
+}
+
+class WicketsInOverQuestionValidator : QuestionValidator {
+    override fun validateQuestion(question: QuestionDataModel): Boolean {
+        if (question.questionType != QuestionType.WICKETS_IN_OVER) {
+            return false
         }
         if (question.targetBowlerId == null) {
             throw QuestionValidationException("Target bowler ID is required for Wickets in Over question")
         }
+        if (question.targetWickets == null || question.targetWickets <= 0) {
+            throw QuestionValidationException("Target wickets must be a positive number for Wickets in Over question")
+        }
+        if (question.targetSpecificOver == null || question.targetSpecificOver < 0) {
+            throw QuestionValidationException("Target over must be a non-negative number for Wickets in Over question")
+        }
+        return true
     }
 
-    override fun canBeResolved(question: QuestionDataModel, matchState: MatchState): Boolean {
-        val targetOvers = question.targetOvers
+    override fun validateParameters(matchState: MatchState): Boolean {
+        TODO("Not yet implemented")
+    }
+}
+
+class WicketsInOverResolutionStrategy : ResolutionStrategy {
+    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
         val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val currentOver = currentInnings?.overs
-        return when {
-            targetOvers != null -> (currentOver?.toInt()?.plus(1) ?: -1) == targetOvers
-            else -> false
-        }
+        val currentOver = currentInnings?.overs?.toInt() ?: -1
+        return currentOver > (question.targetSpecificOver ?: -1)
     }
 
-    override fun resolveQuestion(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        if (!canBeResolved(question, matchState)) {
-            return QuestionResolution(false, null)
-        }
-
+    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val targetOver = question.targetSpecificOver ?: return QuestionResolution(false, null)
         val targetWickets = question.targetWickets ?: return QuestionResolution(false, null)
         val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
 
-        val wicketsInOver = countWicketsInOver(matchState.liveScorecard, targetBowlerId)
-        val result = if (wicketsInOver >= targetWickets) "Yes" else "No"
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
+        val wicketInTargetOver = currentInnings?.ballByBallEvents
+            ?.filter { it.overNumber == targetOver }
+            ?.any { it.isWicket } ?: false
 
-        return QuestionResolution(true, result)
+        return QuestionResolution(true, if (wicketInTargetOver) "Yes" else "No")
     }
+}
 
-    private fun countWicketsInOver(scorecard: Hit11Scorecard, targetBowlerId: Int): Int {
-//        val commentaryList = scorecard.innings.ballByBallEvents
-//        val bowlerId = scorecard.innings.bowlingPerformances.find {it.onStrike == 1}?.playerId ?: -1
-//        if(targetBowlerId != bowlerId) {
-//            throw QuestionValidationException("Target bowler ID is different to bolwer on strike")
-//        }
-        var wicketCount = 0
-        val overNumber =
+private fun countWicketsInOver(scorecard: Hit11Scorecard, targetBowlerId: Int, targetOver: Int): Int {
+    // Implement logic to count wickets in the specific over
+    // This would involve iterating through the ball-by-ball events of the scorecard
+    // and counting wickets for the specific bowler in the target over
+    // Return the count of wickets
+    return 0 // Placeholder return
 
-//        for (event in commentaryList.reversed()) {
-//            val eventOver = event.overNumber.toInt() + 1
-//
-//            when {
-//                eventOver > BigDecimal(targetOver) -> continue
-//                eventOver < BigDecimal(targetOver - 1) -> break  // Break if we've gone past the previous over
-//                eventOver.toInt() == targetOver - 1 && eventOver.remainder(BigDecimal.ONE) > BigDecimal("0.5") -> {
-//                    // Count wickets in the last ball of the previous over (X.6)
-//                    if (event.isWicket && isBowlerWicket(event.commText)) {
-//                        wicketCount++
-//                    }
-//                }
-//                eventOver.toInt() == targetOver -> {
-//                    // Count wickets in the target over
-//                    if (event.isWicket && isBowlerWicket(event.commText)) {
-//                        wicketCount++
-//                    }
-//                }
-//            }
-//        }
-
-        return wicketCount
-    }
-
-    private fun parseOver(overString: String): BigDecimal {
-        return try {
-            BigDecimal(overString)
-        } catch (e: NumberFormatException) {
-            BigDecimal.ZERO
-        }
-    }
 }

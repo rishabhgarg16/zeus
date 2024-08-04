@@ -1,5 +1,6 @@
 package com.hit11.zeus.service
 
+import com.hit11.zeus.controller.BallEventProcessResponse
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.ResourceNotFoundException
 import com.hit11.zeus.livedata.BallEvent
@@ -25,7 +26,7 @@ class EventService(
     @Transactional
     fun processBallEvent(
         liveScoreEvent: Hit11Scorecard
-    ): UpdateQuestionsResponse {
+    ): BallEventProcessResponse {
         // Validate ball event data
         validateBallEvent(liveScoreEvent)
 
@@ -95,8 +96,9 @@ class EventService(
 
         // Call QuestionService to update questions based on the ball event
         val updatedQuestionsResponse =
-            questionService.updateQuestions(liveScoreEvent)
-        return updatedQuestionsResponse
+            questionService.processNewScorecard(liveScoreEvent)
+        // TODO v1 needs to be fixed
+        return BallEventProcessResponse(emptyList(), emptyList(), emptyList(), emptyList())
     }
 
     private fun updateInningEntity(currentInnings: Innings, inningEntity: Inning, matchId: Int) {

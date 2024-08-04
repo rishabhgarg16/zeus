@@ -1,6 +1,7 @@
 package com.hit11.zeus.adapter
 
 import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.QuestionStatus
 import com.hit11.zeus.oms.Trade
 import com.hit11.zeus.oms.TradeResponse
 
@@ -15,7 +16,8 @@ object TradeAdapter {
             answerTime = tradeTime,
             matchId = questionDataModel.matchId,
             tradeResult = checkIfUserWon(userAnswer, questionDataModel),
-            isPulseActive = questionDataModel.enabled,
+            // TODO may be change it on
+            isPulseActive = questionDataModel.status == QuestionStatus.LIVE,
             pulseImageUrl = questionDataModel.pulseImageUrl,
             pulseEndDate = questionDataModel.pulseEndDate,
             userTradeQuantity = tradeQuantity,

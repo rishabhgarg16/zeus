@@ -5,10 +5,21 @@ import javax.persistence.*
 
 enum class MatchStatus(val text: String) {
     SCHEDULED("Scheduled"),
-    ENDED("Ended"),
-    DELAYED("Delayed"),
-    LIVE("Live")
+    PREVIEW("Preview"),
+    COMPLETE("Complete"),
+    IN_PROGRESS("In Progress");
+
+    companion object {
+        fun fromText(text: String): MatchStatus = values().find { it.text == text }
+            ?: throw IllegalArgumentException("No MatchStatus found for text: $text")
+    }
 }
+
+enum class MatchFormat(matchFormat: String) {
+    ODI("ODI"),
+    T20("T20")
+}
+
 
 data class Match(
     val id: Int = 0,
@@ -23,6 +34,7 @@ data class Match(
     val stadium: String? = null,
     val country: String? = null,
     val tournamentName: String? = null,
+    val matchFormat: String? = null,
     val matchType: String? = null,
     val matchStatus: String = "",
     val matchLink: String? = null,
@@ -42,6 +54,7 @@ data class Match(
             country = country,
             status = matchStatus,
             tournamentName = tournamentName,
+            matchFormat = matchFormat,
             matchType = matchType,
             matchLink = matchLink,
             team1Id = team1Id,
@@ -67,6 +80,7 @@ data class MatchEntity(
     val country: String? = null,
     val status: String = MatchStatus.SCHEDULED.text,
     val tournamentName: String? = null,
+    val matchFormat: String? = null,
     val matchType: String? = null,
     val matchLink: String? = null,
     @Column(name = "team1_id")
@@ -106,21 +120,14 @@ data class MatchEntity(
             stadium = this.stadium,
             country = this.country,
             tournamentName = this.tournamentName,
+            matchFormat = this.matchFormat,
             matchType = this.matchType,
-            matchStatus = findMatchStatus(this.startDate),
+            matchStatus = status,
             startDate = this.startDate,
             endDate = this.endDate,
             team1Id = this.team1Id,
             team2Id = this.team2Id,
             matchLink = this.matchLink,
         )
-    }
-
-    private fun findMatchStatus(startDate: Instant): String {
-        if (startDate < Instant.now()) {
-            return MatchStatus.LIVE.text
-        } else {
-            return MatchStatus.SCHEDULED.text
-        }
     }
 }

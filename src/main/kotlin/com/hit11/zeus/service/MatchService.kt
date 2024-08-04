@@ -1,30 +1,26 @@
 package com.hit11.zeus.service
 
 import com.hit11.zeus.model.Match
-import com.hit11.zeus.model.MatchEntity
+import com.hit11.zeus.model.MatchStatus
 import com.hit11.zeus.repository.MatchRepository
 import com.hit11.zeus.repository.TeamRepository
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
-@Service class MatchService(
+@Service
+class MatchService(
     private val matchRepository: MatchRepository,
     private val teamRepository: TeamRepository
 ) {
     fun getUpcomingMatches(limit: Int): List<Match> {
-        val now = Instant.now()
-        val pageable: Pageable = PageRequest.of(
-            0,
-            limit
-        )
+        val activeStatuses = listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
+        val startDate = Instant.now().minus(1, ChronoUnit.DAYS)
+        val pageable = PageRequest.of(0, limit)
+
         return try {
-            val matchEntities: List<MatchEntity> =
-                    matchRepository.findMatchesWithLimit(
-                        now,
-                        pageable
-                    )
+            val matchEntities = matchRepository.findMatchesByStatusesWithLimit(activeStatuses, startDate, pageable)
             matchEntities.mapNotNull { matchEntity ->
                 try {
                     val team1 = teamRepository.findById(matchEntity.team1Id.toLong()).orElse(null)

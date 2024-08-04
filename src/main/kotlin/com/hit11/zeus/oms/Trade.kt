@@ -1,6 +1,7 @@
 package com.hit11.zeus.oms
 
 import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.QuestionStatus
 import java.math.BigDecimal
 import java.time.Instant
 import javax.persistence.*
@@ -70,7 +71,7 @@ data class Trade(
 
     fun checkIfUserWon(userAnswer: String, questionDataModel: QuestionDataModel): String {
         return when {
-            questionDataModel.enabled -> TradeResult.ACTIVE.text
+            questionDataModel.status == QuestionStatus.LIVE -> TradeResult.ACTIVE.text
             questionDataModel.pulseResult.isNullOrBlank() -> TradeResult.ACTIVE.text
             userAnswer == questionDataModel.pulseResult -> TradeResult.WIN.text
             else -> TradeResult.LOSE.text

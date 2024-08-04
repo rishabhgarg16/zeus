@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 @Repository interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
     fun findByMatchIdInAndStatus(
         matchIdList: List<Int>,
-        status: Boolean
+        status: QuestionStatus
     ): List<QuestionEntity>?
 
     fun findByMatchId(matchId: Int): List<QuestionEntity>?

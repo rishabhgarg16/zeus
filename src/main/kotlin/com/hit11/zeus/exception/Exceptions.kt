@@ -1,5 +1,7 @@
 package com.hit11.zeus.exception
 
+import kotlin.contracts.contract
+
 class InsufficientBalanceException(message: String) : RuntimeException(message)
 class OrderInvalidationException(message: String) : RuntimeException(message)
 class OrderNotFoundException (message: String) : RuntimeException(message)

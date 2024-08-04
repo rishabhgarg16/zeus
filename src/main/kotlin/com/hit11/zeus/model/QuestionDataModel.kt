@@ -15,7 +15,7 @@ enum class QuestionType(val text: String) {
 
     // batting questions
     TOP_SCORER("top_scorer"),
-    SIXES_IN_MATCH("sixes_in_match"),
+    SIX_BY_PLAYER("six_by_player"),
     RUNS_SCORED_BY_BATSMAN("runs_scored_by_batsman"),
     TEAM_RUNS_IN_MATCH("team_runs_in_match"),
     MAN_OF_THE_MATCH("man_of_the_match"),
@@ -24,7 +24,7 @@ enum class QuestionType(val text: String) {
     WICKETS_IN_MATCH("wickets_in_match"),
     WICKETS_BY_BOWLER("wickets_by_bowler"),
     WICKETS_IN_OVER("wickets_in_over"),
-    WIDES_IN_MATCH("wides_in_match"),
+    WIDES_BY_BOWLER("wides_by_bowler"),
     ECONOMY_RATE("economy_rate_in_match"),
     TOTAL_EXTRAS("total_extras"),
 
@@ -37,9 +37,16 @@ enum class QuestionType(val text: String) {
         }
     }
 }
+enum class QuestionStatus {
+    SYSTEM_GENERATED,  // Newly created by the system, waiting for review
+    MANUAL_DRAFT,      // Manually created, not yet approved
+    LIVE,              // Currently active
+    RESOLVED,          // Question has been answered/resolved
+    CANCELLED          // Question was cancelled or deemed invalid
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class QuestionDataModel(
+data class QuestionDataModel(
     val id: Int = 0,
     val matchId: Int = 0,
     val pulseQuestion: String = "",
@@ -50,7 +57,7 @@ class QuestionDataModel(
     val userACount: Long? = -1L,
     val userBCount: Long? = -1L,
     val category: List<String>? = ArrayList(),
-    var enabled: Boolean = false,
+    var status: QuestionStatus = QuestionStatus.SYSTEM_GENERATED,
     var pulseResult: String? = "",
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
@@ -81,7 +88,7 @@ class QuestionDataModel(
             userACount = this.userACount,
             userBCount = this.userBCount,
             category = this.category.toString(),
-            status = this.enabled,
+            status = this.status,
             pulseResult = this.pulseResult,
             pulseImageUrl = this.pulseImageUrl,
             pulseEndDate = this.pulseEndDate,
@@ -136,7 +143,10 @@ data class QuestionEntity(
 
     val category: String? = "",
 
-    var status: Boolean = false,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    var status: QuestionStatus = QuestionStatus.SYSTEM_GENERATED,
+
     var pulseResult: String? = "",
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
@@ -194,7 +204,7 @@ data class QuestionEntity(
             userACount = this.userACount ?: -1L,
             userBCount = this.userBCount ?: -1L,
             category = getCategoryList(),
-            enabled = this.status,
+            status = this.status,
             pulseResult = this.pulseResult,
             pulseImageUrl = this.pulseImageUrl,
             pulseEndDate = this.pulseEndDate,

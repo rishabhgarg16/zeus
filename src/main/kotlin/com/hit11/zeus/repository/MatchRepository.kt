@@ -1,6 +1,7 @@
 package com.hit11.zeus.repository
 
 import com.hit11.zeus.model.MatchEntity
+import com.hit11.zeus.model.MatchStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -10,7 +11,14 @@ import java.time.Instant
 
 @Repository interface MatchRepository : JpaRepository<MatchEntity, Int> {
     @Query("SELECT m FROM MatchEntity m WHERE m.endDate > :startDate ORDER BY m.startDate ASC")
-    fun findMatchesWithLimit(
+    fun findMatchesByStartDateWithLimit(
+        @Param("startDate") startDate: Instant,
+        pageable: Pageable
+    ): List<MatchEntity>
+
+    @Query("SELECT m FROM MatchEntity m WHERE m.status IN :statuses AND m.startDate >= :startDate ORDER BY m.startDate ASC")
+    fun findMatchesByStatusesWithLimit(
+        @Param("statuses") statuses: List<String>,
         @Param("startDate") startDate: Instant,
         pageable: Pageable
     ): List<MatchEntity>
