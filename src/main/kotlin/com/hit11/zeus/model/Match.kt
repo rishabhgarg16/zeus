@@ -70,8 +70,14 @@ data class MatchEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
-    val team1: String = "",
-    val team2: String = "",
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team1_id", insertable = false, updatable = false)
+    val team1: TeamEntity? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team2_id", insertable = false, updatable = false)
+    val team2: TeamEntity? = null,
+
     val matchGroup: String? = null,
     val startDate: Instant = Instant.now(),
     val endDate: Instant = Instant.now(),
@@ -106,12 +112,12 @@ data class MatchEntity(
     }
 
 
-    fun mapToMatch(team1: TeamEntity?, team2: TeamEntity?): Match {
+    fun mapToMatch(): Match {
         return Match(
             id = this.id,
             matchGroup = this.matchGroup,
-            team1 = this.team1,
-            team2 = this.team2,
+            team1 = this.team1?.teamName ?: "",
+            team2 = this.team2?.teamName ?: "",
             team1ShortName = team1?.teamShortName ?: "",
             team2ShortName = team2?.teamShortName ?: "",
             team1ImageUrl = team1?.teamImageUrl,

@@ -32,7 +32,7 @@ class EventService(
 
         val match = matchRepository.findById(liveScoreEvent.matchId)
             .orElseThrow { ResourceNotFoundException("Match not found") }
-            .mapToMatch(null, null)
+            .mapToMatch()
 
         val currentInnings = findCurrentInnings(liveScoreEvent) ?: throw Exception("Match completed")
 

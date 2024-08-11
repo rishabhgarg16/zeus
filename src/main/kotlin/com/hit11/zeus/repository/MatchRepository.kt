@@ -16,12 +16,21 @@ import java.time.Instant
         pageable: Pageable
     ): List<MatchEntity>
 
-    @Query("SELECT m FROM MatchEntity m WHERE m.status IN :statuses AND m.startDate >= :startDate ORDER BY m.startDate ASC")
+    @Query("SELECT m FROM MatchEntity m WHERE m.status IN :statuses " +
+            "AND m.startDate >= :startDate ORDER BY m.startDate ASC")
     fun findMatchesByStatusesWithLimit(
         @Param("statuses") statuses: List<String>,
         @Param("startDate") startDate: Instant,
         pageable: Pageable
     ): List<MatchEntity>
+
+    @Query("""SELECT m FROM MatchEntity m
+    JOIN FETCH m.team1 t1
+    JOIN FETCH m.team2 t2
+    WHERE m.status IN :statuses
+    AND m.startDate >= :startDate
+    ORDER BY m.startDate ASC""")
+    fun findMatchesWithTeams(statuses: List<String>, startDate: Instant, pageable: Pageable): List<MatchEntity>
 
     @Query("SELECT m FROM MatchEntity m WHERE m.status = :status ORDER BY m.startDate ASC")
     fun findMatchesWithLiveStatusWithLimit(
