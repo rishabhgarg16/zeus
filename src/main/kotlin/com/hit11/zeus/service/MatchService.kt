@@ -37,13 +37,14 @@ class MatchService(
 
     fun getMatchById(matchId: Int): Match? {
         return try {
-            val matchEntity = matchRepository.findById(matchId)
-            if (!matchEntity.isPresent) {
-                return null
+            val matchEntity = matchRepository.findMatchWithTeamsById(matchId)
+            if (matchEntity.isPresent) {
+                matchEntity.get().mapToMatch()
+            } else {
+                null
             }
-            matchEntity.get().mapToMatch()
         } catch (e: Exception) {
-            println("Error fetching upcoming matches: $e")
+            println("Error fetching match by ID: $e")
             null
         }
     }
