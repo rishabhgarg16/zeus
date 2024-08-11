@@ -37,4 +37,21 @@ class MatchService(
             emptyList<Match>()
         }
     }
+
+    fun getMatchById(matchId: Int): Match? {
+        return try {
+            val matchEntity = matchRepository.findById(matchId)
+            if (!matchEntity.isPresent) {
+                return null
+            }
+            val team1Id = matchEntity.get().team1Id.toLong()
+            val team2Id = matchEntity.get().team2Id.toLong()
+            val team1 = teamRepository.findById(team1Id).orElse(null)
+            val team2 = teamRepository.findById(team2Id).orElse(null)
+            matchEntity.get().mapToMatch(team1, team2)
+        } catch (e: Exception) {
+            println("Error fetching upcoming matches: $e")
+            null
+        }
+    }
 }

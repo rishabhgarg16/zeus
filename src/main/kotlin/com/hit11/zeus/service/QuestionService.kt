@@ -128,6 +128,10 @@ class QuestionService(
             questionRepository.saveAll(questions.map { it.maptoEntity() })
         }
     }
+
+    fun getQuestionById(questionId: Int): QuestionDataModel? {
+        return questionRepository.findById(questionId).map { it.mapToQuestionDataModel() }.orElse(null)
+    }
 }
 
 data class QuestionError(

@@ -34,6 +34,21 @@ class QuestionController(private val service: QuestionService) {
         )
     }
 
+    @GetMapping("/pulse/{pulseId}")
+    fun getPulseById(
+        @PathVariable pulseId: Int
+    ): ResponseEntity<ApiResponse<QuestionResponse?>> {
+        val response = service.getQuestionById(pulseId)?.toQuestionResponse()
+        return ResponseEntity.ok(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = response
+            )
+        )
+    }
+
     @PostMapping("/updateAnswer")
     fun updateAnswer(
         @RequestBody req: QuestionAnswerUpdateRequest
