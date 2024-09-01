@@ -23,6 +23,7 @@ class MyWebSocketHandler(
 ) : TextWebSocketHandler() {
 
     private val sessions = ConcurrentHashMap<String, WebSocketSession>()
+    private val lastSessionMessage = ConcurrentHashMap<String, CharSequence>()
 
     @PostConstruct
     fun init() {
@@ -33,6 +34,9 @@ class MyWebSocketHandler(
         val sessionId = session.id
         sessions[sessionId] = session
         println("New WebSocket connection: $sessionId. Total sessions: ${sessions.size}. Handler instance: ${this.hashCode()}")
+        lastSessionMessage[session.id]?.let {
+            session.sendMessage(TextMessage(it))
+        }
     }
 
     override fun handleTextMessage(
@@ -68,15 +72,16 @@ class MyWebSocketHandler(
         sessions.values.forEach { session ->
             val subscribedTopicsBySession = session.attributes["subscribedTopics"] as? Set<String>
             println("Session ${session.id} subscribed topics: $subscribedTopicsBySession")
+            val jsonMessage = JsonObject().apply {
+                addProperty(
+                    "topic",
+                    topic
+                )
+                addProperty("matchId", topic.removePrefix("match"))
+                addProperty("liveScore", Gson().toJson(message))
+            }.toString()
+            lastSessionMessage[session.id] = jsonMessage
             if (subscribedTopicsBySession?.contains(topic) == true) {
-                val jsonMessage = JsonObject().apply {
-                    addProperty(
-                        "topic",
-                        topic
-                    )
-                    addProperty("matchId", topic.removePrefix("match"))
-                    addProperty("liveScore", Gson().toJson(message))
-                }.toString()
                 session.sendMessage(TextMessage(jsonMessage))
                 println("Sent message to session ${session.id} for topic $topic")
             }

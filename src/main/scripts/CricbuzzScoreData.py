@@ -123,6 +123,7 @@ def update_match(cursor, match_header, match_id):
     print(f"Updated match: {match_id}")
 
 
+lastUpdatedTime = 0
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
     headers = {
@@ -134,7 +135,8 @@ def call_cricbuzz_commentry_api(match_id):
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
         # print(f"Data fetched successfully from Cricbuzz. Response: {response.text}")
-        return response.json()
+        response_json = response.json()
+        return response_json
     except requests.exceptions.RequestException as e:
         print(f"Error getting data from Cricbuzz: {e}")
         return False
@@ -594,10 +596,16 @@ def process_cricbuzz_data(cricbuzz_data):
         print(traceback.format_exc())
 
 
+lastUpdatedTime = 0
 while True:
     try:
-        cricbuzz_data = call_cricbuzz_commentry_api(101550)
-        process_cricbuzz_data(cricbuzz_data)
+        matchlist = [123456]
+        for match_id in matchlist:
+            cricbuzz_data = call_cricbuzz_commentry_api(match_id)
+            if cricbuzz_data['responseLastUpdated'] > lastUpdatedTime:
+                lastUpdatedTime = cricbuzz_data['responseLastUpdated']
+                process_cricbuzz_data(cricbuzz_data)
+
     except FileNotFoundError:
         print("Error: cricbuzz_data.json file not found.")
     except json.JSONDecodeError:

@@ -6,22 +6,30 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.UserRecord
 import com.google.firebase.cloud.FirestoreClient
+import com.hit11.zeus.ZeusApplication
 import com.hit11.zeus.exception.InsufficientBalanceException
 import com.hit11.zeus.exception.UserNotFoundException
 import com.hit11.zeus.model.User
 import com.hit11.zeus.model.UserEntity
+import com.hit11.zeus.model.UserReward
 import com.hit11.zeus.model.mapToUser
 import com.hit11.zeus.repository.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.util.Date
 import java.sql.SQLIntegrityConstraintViolationException
+import java.time.Instant
+import java.util.concurrent.TimeUnit
 
 
 @Service
 class UserService(
     private val userRepository: UserRepository
 ) {
+
+    private val logger = LoggerFactory.getLogger(UserService::class.java)
     private val firestore: Firestore = FirestoreClient.getFirestore()
     val userCollection = firestore.collection("users")
 
@@ -53,7 +61,8 @@ class UserService(
                 firebaseUser.displayName,
                 firebaseUser.phoneNumber,
                 BigDecimal(500),
-                BigDecimal.ZERO
+                BigDecimal.ZERO,
+                lastLoginDate = Date(),
             )
             try {
                 val createdUser = userRepository.save(newUser)
@@ -62,6 +71,30 @@ class UserService(
                 throw Exception("User Already Exists")
             } catch (e: Exception) {
                 throw Exception(e.message)
+            }
+        }
+        return null
+    }
+
+    fun checkUserReward(firebaseUID: String): UserReward? {
+        val userRecord = userRepository.findByFirebaseUID(firebaseUID) ?: return null
+        if (userRecord.lastLoginDate != null) {
+            val oldLoginDate = userRecord.lastLoginDate!!
+            val newLoginDate = Date()
+            val diffInMillis = newLoginDate.time - oldLoginDate.time
+            val diffInDays = TimeUnit.DAYS.convert(diffInMillis, TimeUnit.MILLISECONDS)
+            val newUserRecord = userRepository.save(userRecord.copy(lastLoginDate = newLoginDate))
+            if (diffInDays > 0L) {
+                val rewardAmount = 200.0
+                if (this.updateBalance(userRecord.id, rewardAmount)) {
+                    logger.info("Added $rewardAmount to user with ID: ${userRecord.id}")
+                    return UserReward(
+                        "DAILY_LOGIN_REWARD",
+                        "NON_WITHDRAWAL_BALANCE",
+                        rewardAmount,
+                        Instant.now().epochSecond
+                    )
+                }
             }
         }
         return null

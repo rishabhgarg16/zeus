@@ -45,3 +45,6 @@ bin/
 .kotlin
 
 *.csv
+
+# appsmith
+stacks
