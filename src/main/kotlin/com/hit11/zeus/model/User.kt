@@ -1,6 +1,7 @@
 package com.hit11.zeus.model
 
 import java.math.BigDecimal
+import java.util.Date
 import java.time.Instant
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -19,6 +20,7 @@ data class User(
     val phone: String = "",
     val walletBalance: BigDecimal = BigDecimal.ZERO,
     val withdrawalBalance: BigDecimal = BigDecimal.ZERO,
+    val lastLoginDate: Date? = null
 )
 
 @Entity
@@ -39,6 +41,9 @@ data class UserEntity(
 
     @Column(name = "withdrawal_balance", precision = 19, scale = 4)
     var withdrawalBalance: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "last_login_date", nullable = true, updatable = true)
+    var lastLoginDate: Date? = null,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
@@ -68,5 +73,6 @@ fun mapToUser(userEntity: UserEntity): User {
         phone = userEntity.phone,
         walletBalance = userEntity.walletBalance,
         withdrawalBalance = userEntity.withdrawalBalance,
+        lastLoginDate = userEntity.lastLoginDate
     )
 }
