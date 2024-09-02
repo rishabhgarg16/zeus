@@ -3,10 +3,7 @@ package com.hit11.zeus.question
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.livedata.BattingPerformance
 import com.hit11.zeus.livedata.Innings
-import com.hit11.zeus.model.CricbuzzMatchPlayingState
-import com.hit11.zeus.model.MatchState
-import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 
 data class RunsScoredByBatsmanParameter(
@@ -99,8 +96,8 @@ class RunsScoredByBatsmanQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${batsman.playerName} score ${param.targetRuns} or more runs in this innings?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Batting"),
             questionType = QuestionType.RUNS_SCORED_BY_BATSMAN,
             targetBatsmanId = param.targetBatsmanId,
@@ -180,8 +177,8 @@ class RunsScoredByBatsmanResolutionStrategy : ResolutionStrategy {
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, null)
-        val targetRuns = question.targetRuns ?: return QuestionResolution(false, null)
+        val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetRuns = question.targetRuns ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
         // Find the relevant innings where this batsman batted
         val relevantInnings = matchState.liveScorecard.innings.find { innings ->
@@ -190,11 +187,11 @@ class RunsScoredByBatsmanResolutionStrategy : ResolutionStrategy {
         val batsmanPerformance = relevantInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
 
         if (batsmanPerformance == null) {
-            return QuestionResolution(false, null)
+            return QuestionResolution(false, PulseResult.UNDECIDED)
         }
 
         val runsScored = batsmanPerformance.runs
-        val result = if (runsScored >= targetRuns) "Yes" else "No"
+        val result = if (runsScored >= targetRuns) PulseResult.Yes else PulseResult.No
 
         // Resolve if the target is met, batsman is dismissed, innings has ended, or match has ended
         val canResolve = runsScored >= targetRuns ||
@@ -202,6 +199,6 @@ class RunsScoredByBatsmanResolutionStrategy : ResolutionStrategy {
                 !relevantInnings.isCurrentInnings ||
                 matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE
 
-        return QuestionResolution(canResolve, if (canResolve) result else null)
+        return QuestionResolution(canResolve, if (canResolve) result else PulseResult.UNDECIDED)
     }
 }

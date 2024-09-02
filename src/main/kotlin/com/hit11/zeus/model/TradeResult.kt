@@ -1,4 +1,4 @@
-package com.hit11.zeus.oms
+package com.hit11.zeus.model
 
 enum class TradeResult(val text: String, val outcome: Int) {
     WIN("Win", 1),

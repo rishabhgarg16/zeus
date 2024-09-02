@@ -1,6 +1,8 @@
 package com.hit11.zeus.model.request
 
+import com.hit11.zeus.model.PulseResult
+
 class QuestionAnswerUpdateRequest(
     var pulseId: Int = 0,
-    var pulseResult: String = "",
+    var pulseResult: PulseResult = PulseResult.UNDECIDED,
 )

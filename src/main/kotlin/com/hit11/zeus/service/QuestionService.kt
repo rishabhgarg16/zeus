@@ -90,7 +90,7 @@ class QuestionService(
                         question.pulseResult = resolution.result
                         question.status = QuestionStatus.RESOLVED
                         questionRepository.save(question.maptoEntity())
-                        if (resolution.result != null) {
+                        if (resolution.result != PulseResult.UNDECIDED) {
                             payoutService.processPayouts(question)
                         }
                         updatedQuestions.add(question)

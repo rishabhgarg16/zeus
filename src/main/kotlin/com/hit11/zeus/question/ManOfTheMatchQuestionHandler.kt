@@ -1,10 +1,7 @@
 package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
-import com.hit11.zeus.model.CricbuzzMatchPlayingState
-import com.hit11.zeus.model.MatchState
-import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 
 data class ManOfTheMatchParameter(val targetPlayerId: Int) : QuestionParameter()
@@ -68,8 +65,8 @@ class ManOfTheMatchQuestionGenerator(
             return createDefaultQuestionDataModel(
                 matchId = state.liveScorecard.matchId,
                 pulseQuestion = "Will ${player.playerName} be the Man of the Match?",
-                optionA = "Yes",
-                optionB = "No",
+                optionA = PulseOption.Yes.name,
+                optionB = PulseOption.No.name,
                 category = listOf("Match Award"),
                 questionType = QuestionType.MAN_OF_THE_MATCH,
                 targetBatsmanId = param.targetPlayerId,
@@ -84,8 +81,8 @@ class ManOfTheMatchQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${bowlingplayer.playerName} be the Man of the Match?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Match Award"),
             questionType = QuestionType.MAN_OF_THE_MATCH,
             targetBatsmanId = param.targetPlayerId,
@@ -120,7 +117,7 @@ class ManOfTheMatchResolutionStrategy : ResolutionStrategy {
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
         val playerOfTheMatch = matchState.liveScorecard.playerOfTheMatch
-        val result = if (playerOfTheMatch?.id == question.targetBatsmanId) "Yes" else "No"
+        val result = if (playerOfTheMatch?.id == question.targetBatsmanId) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)
     }
 }

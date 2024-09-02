@@ -47,6 +47,10 @@ enum class QuestionStatus {
     CANCELLED          // Question was cancelled or deemed invalid
 }
 
+
+enum class PulseResult { Yes, No, UNDECIDED }
+enum class PulseOption {Yes, No}
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class QuestionDataModel(
     val id: Int = 0,
@@ -60,7 +64,7 @@ data class QuestionDataModel(
     val userBCount: Long? = -1L,
     val category: List<String>? = ArrayList(),
     var status: QuestionStatus = QuestionStatus.SYSTEM_GENERATED,
-    var pulseResult: String? = "",
+    var pulseResult: PulseResult = PulseResult.UNDECIDED,
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
     val targetRuns: Int? = 0,
@@ -71,7 +75,7 @@ data class QuestionDataModel(
     val targetExtras: Int? = 0,
     val targetWides: Int? = 0,
     val targetBoundaries: Int? = 0,
-    val questionType: QuestionType = QuestionType.INVALID,
+    val questionType: QuestionType? = QuestionType.INVALID,
     val targetBatsmanId: Int? = 0,
     val targetBowlerId: Int? = 0,
     val targetTeamId: Int? = 0,
@@ -106,7 +110,7 @@ data class QuestionDataModel(
             targetBowlerId = this.targetBowlerId,
             targetTeamId = this.targetTeamId,
             targetTossDecision = this.targetTossDecision,
-            questionType = this.questionType.text
+            questionType = this.questionType
         )
     }
 }
@@ -149,7 +153,10 @@ data class QuestionEntity(
     @Column(name = "status")
     var status: QuestionStatus = QuestionStatus.SYSTEM_GENERATED,
 
-    var pulseResult: String? = "",
+    @Enumerated(EnumType.STRING)
+    @Column(name  = "pulse_result")
+    var pulseResult: PulseResult = PulseResult.UNDECIDED,
+
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
     val targetRuns: Int? = 0,
@@ -165,7 +172,9 @@ data class QuestionEntity(
     val targetTeamId: Int? = 0,
     @Column(name = "target_toss_decision")
     val targetTossDecision: String? = null,
-    val questionType: String? = "",
+
+    @Enumerated(EnumType.STRING)
+    val questionType: QuestionType? = QuestionType.INVALID,
 
     @Column(
         name = "created_at",
@@ -220,7 +229,7 @@ data class QuestionEntity(
             targetSpecificOver = this.targetSpecificOver,
             targetBatsmanId = this.targetBatsmanId,
             targetBowlerId = this.targetBowlerId,
-            questionType = QuestionType.fromText(this.questionType),
+            questionType = this.questionType,
             targetTeamId = this.targetTeamId,
             targetTossDecision = this.targetTossDecision,
             )

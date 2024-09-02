@@ -54,8 +54,8 @@ class WicketsByBowlerQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${bowler.playerName} take ${param.targetWickets} or more wickets in this innings?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Bowling"),
             questionType = QuestionType.WICKETS_BY_BOWLER,
             targetBowlerId = param.targetBowlerId,
@@ -132,8 +132,8 @@ class WicketsByBowlerResolutionStrategy : ResolutionStrategy {
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
-        val targetWickets = question.targetWickets ?: return QuestionResolution(false, null)
+        val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetWickets = question.targetWickets ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
         // Find the relevant innings where this bowler bowled
         val relevantInnings = matchState.liveScorecard.innings.find { innings ->
@@ -142,11 +142,11 @@ class WicketsByBowlerResolutionStrategy : ResolutionStrategy {
         val bowlerPerformance = relevantInnings?.bowlingPerformances?.find { it.playerId == targetBowlerId }
 
         if (bowlerPerformance == null) {
-            return QuestionResolution(false, null)
+            return QuestionResolution(false, PulseResult.UNDECIDED)
         }
 
         val wicketsTaken = bowlerPerformance.wickets
-        val result = if (wicketsTaken >= targetWickets) "Yes" else "No"
+        val result = if (wicketsTaken >= targetWickets) PulseResult.Yes else PulseResult.No
 
         // Always resolve if the innings or match has ended
         return QuestionResolution(true, result)

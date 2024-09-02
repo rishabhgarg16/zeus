@@ -1,11 +1,10 @@
 package com.hit11.zeus.controller
 
-import com.hit11.zeus.adapter.OrderAdapter
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.OrderValidationException
-import com.hit11.zeus.model.request.GetTradeRequest
+import com.hit11.zeus.model.OrderRequest
 import com.hit11.zeus.model.response.ApiResponse
-import com.hit11.zeus.oms.*
+import com.hit11.zeus.service.OrderService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -15,24 +14,22 @@ import org.springframework.web.bind.annotation.RestController
 import javax.validation.Valid
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/order")
 class OrderController(
-    private val orderService: OrderService,
-    private val orderOrchestrator: OrderOrchestrator,
-    private val tradeService: TradeService
+    private val orderService: OrderService
 ) {
 
     private val logger = Logger.getLogger(this::class.java)
 
     @PostMapping("/bookOrder")
-    fun submitOrder(
-        @Valid @RequestBody request: OrderPlaceRequest
+    fun createOrder(
+        @Valid @RequestBody request: OrderRequest
     ): ResponseEntity<ApiResponse<Boolean>> {
         logger.info("Received request: $request")
-        val dataModel = OrderAdapter.convertToDataModel(request)
+//        val dataModel = OrderAdapter.convertToDataModel(request)
 
         try {
-            val processedOrder = orderOrchestrator.processOrder(dataModel)
+            val createdOrder = orderService.createOrder(request)
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse(
                     status = HttpStatus.CREATED.value(),
@@ -62,23 +59,7 @@ class OrderController(
         }
     }
 
-    @PostMapping("/trades")
-    fun getAllTrades(
-        @Valid @RequestBody request: GetTradeRequest
-    ): ResponseEntity<ApiResponse<List<TradeResponse>>> {
-
-        val response = tradeService.getAllTradesByUserAndMatch(request.userId, request.matchIdList)
-        return ResponseEntity.status(HttpStatus.OK).body(
-            ApiResponse(
-                status = HttpStatus.OK.value(),
-                internalCode = null,
-                message = "Success",
-                data = response
-            )
-        )
-    }
-
-    @PostMapping("/user/cancelOrder")
+    @PostMapping("/cancelOrder")
     fun cancelOrder(
         @Valid @RequestBody request: CancelOrderRequest
     ): ResponseEntity<ApiResponse<Boolean>> {

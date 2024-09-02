@@ -67,8 +67,8 @@ class GlobalExceptionHandler {
         return ResponseEntity(errorResponse, HttpStatus.OK)
     }
 
-    @ExceptionHandler(OrderNotSaveException::class)
-    fun handleOrderNotSaveException(ex: OrderNotSaveException): ResponseEntity<ApiResponse<Any>> {
+    @ExceptionHandler(OrderCreationException::class)
+    fun handleOrderNotSaveException(ex: OrderCreationException): ResponseEntity<ApiResponse<Any>> {
         logger.error("Order not saved to DB: ${ex.message}")
         val errorResponse = ApiResponse<Any>(
             status = HttpStatus.OK.value(),

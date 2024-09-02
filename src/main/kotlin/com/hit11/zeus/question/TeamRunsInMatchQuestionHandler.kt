@@ -87,8 +87,8 @@ class TeamRunsInMatchQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${currentInnings.battingTeam!!.name} score ${param.targetRuns} or more runs by the ${param.targetOvers}th over?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Batting"),
             questionType = QuestionType.TEAM_RUNS_IN_MATCH,
             targetTeamId = currentInnings.battingTeam.id,
@@ -191,13 +191,13 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
 
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val targetTeamId = question.targetTeamId ?: return QuestionResolution(false, null)
-        val targetRuns = question.targetRuns ?: return QuestionResolution(false, null)
-        val targetOvers = question.targetOvers ?: return QuestionResolution(false, null)
+        val targetTeamId = question.targetTeamId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetRuns = question.targetRuns ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetOvers = question.targetOvers ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetBalls = targetOvers * 6
 
         val targetInnings = matchState.liveScorecard.innings.find { it.battingTeam?.id == targetTeamId }
-            ?: return QuestionResolution(false, null)
+            ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
         val currentRuns = targetInnings.totalRuns
         val currentOvers = targetInnings.overs
@@ -206,28 +206,28 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
 
         // Case 1: Target overs have been bowled
         if (currentBalls >= targetBalls) {
-            val result = if (currentRuns >= targetRuns) "Yes" else "No"
+            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
             return QuestionResolution(true, result)
         }
 
         // Case 2: Innings has ended before target overs (all out or declaration)
         if (!targetInnings.isCurrentInnings && currentBalls < targetBalls) {
-            val result = if (currentRuns >= targetRuns) "Yes" else "No"
+            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
             return QuestionResolution(true, result)
         }
 
         // Case 3: Match has ended
         if (matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE) {
-            val result = if (currentRuns >= targetRuns) "Yes" else "No"
+            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
             return QuestionResolution(true, result)
         }
 
         // Case 4: Target runs achieved before target overs
         if (currentRuns >= targetRuns) {
-            return QuestionResolution(true, "Yes")
+            return QuestionResolution(true, PulseResult.Yes)
         }
 
         // If none of the above conditions are met, the question can't be resolved yet
-        return QuestionResolution(false, null)
+        return QuestionResolution(false, PulseResult.UNDECIDED)
     }
 }

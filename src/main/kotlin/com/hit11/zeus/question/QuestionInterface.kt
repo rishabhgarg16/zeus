@@ -1,9 +1,6 @@
 package com.hit11.zeus.question
 
-import com.hit11.zeus.model.MatchState
-import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionStatus
-import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -130,6 +127,6 @@ interface ResolutionStrategy {
 }
 
 data class QuestionResolution(
-    val isResolved: Boolean,
-    val result: String?
+    val isResolved: Boolean = false,
+    val result: PulseResult = PulseResult.UNDECIDED
 )

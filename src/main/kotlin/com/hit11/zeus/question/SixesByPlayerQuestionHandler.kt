@@ -1,10 +1,7 @@
 package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
-import com.hit11.zeus.model.CricbuzzMatchPlayingState
-import com.hit11.zeus.model.MatchState
-import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 
 data class SixesByPlayerParameter(
@@ -71,8 +68,8 @@ class SixesByPlayerQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${batsman.playerName} hit ${param.targetSixes} or more sixes in this innings?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Batting"),
             questionType = QuestionType.SIX_BY_PLAYER,
             targetBatsmanId = param.batsmanId.toInt(),
@@ -152,8 +149,8 @@ class SixesByPlayerResolutionStrategy : ResolutionStrategy {
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, null)
-        val targetSixes = question.targetSixes ?: return QuestionResolution(false, null)
+        val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetSixes = question.targetSixes ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
         // Find the relevant innings where this batsman batted
         val relevantInnings = matchState.liveScorecard.innings.find { innings ->
@@ -162,11 +159,11 @@ class SixesByPlayerResolutionStrategy : ResolutionStrategy {
         val batsmanPerformance = relevantInnings?.battingPerformances?.find { it.playerId == targetBatsmanId }
 
         if (batsmanPerformance == null) {
-            return QuestionResolution(false, null)
+            return QuestionResolution(false, PulseResult.UNDECIDED)
         }
 
         val sixesHit = batsmanPerformance.sixes
-        val result = if (sixesHit >= targetSixes) "Yes" else "No"
+        val result = if (sixesHit >= targetSixes) PulseResult.Yes else PulseResult.No
 
         // Always resolve if the batsman is out, innings has ended, or match has ended
         return QuestionResolution(true, result)

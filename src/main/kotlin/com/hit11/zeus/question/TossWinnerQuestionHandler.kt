@@ -1,10 +1,7 @@
 package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
-import com.hit11.zeus.model.CricbuzzMatchPlayingState
-import com.hit11.zeus.model.MatchState
-import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 
 data class TossWinnerParameter(val targetTeamId: Int) : QuestionParameter()
@@ -46,8 +43,8 @@ class TossWinnerQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} win the toss?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Toss"),
             questionType = QuestionType.TOSS_WINNER,
             targetTeamId = param.targetTeamId,
@@ -78,8 +75,8 @@ class TossWinnerResolutionStrategy : ResolutionStrategy {
         matchState.liveScorecard.tossResult != null
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val tossResult = matchState.liveScorecard.tossResult ?: return QuestionResolution(false, null)
-        val result = if (tossResult.tossWinnerTeamId == question.targetTeamId) "Yes" else "No"
+        val tossResult = matchState.liveScorecard.tossResult ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val result = if (tossResult.tossWinnerTeamId == question.targetTeamId) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)
     }
 }

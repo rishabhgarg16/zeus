@@ -80,8 +80,8 @@ class WinByRunsMarginQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} win by ${param.targetMargin} or more runs?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Match Result"),
             questionType = QuestionType.WIN_BY_RUNS_MARGIN,
             targetTeamId = param.targetTeamId,
@@ -158,6 +158,6 @@ class WinByRunsMarginResolutionStrategy : ResolutionStrategy {
         val result = matchState.liveScorecard.result
         val isCorrectTeam = result?.winningTeamId == question.targetTeamId
         val isCorrectMargin = result?.winByRuns == true && (result.winningMargin >= (question.targetRuns ?: 0))
-        return QuestionResolution(true, if (isCorrectTeam && isCorrectMargin) "Yes" else "No")
+        return QuestionResolution(true, if (isCorrectTeam && isCorrectMargin) PulseResult.Yes else PulseResult.No)
     }
 }

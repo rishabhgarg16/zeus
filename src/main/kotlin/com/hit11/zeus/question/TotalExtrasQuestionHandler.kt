@@ -1,10 +1,7 @@
 package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
-import com.hit11.zeus.model.CricbuzzMatchPlayingState
-import com.hit11.zeus.model.MatchState
-import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 
 data class TotalExtrasParameter(
@@ -70,8 +67,8 @@ class TotalExtrasQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} concede ${param.targetExtras} or more extras in this innings?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Bowling"),
             questionType = QuestionType.TOTAL_EXTRAS,
             targetTeamId = param.targetTeamId,
@@ -113,11 +110,11 @@ class TotalExtrasResolutionStrategy : ResolutionStrategy {
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val targetTeamId = question.targetTeamId ?: return QuestionResolution(false, null)
-        val targetExtras = question.targetExtras ?: return QuestionResolution(false, null)
+        val targetTeamId = question.targetTeamId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetExtras = question.targetExtras ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetInnings = matchState.liveScorecard.innings.find { it.bowlingTeam?.id == targetTeamId }
 
         val result = targetInnings?.totalExtras?.let { it >= targetExtras } ?: false
-        return QuestionResolution(true, if (result) "Yes" else "No")
+        return QuestionResolution(true, if (result) PulseResult.Yes else PulseResult.No)
     }
 }

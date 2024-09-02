@@ -1,31 +1,24 @@
 package com.hit11.zeus.model
 
 import java.math.BigDecimal
-import java.util.Date
 import java.time.Instant
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
-import javax.persistence.PrePersist
-import javax.persistence.PreUpdate
-import javax.persistence.Table
+import java.util.*
+import javax.persistence.*
 
-data class User(
-    val id: Int  = 0,
-    val firebaseUID: String = "",
-    val email: String? = "",
-    val name: String? = "",
-    val phone: String = "",
-    val walletBalance: BigDecimal = BigDecimal.ZERO,
-    val withdrawalBalance: BigDecimal = BigDecimal.ZERO,
-    val lastLoginDate: Date? = null
-)
+//data class User(
+//    val id: Int  = 0,
+//    val firebaseUID: String = "",
+//    val email: String? = "",
+//    val name: String? = "",
+//    val phone: String = "",
+//    val walletBalance: BigDecimal = BigDecimal.ZERO,
+//    val withdrawalBalance: BigDecimal = BigDecimal.ZERO,
+//    val lastLoginDate: Date? = null
+//)
 
 @Entity
 @Table(name = "users")
-data class UserEntity(
+data class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
@@ -38,6 +31,9 @@ data class UserEntity(
 
     @Column(name = "wallet_balance", precision = 19, scale = 4)
     var walletBalance: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "reserved_balance", precision = 19, scale = 4)
+    var reservedBalance: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "withdrawal_balance", precision = 19, scale = 4)
     var withdrawalBalance: BigDecimal = BigDecimal.ZERO,
@@ -52,6 +48,10 @@ data class UserEntity(
     var updatedAt: Instant = Instant.now()
 
 ) {
+    val availableBalance: BigDecimal
+        get() = walletBalance - reservedBalance
+
+
     @PrePersist
     fun prePersist() {
         val now = Instant.now()
@@ -64,15 +64,15 @@ data class UserEntity(
         updatedAt = Instant.now()
     }
 }
-fun mapToUser(userEntity: UserEntity): User {
-    return User(
-        id = userEntity.id,
-        firebaseUID = userEntity.firebaseUID,
-        email = userEntity.email,
-        name = userEntity.name,
-        phone = userEntity.phone,
-        walletBalance = userEntity.walletBalance,
-        withdrawalBalance = userEntity.withdrawalBalance,
-        lastLoginDate = userEntity.lastLoginDate
-    )
-}
+//fun mapToUser(userEntity: UserEntity): User {
+//    return User(
+//        id = userEntity.id,
+//        firebaseUID = userEntity.firebaseUID,
+//        email = userEntity.email,
+//        name = userEntity.name,
+//        phone = userEntity.phone,
+//        walletBalance = userEntity.walletBalance,
+//        withdrawalBalance = userEntity.withdrawalBalance,
+//        lastLoginDate = userEntity.lastLoginDate
+//    )
+//}

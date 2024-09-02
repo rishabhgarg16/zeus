@@ -1,11 +1,11 @@
-package com.hit11.zeus.oms
+package com.hit11.zeus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.math.BigDecimal
 import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class TradeResponse(
+class UserPositionResponse(
     val matchId: Int = 0,
     val userId: Int = 0,
     val pulseId: Int = 0,

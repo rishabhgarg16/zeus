@@ -2,9 +2,7 @@ package com.hit11.zeus.question
 
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.livedata.Hit11Scorecard
-import com.hit11.zeus.model.MatchState
-import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.QuestionType
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 
 data class WicketsInOverParameter(val targetBowlerId: Int, val targetOver: Int, val targetWickets: Int) :
@@ -58,8 +56,8 @@ class WicketsInOverQuestionGenerator(
         return createDefaultQuestionDataModel(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${bowler.playerName} take ${param.targetWickets} or more wickets in the ${param.targetOver}th over?",
-            optionA = "Yes",
-            optionB = "No",
+            optionA = PulseOption.Yes.name,
+            optionB = PulseOption.No.name,
             category = listOf("Bowling"),
             questionType = QuestionType.WICKETS_IN_OVER,
             targetBowlerId = param.targetBowlerId,
@@ -101,16 +99,16 @@ class WicketsInOverResolutionStrategy : ResolutionStrategy {
     }
 
     override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
-        val targetOver = question.targetSpecificOver ?: return QuestionResolution(false, null)
-        val targetWickets = question.targetWickets ?: return QuestionResolution(false, null)
-        val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, null)
+        val targetOver = question.targetSpecificOver ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetWickets = question.targetWickets ?: return QuestionResolution(false, PulseResult.UNDECIDED)
+        val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
         val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
         val wicketInTargetOver = currentInnings?.ballByBallEvents
             ?.filter { it.overNumber == targetOver }
             ?.any { it.isWicket } ?: false
 
-        return QuestionResolution(true, if (wicketInTargetOver) "Yes" else "No")
+        return QuestionResolution(true, if (wicketInTargetOver) PulseResult.Yes else PulseResult.No)
     }
 }
 
