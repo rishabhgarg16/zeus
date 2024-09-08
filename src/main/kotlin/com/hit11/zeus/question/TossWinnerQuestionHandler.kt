@@ -33,7 +33,7 @@ class TossWinnerQuestionGenerator(
     override fun questionExists(param: TossWinnerParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionType(
             state.liveScorecard.matchId,
-            QuestionType.TOSS_WINNER.text
+            QuestionType.TOSS_WINNER
         )
     }
 

@@ -27,4 +27,11 @@ import java.util.*
     """)
     fun findMatchWithTeamsById(@Param("matchId") matchId: Int): Optional<MatchEntity>
 
+    @Query("""
+    SELECT m FROM MatchEntity m
+    WHERE m.id = :matchId
+    AND m.status IN ('Scheduled', 'Preview', 'In Progress')
+    """)
+    fun findActiveMatchById(@Param("matchId") matchId: Int) : Optional<MatchEntity>
+
 }

@@ -20,14 +20,14 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
     // Match Winner
     fun existsByMatchIdAndQuestionTypeAndTargetTeamId(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetTeamId: Int
     ): Boolean
 
     // Wickets by Bowler
     fun existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWickets(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetBowlerId: Int,
         targetWickets: Int
     ): Boolean
@@ -35,7 +35,7 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
     // Runs Scored by Batsman
     fun existsByMatchIdAndQuestionTypeAndTargetBatsmanIdAndTargetRuns(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetBatsmanId: Int,
         targetRuns: Int
     ): Boolean
@@ -43,7 +43,7 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
     // Team Runs in Match
     fun existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRuns(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetTeamId: Int,
         targetRuns: Int
     ): Boolean
@@ -51,7 +51,7 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
     // Sixes by Player
     fun existsByMatchIdAndQuestionTypeAndTargetBatsmanIdAndTargetSixes(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetBatsmanId: Int,
         targetSixes: Int
     ): Boolean
@@ -59,20 +59,20 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
     // Toss Winner
     fun existsByMatchIdAndQuestionType(
         matchId: Int,
-        questionType: String
+        questionType: QuestionType
     ): Boolean
 
     // Toss Decision
     fun existsByMatchIdAndQuestionTypeAndTargetTossDecision(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetTossDecision: String
     ): Boolean
 
     // Wickets in Over
     fun existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWicketsAndTargetSpecificOver(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetBowlerId: Int,
         targetWickets: Int,
         targetSpecificOver: Int
@@ -80,21 +80,21 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
 
     fun existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetExtras(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetTeamId: Int,
         targetExtras: Int
     ): Boolean
 
     fun existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWides(
         matchId: Int,
-        questionString: String,
+        questionString: QuestionType,
         targetBowlerId: Int,
         targetWides: Int
     ): Boolean
 
     fun existsByMatchIdAndQuestionTypeAndTargetBatsmanId(
         matchId: Int,
-        questionType: String,
+        questionType: QuestionType,
         targetBatsmanId: Int
     ): Boolean
 

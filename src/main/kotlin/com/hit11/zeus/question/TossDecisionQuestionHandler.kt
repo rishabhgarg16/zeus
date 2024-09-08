@@ -45,7 +45,7 @@ class TossDecisionQuestionGenerator(
     override fun questionExists(param: TossDecisionParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTossDecision(
             state.liveScorecard.matchId,
-            QuestionType.TOSS_DECISION.text,
+            QuestionType.TOSS_DECISION,
             param.targetDecision
         )
     }

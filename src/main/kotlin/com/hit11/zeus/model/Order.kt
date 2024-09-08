@@ -7,20 +7,8 @@ import javax.persistence.*
 enum class OrderStatus { OPEN, PARTIALLY_FILLED, FILLED, CANCELLED, EXPIRED }
 enum class OrderType { BUY, SELL }
 enum class OrderExecutionType { MARKET, LIMIT }
-enum class OrderSide(val text: String) {
-    YES("Yes"),
-    NO("No") ;
-
-    companion object {
-        fun fromString(name: String): OrderSide {
-
-            val orderSide = entries.find {
-                it.text == name
-            } ?: throw IllegalArgumentException("Invalid OrderSide: $name")
-
-            return orderSide
-        }
-    }
+enum class OrderSide {
+    Yes, No
 }
 
 @Entity

@@ -63,7 +63,7 @@ class TeamRunsInMatchQuestionGenerator(
 
     override fun questionExists(param: TeamRunsInQuestionParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRuns(
-            state.liveScorecard.matchId, QuestionType.TEAM_RUNS_IN_MATCH.text,
+            state.liveScorecard.matchId, QuestionType.TEAM_RUNS_IN_MATCH,
             param.targetTeamId,
             param.targetRuns
         )

@@ -45,7 +45,7 @@ class MatchWinnerQuestionGenerator(
     override fun questionExists(param: MatchWinnerParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamId(
             state.liveScorecard.matchId,
-            QuestionType.MATCH_WINNER.text,
+            QuestionType.MATCH_WINNER,
             param.targetTeamId
         )
     }

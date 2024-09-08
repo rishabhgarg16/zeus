@@ -42,7 +42,7 @@ class WicketsByBowlerQuestionGenerator(
     override fun questionExists(param: WicketsByBowlerParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWickets(
             state.liveScorecard.matchId,
-            QuestionType.WICKETS_BY_BOWLER.text,
+            QuestionType.WICKETS_BY_BOWLER,
             param.targetBowlerId,
             param.targetWickets
         )

@@ -5,38 +5,32 @@ import java.math.BigDecimal
 import java.time.Instant
 import javax.persistence.*
 
-enum class QuestionType(val text: String) {
+enum class QuestionType {
     // match questions
-    MATCH_WINNER("match_winner"),
-    RUNS_IN_MATCH("runs_in_match"),
-    SUPER_OVER_IN_MATCH("super_over_in_match"),
-    WIN_BY_RUNS_MARGIN("win_by_runs_margin"),
-    TOSS_WINNER("toss_winner"),
-    TOSS_DECISION("toss_decision"),
+    MATCH_WINNER,
+    RUNS_IN_MATCH,
+    SUPER_OVER_IN_MATCH,
+    WIN_BY_RUNS_MARGIN,
+    TOSS_WINNER,
+    TOSS_DECISION,
 
     // batting questions
-    TOP_SCORER("top_scorer"),
-    SIX_BY_PLAYER("six_by_player"),
-    RUNS_SCORED_BY_BATSMAN("runs_scored_by_batsman"),
-    TEAM_RUNS_IN_MATCH("team_runs_in_match"),
-    MAN_OF_THE_MATCH("man_of_the_match"),
+    TOP_SCORER,
+    SIX_BY_PLAYER,
+    RUNS_SCORED_BY_BATSMAN,
+    TEAM_RUNS_IN_MATCH,
+    MAN_OF_THE_MATCH,
 
     // bowling
-    WICKETS_IN_MATCH("wickets_in_match"),
-    WICKETS_BY_BOWLER("wickets_by_bowler"),
-    WICKETS_IN_OVER("wickets_in_over"),
-    WIDES_BY_BOWLER("wides_by_bowler"),
-    ECONOMY_RATE("economy_rate_in_match"),
-    TOTAL_EXTRAS("total_extras"),
+    WICKETS_IN_MATCH,
+    WICKETS_BY_BOWLER,
+    WICKETS_IN_OVER,
+    WIDES_BY_BOWLER,
+    ECONOMY_RATE,
+    TOTAL_EXTRAS,
 
     // invalid
-    INVALID("invalid");
-
-    companion object {
-        fun fromText(type: String?): QuestionType {
-            return entries.find { it.text == type } ?: INVALID
-        }
-    }
+    INVALID;
 }
 enum class QuestionStatus {
     SYSTEM_GENERATED,  // Newly created by the system, waiting for review

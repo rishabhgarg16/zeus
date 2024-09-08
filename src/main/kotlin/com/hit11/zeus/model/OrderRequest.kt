@@ -33,5 +33,9 @@ class OrderRequest(
 
     val executionType: OrderExecutionType = OrderExecutionType.MARKET,
 
-    val createdAt: Instant = Instant.now(),
-)
+    val createdAt: Long = Instant.now().epochSecond,
+) {
+    fun getCreatedAtAsInstant(): Instant {
+        return Instant.ofEpochSecond(createdAt)
+    }
+}

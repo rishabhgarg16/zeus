@@ -26,7 +26,6 @@ class OrderController(
         @Valid @RequestBody request: OrderRequest
     ): ResponseEntity<ApiResponse<Boolean>> {
         logger.info("Received request: $request")
-//        val dataModel = OrderAdapter.convertToDataModel(request)
 
         try {
             val createdOrder = orderService.createOrder(request)

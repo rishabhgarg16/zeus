@@ -54,7 +54,7 @@ class ManOfTheMatchQuestionGenerator(
         // TOOD we are using batsman id instead od player id, man of the match can be bowler as well
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBatsmanId(
             state.liveScorecard.matchId,
-            QuestionType.MATCH_WINNER.text,
+            QuestionType.MATCH_WINNER,
             param.targetPlayerId
         )
     }

@@ -54,7 +54,7 @@ class SixesByPlayerQuestionGenerator(
     override fun questionExists(param: SixesByPlayerParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBatsmanIdAndTargetSixes(
             state.liveScorecard.matchId,
-            QuestionType.SIX_BY_PLAYER.text,
+            QuestionType.SIX_BY_PLAYER,
             param.batsmanId.toInt(),
             param.targetSixes
         )

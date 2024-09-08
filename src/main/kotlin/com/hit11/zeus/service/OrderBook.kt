@@ -14,29 +14,29 @@ class OrderBook(val pulseId: Int) {
 
     fun addOrder(order: Order) {
         when (order.orderSide) {
-            OrderSide.YES ->
+            OrderSide.Yes ->
                 if (order.orderType == OrderType.BUY) yesBuyOrders.offer(order) else yesSellOrders.offer(order)
 
-            OrderSide.NO ->
+            OrderSide.No ->
                 if (order.orderType == OrderType.BUY) noBuyOrders.offer(order) else noSellOrders.offer(order)
         }
     }
 
     fun matchOrders(): List<MatchResult> {
         val matches = mutableListOf<MatchResult>()
-        matches.addAll(matchDirectOrders(yesBuyOrders, yesSellOrders, OrderSide.YES))
-        matches.addAll(matchDirectOrders(noBuyOrders, noSellOrders, OrderSide.NO))
+        matches.addAll(matchDirectOrders(yesBuyOrders, yesSellOrders, OrderSide.Yes))
+        matches.addAll(matchDirectOrders(noBuyOrders, noSellOrders, OrderSide.No))
         matches.addAll(matchCrossSideOrders())
         return matches
     }
 
     fun removeOrder(order: Order) {
         when (order.orderSide) {
-            OrderSide.YES -> if (order.orderType == OrderType.BUY) yesBuyOrders.remove(
+            OrderSide.Yes -> if (order.orderType == OrderType.BUY) yesBuyOrders.remove(
                 order
             ) else yesSellOrders.remove(order)
 
-            OrderSide.NO -> if (order.orderType == OrderType.BUY) noBuyOrders.remove(
+            OrderSide.No -> if (order.orderType == OrderType.BUY) noBuyOrders.remove(
                 order
             ) else noSellOrders.remove(order)
         }
@@ -86,7 +86,7 @@ class OrderBook(val pulseId: Int) {
                 val matchedQuantity = minOf(yesBuyOrder.remainingQuantity, noBuyOrder.remainingQuantity)
                 val matchPrice = maxOf(yesBuyOrder.price, BigDecimal.TEN.subtract(noBuyOrder.price))
 
-                matches.add(MatchResult(yesBuyOrder, noBuyOrder, matchedQuantity, matchPrice, OrderSide.YES))
+                matches.add(MatchResult(yesBuyOrder, noBuyOrder, matchedQuantity, matchPrice, OrderSide.Yes))
 
                 yesBuyOrder.remainingQuantity -= matchedQuantity
                 noBuyOrder.remainingQuantity -= matchedQuantity
@@ -111,7 +111,7 @@ class OrderBook(val pulseId: Int) {
                 val matchedQuantity = minOf(yesSellOrder.remainingQuantity, noSellOrder.remainingQuantity)
                 val matchPrice = minOf(yesSellOrder.price, BigDecimal.TEN.subtract(noSellOrder.price))
 
-                matches.add(MatchResult(noSellOrder, yesSellOrder, matchedQuantity, matchPrice, OrderSide.NO))
+                matches.add(MatchResult(noSellOrder, yesSellOrder, matchedQuantity, matchPrice, OrderSide.No))
 
                 yesSellOrder.remainingQuantity -= matchedQuantity
                 noSellOrder.remainingQuantity -= matchedQuantity

@@ -53,7 +53,7 @@ class TotalExtrasQuestionGenerator(
     override fun questionExists(param: TotalExtrasParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetExtras(
             state.liveScorecard.matchId,
-            QuestionType.TOTAL_EXTRAS.text,
+            QuestionType.TOTAL_EXTRAS,
             param.targetTeamId,
             param.targetExtras
         )

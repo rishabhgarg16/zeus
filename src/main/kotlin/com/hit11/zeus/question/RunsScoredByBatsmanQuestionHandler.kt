@@ -81,7 +81,7 @@ class RunsScoredByBatsmanQuestionGenerator(
     override fun questionExists(param: RunsScoredByBatsmanParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBatsmanIdAndTargetRuns(
             state.liveScorecard.matchId,
-            QuestionType.RUNS_SCORED_BY_BATSMAN.text,
+            QuestionType.RUNS_SCORED_BY_BATSMAN,
             param.targetBatsmanId,
             param.targetRuns
         )

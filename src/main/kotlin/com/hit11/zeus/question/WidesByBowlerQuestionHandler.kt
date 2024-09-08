@@ -48,7 +48,7 @@ class WidesByBowlerQuestionGenerator(
     override fun questionExists(param: WidesByBowlerParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWides(
             state.liveScorecard.matchId,
-            QuestionType.WIDES_BY_BOWLER.text,
+            QuestionType.WIDES_BY_BOWLER,
             param.targetBowlerId,
             param.targetWides
         )

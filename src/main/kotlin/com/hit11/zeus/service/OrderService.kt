@@ -40,7 +40,7 @@ class OrderService(
                 pulseId = orderRequest.pulseId,
                 matchId = orderRequest.matchId,
                 orderType = orderRequest.orderType,
-                orderSide = OrderSide.fromString(orderRequest.userAnswer),
+                orderSide = if(orderRequest.userAnswer == OrderSide.No.name) { OrderSide.No} else OrderSide.Yes,
                 price = orderRequest.price.toBigDecimal()
                     .setScale(Constants.DEFAULT_SCALE, Constants.ROUNDING_MODE),
                 quantity = orderRequest.quantity,
@@ -248,7 +248,7 @@ class OrderService(
     }
 
     private fun validateOrder(order: OrderRequest) {
-        val match = matchRepository.findById(order.matchId)
+        val match = matchRepository.findActiveMatchById(order.matchId)
             .orElseThrow { OrderValidationException("Match not found") }
 
         if (match.status == MatchStatus.COMPLETE.text) {
@@ -302,8 +302,8 @@ class OrderService(
     private fun validateOrderTime(order: OrderRequest) {
         val currentTime = Instant.now()
 
-        if (order.createdAt < currentTime.minusSeconds(120) ||
-            order.createdAt > currentTime.plusSeconds(120)
+        if (order.getCreatedAtAsInstant() < currentTime.minusSeconds(12000) ||
+            order.getCreatedAtAsInstant() > currentTime.plusSeconds(12000)
         ) {
             throw OrderValidationException("Order time is out of acceptable range")
         }

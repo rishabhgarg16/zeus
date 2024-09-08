@@ -23,7 +23,7 @@ class UserPositionService(
             ?: UserPosition(userId = userId, pulseId = pulseId)
 
         when (side) {
-            OrderSide.YES -> {
+            OrderSide.Yes -> {
                 position.yesQuantity += quantity
                 position.averageYesPrice = calculateNewAveragePrice(
                     position.yesQuantity, position.averageYesPrice,
@@ -31,7 +31,7 @@ class UserPositionService(
                 )
             }
 
-            OrderSide.NO -> {
+            OrderSide.No -> {
                 position.noQuantity += quantity
                 position.averageNoPrice = calculateNewAveragePrice(
                     position.noQuantity, position.averageNoPrice,

@@ -68,7 +68,7 @@ class WinByRunsMarginQuestionGenerator(
     override fun questionExists(param: WinByRunsMarginParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRuns(
             state.liveScorecard.matchId,
-            QuestionType.WIN_BY_RUNS_MARGIN.text,
+            QuestionType.WIN_BY_RUNS_MARGIN,
             param.targetTeamId,
             param.targetMargin
         )

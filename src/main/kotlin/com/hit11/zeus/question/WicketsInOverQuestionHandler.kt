@@ -43,7 +43,7 @@ class WicketsInOverQuestionGenerator(
     override fun questionExists(param: WicketsInOverParameter, state: MatchState): Boolean {
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetBowlerIdAndTargetWicketsAndTargetSpecificOver(
             state.liveScorecard.matchId,
-            QuestionType.WICKETS_IN_OVER.text,
+            QuestionType.WICKETS_IN_OVER,
             param.targetBowlerId,
             param.targetWickets,
             param.targetOver
