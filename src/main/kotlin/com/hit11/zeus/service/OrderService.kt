@@ -278,13 +278,13 @@ class OrderService(
     private fun validateWager(order: OrderRequest, question: QuestionDataModel) {
         when (order.userAnswer) {
             question.optionA -> {
-                if (order.price != question.optionAWager.toDouble()) {
+                if (order.price <= question.optionAWager.toDouble()) {
                     throw OrderValidationException("Invalid wager for Option A")
                 }
             }
 
             question.optionB -> {
-                if (order.price != question.optionBWager.toDouble())
+                if (order.price <= question.optionBWager.toDouble())
                     throw OrderValidationException("Invalid wager for Option B")
             }
 

@@ -1,5 +1,6 @@
 package com.hit11.zeus.service
 
+import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.UserPositionRepository
@@ -38,6 +39,9 @@ class UserPositionService(
                     quantity, price
                 )
             }
+
+            OrderSide.UNKNOWN ->
+                throw OrderValidationException("Unknown side")
         }
 
         updateUnrealizedPnl(position)

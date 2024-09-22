@@ -1,5 +1,6 @@
 package com.hit11.zeus.service
 
+import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.Order
 import com.hit11.zeus.model.OrderSide
 import com.hit11.zeus.model.OrderType
@@ -19,6 +20,8 @@ class OrderBook(val pulseId: Int) {
 
             OrderSide.No ->
                 if (order.orderType == OrderType.BUY) noBuyOrders.offer(order) else noSellOrders.offer(order)
+            OrderSide.UNKNOWN ->
+                throw OrderValidationException("Unknown order side")
         }
     }
 
@@ -39,6 +42,9 @@ class OrderBook(val pulseId: Int) {
             OrderSide.No -> if (order.orderType == OrderType.BUY) noBuyOrders.remove(
                 order
             ) else noSellOrders.remove(order)
+
+            OrderSide.UNKNOWN ->
+                throw OrderValidationException("Unknown order side")
         }
     }
 

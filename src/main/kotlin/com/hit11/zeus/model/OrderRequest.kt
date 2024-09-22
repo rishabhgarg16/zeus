@@ -1,10 +1,12 @@
 package com.hit11.zeus.model
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.time.Instant
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class OrderRequest(
 
     @field:NotNull(message = "User ID cannot be null")

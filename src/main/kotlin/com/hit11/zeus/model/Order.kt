@@ -6,9 +6,9 @@ import javax.persistence.*
 
 enum class OrderStatus { OPEN, PARTIALLY_FILLED, FILLED, CANCELLED, EXPIRED }
 enum class OrderType { BUY, SELL }
-enum class OrderExecutionType { MARKET, LIMIT }
+enum class OrderExecutionType { MARKET, LIMIT, UNKNOWN }
 enum class OrderSide {
-    Yes, No
+    UNKNOWN ,Yes, No
 }
 
 @Entity
@@ -17,30 +17,30 @@ data class Order(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    val userId: Int,
+    val userId: Int = -1,
 
-    val pulseId: Int,
+    val pulseId: Int = -1,
 
-    val matchId: Int,
+    val matchId: Int = -1,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_type")
-    val orderType: OrderType,
+    val orderType: OrderType = OrderType.BUY,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_side")
-    val orderSide: OrderSide,
+    val orderSide: OrderSide = OrderSide.UNKNOWN,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "execution_type")
-    val executionType: OrderExecutionType,
+    val executionType: OrderExecutionType = OrderExecutionType.UNKNOWN,
 
     @Column(precision = 10, scale = 2)
-    val price: BigDecimal,
+    val price: BigDecimal = 0.toBigDecimal(),
 
-    val quantity: Long,
+    val quantity: Long = 0,
 
-    var remainingQuantity: Long,
+    var remainingQuantity: Long = 0,
 
     @Enumerated(EnumType.STRING)
     var status: OrderStatus = OrderStatus.OPEN,
