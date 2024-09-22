@@ -46,7 +46,8 @@ class OrderService(
                 quantity = orderRequest.quantity,
                 remainingQuantity = orderRequest.quantity,
                 createdAt = Instant.now(),
-                executionType = orderRequest.executionType
+                executionType = orderRequest.executionType,
+                status = OrderStatus.OPEN
             )
 
             if (order.orderType == OrderType.BUY) {
