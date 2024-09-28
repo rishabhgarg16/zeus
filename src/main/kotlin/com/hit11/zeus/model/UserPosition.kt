@@ -17,10 +17,10 @@ data class UserPosition(
     val id: Long = 0,
 
     @Column(name = "user_id")
-    val userId: Int,
+    val userId: Int = 0,
 
     @Column(name = "pulse_id")
-    val pulseId: Int,
+    val pulseId: Int=0,
 
     @Column(name = "yes_quantity")
     var yesQuantity: Long = 0,
