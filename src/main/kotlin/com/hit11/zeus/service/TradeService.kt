@@ -1,7 +1,6 @@
 package com.hit11.zeus.service
 
 import com.hit11.zeus.model.*
-import com.hit11.zeus.repository.OrderRepository
 import com.hit11.zeus.repository.TradeRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,12 +16,12 @@ class TradeService(
     @Transactional
     fun createTrade(matchResult: MatchResult): Trade {
         val trade = Trade(
-            buyOrderId = matchResult.buyOrder.id,
-            sellOrderId = matchResult.sellOrder.id,
-            pulseId = matchResult.buyOrder.pulseId,
-            quantity = matchResult.quantity,
-            price = matchResult.price,
-            matchId = matchResult.buyOrder.matchId,
+            yesOrderId = matchResult.yesOrder.id,
+            noOrderId = matchResult.noOrder.id,
+            pulseId = matchResult.yesOrder.pulseId,
+            tradedQuantity = matchResult.matchedQuantity,
+            tradedPrice = matchResult.matchedYesPrice,
+            matchId = matchResult.yesOrder.matchId,
             createdAt = Instant.now()
         )
         val savedTrade = tradeRepository.save(trade)
@@ -34,41 +33,58 @@ class TradeService(
     }
 
     private fun updateUserBalances(matchResult: MatchResult) {
-        val tradeAmount = matchResult.price.multiply(BigDecimal(matchResult.quantity))
+        val yesTradeAmount = matchResult.matchedYesPrice.multiply(BigDecimal(matchResult.matchedQuantity))
+        val noTradeAmount = matchResult.matchedNoPrice.multiply(BigDecimal(matchResult.matchedQuantity))
 
-        // For the buyer, confirm the reserved balance (deduct from wallet)
-        userService.confirmReservedBalance(matchResult.buyOrder.userId, tradeAmount)
+        // Deduct from the Yes buyer's wallet
+        userService.confirmReservedBalance(matchResult.yesOrder.userId, yesTradeAmount)
 
-        // For the seller, credit their wallet
-        userService.updateUserWallet(matchResult.sellOrder.userId, tradeAmount)
+        // Deduct from the No buyer's wallet
+        userService.confirmReservedBalance(matchResult.noOrder.userId, noTradeAmount)
     }
 
     private fun updateUserPositions(matchResult: MatchResult) {
+        // Yes position
         userPositionService.updatePosition(
-            matchResult.buyOrder.userId,
-            matchResult.buyOrder.pulseId,
-            matchResult.side,
-            matchResult.quantity,
-            matchResult.price
+            matchResult.yesOrder.userId,
+            matchResult.yesOrder.pulseId,
+            OrderSide.Yes,
+            matchResult.matchedQuantity,
+            matchResult.matchedYesPrice
         )
+        // No position
         userPositionService.updatePosition(
-            matchResult.sellOrder.userId,
-            matchResult.sellOrder.pulseId,
-            matchResult.side,
-            -matchResult.quantity,
-            matchResult.price
+            matchResult.noOrder.userId,
+            matchResult.noOrder.pulseId,
+            OrderSide.No,
+            matchResult.matchedQuantity, // no order is also buy order hence adding the quantity
+            matchResult.matchedNoPrice
         )
     }
 
+    // Get all trades for a given pulse ID
     fun getTradesByPulse(pulseId: Int): List<Trade> {
         return tradeRepository.findByPulseId(pulseId)
     }
 
-    fun getTradesByOrder(orderId: Long): List<Trade> {
-        return tradeRepository.findByBuyOrderIdOrSellOrderId(orderId, orderId)
-    }
-
+    // Get all trades for a given match ID
     fun getTradesByMatch(matchId: Int): List<Trade> {
         return tradeRepository.findByMatchId(matchId)
     }
+
+    // Get all trades for a given order (yesOrderId or noOrderId)
+    fun getTradesByOrder(orderId: Long): List<Trade> {
+        return tradeRepository.findByYesOrderIdOrNoOrderId(orderId, orderId)
+    }
+
+    // Get the most recent trades for a pulse ID (e.g., last 10 trades)
+    fun getRecentTradesByPulse(pulseId: Int, limit: Int): List<Trade> {
+        return tradeRepository.findTopByPulseIdOrderByCreatedAtDesc(pulseId, limit) ?: emptyList()
+    }
+
+    // Get trades within a date range for a pulse ID
+    fun getTradesByPulseAndDateRange(pulseId: Int, startDate: Instant, endDate: Instant): List<Trade> {
+        return tradeRepository.findByPulseIdAndCreatedAtBetween(pulseId, startDate, endDate)
+    }
+
 }

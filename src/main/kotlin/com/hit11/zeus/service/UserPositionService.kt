@@ -19,7 +19,13 @@ class UserPositionService(
     private val userPositionRepository: UserPositionRepository,
 ) {
     @Transactional
-    fun updatePosition(userId: Int, pulseId: Int, side: OrderSide, quantity: Long, price: BigDecimal) {
+    fun updatePosition(
+        userId: Int,
+        pulseId: Int,
+        side: OrderSide,
+        quantity: Long,
+        price: BigDecimal
+    ) {
         val position = userPositionRepository.findByUserIdAndPulseId(userId, pulseId)
             ?: UserPosition(userId = userId, pulseId = pulseId)
 
@@ -27,16 +33,20 @@ class UserPositionService(
             OrderSide.Yes -> {
                 position.yesQuantity += quantity
                 position.averageYesPrice = calculateNewAveragePrice(
-                    position.yesQuantity, position.averageYesPrice,
-                    quantity, price
+                    position.yesQuantity,
+                    position.averageYesPrice,
+                    quantity,
+                    price
                 )
             }
 
             OrderSide.No -> {
                 position.noQuantity += quantity
                 position.averageNoPrice = calculateNewAveragePrice(
-                    position.noQuantity, position.averageNoPrice,
-                    quantity, price
+                    position.noQuantity,
+                    position.averageNoPrice,
+                    quantity,
+                    price
                 )
             }
 
@@ -54,6 +64,22 @@ class UserPositionService(
         newQuantity: Long,
         newPrice: BigDecimal
     ): BigDecimal {
+        // Handle cases where both quantities are zero
+        if (oldQuantity == 0L && newQuantity == 0L) {
+            throw IllegalArgumentException("Total quantity cannot be zero")
+        }
+
+        // Handle cases where oldQuantity is zero (only newPrice contributes)
+        if (oldQuantity == 0L) {
+            return newPrice.setScale(2, RoundingMode.HALF_UP)
+        }
+
+        // Handle cases where newQuantity is zero (only oldAvgPrice contributes)
+        if (newQuantity == 0L) {
+            return oldAvgPrice.setScale(2, RoundingMode.HALF_UP)
+        }
+
+        // General case where both old and new quantities are non-zero
         val totalQuantity = oldQuantity + newQuantity
         return (oldAvgPrice.multiply(BigDecimal(oldQuantity))
             .add(newPrice.multiply(BigDecimal(newQuantity))))

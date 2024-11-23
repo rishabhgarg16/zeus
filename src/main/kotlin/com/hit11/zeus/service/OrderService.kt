@@ -8,11 +8,11 @@ import com.hit11.zeus.repository.MatchRepository
 import com.hit11.zeus.repository.OrderRepository
 import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.UserRepository
-import com.hit11.zeus.utils.Constants
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.sqs.SqsClient
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import javax.transaction.Transactional
 
@@ -32,48 +32,85 @@ class OrderService(
     private val logger = Logger.getLogger(this.javaClass)
 
     @Transactional
-    fun createOrder(orderRequest: OrderRequest): Order {
+    fun createOrder(orderRequest: OrderRequest): Boolean {
         validateOrder(orderRequest)
         try {
-            val order = Order(
-                userId = orderRequest.userId,
-                pulseId = orderRequest.pulseId,
-                matchId = orderRequest.matchId,
-                orderType = orderRequest.orderType,
-                orderSide = if(orderRequest.userAnswer == OrderSide.No.name) { OrderSide.No} else OrderSide.Yes,
-                price = orderRequest.price.toBigDecimal()
-                    .setScale(Constants.DEFAULT_SCALE, Constants.ROUNDING_MODE),
-                quantity = orderRequest.quantity,
-                remainingQuantity = orderRequest.quantity,
-                createdAt = Instant.now(),
-                executionType = orderRequest.executionType,
-                status = OrderStatus.OPEN
-            )
-
-            if (order.orderType == OrderType.BUY) {
-                val reserveAmount = order.price.multiply(BigDecimal(order.quantity))
-                if (!userService.reserveBalance(order.userId, reserveAmount)) {
-                    throw InsufficientBalanceException("Insufficient balance for user ${order.userId}")
-                }
-            }
-
+            val order = createInitialOrder(orderRequest)
             val savedOrder = orderRepository.save(order)
 
-            val matches = matchingEngine.processOrder(savedOrder)
-            processTrades(matches)
+            val reserveAmount = savedOrder.price.multiply(BigDecimal(savedOrder.quantity))
+            if (!userService.reserveBalance(savedOrder.userId, reserveAmount)) {
+                throw InsufficientBalanceException("Insufficient balance for user ${savedOrder.userId}")
+            }
 
-            return orderRepository.save(savedOrder)
+            // 3. Find potential matches
+            val matches = synchronized(matchingEngine) {
+                matchingEngine.addOrder(savedOrder)  // Add to main queue first
+                matchingEngine.findMatches(savedOrder)  // Then find matches
+            }
+
+            // 4. Process matches and create trades atomically
+            if (matches.isNotEmpty()) {
+                processMatchesAndTrades(savedOrder, matches)
+            }
+
+            return true
+
+//            return orderRepository.save(savedOrder)
         } catch (e: Exception) {
-            logger.error("Error saving order for user id ${orderRequest.userId}", e)
-            throw OrderCreationException("Not able to save order for User ${orderRequest.userId}")
+            logger.error("Error processing order", e)
+            handleOrderCreationFailure(orderRequest)
+            throw e
         }
     }
 
-    private fun processTrades(matches: List<MatchResult>) {
-        matches.forEach { match ->
-            tradeService.createTrade(match)
-            updateOrderStatus(match.buyOrder)
-            updateOrderStatus(match.sellOrder)
+    private fun createInitialOrder(request: OrderRequest): Order {
+        return Order(
+            userId = request.userId,
+            pulseId = request.pulseId,
+            matchId = request.matchId,
+            orderType = request.orderType,
+            orderSide = if (request.userAnswer == OrderSide.No.name) OrderSide.No else OrderSide.Yes,
+            price = request.price.toBigDecimal(),
+            quantity = request.quantity,
+            remainingQuantity = request.quantity,
+            createdAt = Instant.now(),
+            executionType = request.executionType,
+            status = OrderStatus.OPEN
+        )
+    }
+
+    @Transactional
+    private fun processMatchesAndTrades(order: Order, matches: List<MatchResult>) {
+        try {
+            // Create trades first
+            // per match, create one trade
+            val trades = matches.map { match ->
+                tradeService.createTrade(match)
+            }
+
+            // Step 2: Confirm matches in the order book
+            matchingEngine.confirmMatches(order, matches)
+
+            // Step 3: Update statuses for all matched orders (after successful matches)
+            matches.forEach { match ->
+                updateOrderStatus(match.yesOrder)
+                updateOrderStatus(match.noOrder)
+            }
+
+        } catch (e: Exception) {
+            logger.error("Failed to process matches and trades", e)
+            throw OrderProcessingException("Failed to process matches and trades", e)
+        }
+    }
+
+    private fun handleOrderCreationFailure(orderRequest: OrderRequest) {
+        try {
+            val reserveAmount = orderRequest.price.toBigDecimal()
+                .multiply(BigDecimal(orderRequest.quantity))
+            userService.releaseReservedBalance(orderRequest.userId, reserveAmount)
+        } catch (e: Exception) {
+            logger.error("Failed to handle order creation failure", e)
         }
     }
 
@@ -84,6 +121,7 @@ class OrderService(
         }
         orderRepository.save(order)
     }
+
 
     @Transactional
     fun cancelOrder(orderId: Int): Order {
@@ -277,6 +315,22 @@ class OrderService(
     }
 
     private fun validateWager(order: OrderRequest, question: QuestionDataModel) {
+        val MIN_WAGER = BigDecimal("0.5")
+        val MAX_WAGER = BigDecimal("9.5")
+        val WAGER_INCREMENT = BigDecimal("0.1")
+
+        // Validate price is within global bounds
+        val orderPrice = BigDecimal(order.price.toString())
+
+        if (orderPrice < MIN_WAGER || orderPrice > MAX_WAGER) {
+            throw OrderValidationException("Wager must be between ₹$MIN_WAGER and ₹$MAX_WAGER")
+        }
+
+        // Validate price follows increment
+        if (orderPrice.remainder(WAGER_INCREMENT).setScale(0, RoundingMode.DOWN) != BigDecimal.ZERO) {
+            throw OrderValidationException("Wager must be in increments of ₹$WAGER_INCREMENT")
+        }
+
         when (order.userAnswer) {
             question.optionA -> {
                 if (order.price <= question.optionAWager.toDouble()) {

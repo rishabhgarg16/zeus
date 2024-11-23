@@ -40,4 +40,16 @@ class OrderRequest(
     fun getCreatedAtAsInstant(): Instant {
         return Instant.ofEpochSecond(createdAt)
     }
+
+    override fun toString(): String {
+        return "OrderRequest(userId=$userId, " +
+                "pulseId=$pulseId, " +
+                "matchId=$matchId, " +
+                "userAnswer='$userAnswer', " +
+                "price=$price, " +
+                "quantity=$quantity, " +
+                "orderType=$orderType, " +
+                "executionType=$executionType, " +
+                "createdAt=${getCreatedAtAsInstant()}" + ")"
+    }
 }

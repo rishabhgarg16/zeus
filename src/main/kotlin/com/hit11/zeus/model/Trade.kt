@@ -11,31 +11,31 @@ enum class TradeType { BUY, SELL }
     name = "trades", indexes = [
         Index(name = "idx_pulse_id", columnList = "pulse_id"),
         Index(name = "idx_match_id", columnList = "match_id"),
-        Index(name = "idx_buy_order_id", columnList = "buy_order_id"),
-        Index(name = "idx_sell_order_id", columnList = "sell_order_id"),
+        Index(name = "idx_yes_order_id", columnList = "yes_order_id"),
+        Index(name = "idx_no_order_id", columnList = "no_order_id"),
     ]
 )
 data class Trade(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    @Column(name = "buy_order_id")
-    val buyOrderId: Long,
+    @Column(name = "yes_order_id")
+    val yesOrderId: Long = 0,
 
-    @Column(name = "sell_order_id")
-    val sellOrderId: Long,
+    @Column(name = "no_order_id")
+    val noOrderId: Long = 0,
 
     @Column(name = "pulse_id")
-    val pulseId: Int,
+    val pulseId: Int = 0,
 
     @Column(name = "match_id")
-    val matchId: Int,
+    val matchId: Int = 0,
 
-    @Column(name = "quantity")
-    val quantity: Long,
+    @Column(name = "traded_quantity")
+    val tradedQuantity: Long = 0,
 
-    @Column(name = "price")
-    val price: BigDecimal,
+    @Column(name = "traded_price")
+    val tradedPrice: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
