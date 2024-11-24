@@ -15,6 +15,10 @@ class OrderBook(val pulseId: Int) {
     private val yesBuyOrders = PriorityQueue(compareByDescending<Order> { it.price }.thenBy { it.createdAt })
     private val noBuyOrders = PriorityQueue(compareByDescending<Order> { it.price }.thenBy { it.createdAt })
 
+//    fun findAllOpenOrders(): List<Order> {
+//        orderRepository.findAll()
+//    }
+
     private fun validatePrice(price: BigDecimal, side: OrderSide): Boolean {
         if (price < BigDecimal("1.0") || price > BigDecimal("9.5")) {
             return false
@@ -24,12 +28,13 @@ class OrderBook(val pulseId: Int) {
 
     fun findPotentialMatches(order: Order): List<MatchResult> {
         // Create deep copies for matching
-        val tempYesOrders = PriorityQueue(
-            yesBuyOrders.map { it.copy() } // Use copied orders to avoid side effects
-        )
-        val tempNoOrders = PriorityQueue(
-            noBuyOrders.map { it.copy() } // Use copied orders to avoid side effects
-        )
+        // Use copied orders to avoid side effects
+        var tempYesOrders = PriorityQueue(compareByDescending<Order> { it.price }.thenBy { it.createdAt })
+        tempYesOrders.addAll(yesBuyOrders.map { it.copy() })
+
+        var tempNoOrders = PriorityQueue(compareByDescending<Order> { it.price }.thenBy { it.createdAt })
+        tempNoOrders.addAll(noBuyOrders.map { it.copy() })
+        // Use copied orders to avoid side effects
 
         return findMatchingOrders(tempYesOrders, tempNoOrders)
     }
@@ -41,18 +46,18 @@ class OrderBook(val pulseId: Int) {
         val matches = mutableListOf<MatchResult>()
 
         while (tempYesOrders.isNotEmpty() && tempNoOrders.isNotEmpty()) {
-            val yesBuyOrder = tempYesOrders.peek()
-            val noBuyOrder = tempNoOrders.peek()
+            val yesBuyOrder = tempYesOrders.peek() // 4
+            val noBuyOrder = tempNoOrders.peek() // 6.1
 
             val (matchYesPrice, matchNoPrice) = if (yesBuyOrder.createdAt < noBuyOrder.createdAt) {
                 Pair(BigDecimal.TEN.subtract(noBuyOrder.price), noBuyOrder.price)
             } else {
-                Pair(yesBuyOrder.price, BigDecimal.TEN.subtract(yesBuyOrder.price))
+                Pair(yesBuyOrder.price, BigDecimal.TEN.subtract(yesBuyOrder.price)) // 4,6
             }
 
             if (yesBuyOrder.price >= matchYesPrice &&
-                noBuyOrder.price >= matchNoPrice &&
-                yesBuyOrder.userId != noBuyOrder.userId // not match against the same user
+                noBuyOrder.price >= matchNoPrice
+//                && yesBuyOrder.userId != noBuyOrder.userId // not match against the same user
             ) {
                 val matchedQuantity = minOf(
                     yesBuyOrder.remainingQuantity,
@@ -89,11 +94,13 @@ class OrderBook(val pulseId: Int) {
             val noOrder = noBuyOrders.find { it.id == match.noOrder.id }
 
             yesOrder?.let {
+                match.yesOrder.remainingQuantity -= match.matchedQuantity
                 it.remainingQuantity -= match.matchedQuantity
                 if (it.remainingQuantity == 0L) yesBuyOrders.remove(it)
             }
 
             noOrder?.let {
+                match.noOrder.remainingQuantity -= match.matchedQuantity
                 it.remainingQuantity -= match.matchedQuantity
                 if (it.remainingQuantity == 0L) noBuyOrders.remove(it)
             }

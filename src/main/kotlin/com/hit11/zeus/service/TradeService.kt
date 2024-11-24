@@ -20,7 +20,8 @@ class TradeService(
             noOrderId = matchResult.noOrder.id,
             pulseId = matchResult.yesOrder.pulseId,
             tradedQuantity = matchResult.matchedQuantity,
-            tradedPrice = matchResult.matchedYesPrice,
+            tradedYesPrice = matchResult.matchedYesPrice,
+            tradedNoPrice = BigDecimal.TEN.subtract(matchResult.matchedYesPrice),
             matchId = matchResult.yesOrder.matchId,
             createdAt = Instant.now()
         )

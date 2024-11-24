@@ -34,8 +34,11 @@ data class Trade(
     @Column(name = "traded_quantity")
     val tradedQuantity: Long = 0,
 
-    @Column(name = "traded_price")
-    val tradedPrice: BigDecimal = BigDecimal.ZERO,
+    @Column(name = "traded_yes_price")
+    val tradedYesPrice: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "traded_no_price")
+    val tradedNoPrice: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
