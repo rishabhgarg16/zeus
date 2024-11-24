@@ -28,10 +28,15 @@ class MatchingEngine {
     }
 
     // Add order to book
-    fun addOrder(order: Order) {
+    fun addOrder(order: Order) : Boolean {
         val orderBook = orderBooks.computeIfAbsent(order.pulseId) { OrderBook(it) }
         synchronized(orderBook) {
-            orderBook.addOrder(order)
+            try {
+                val isAdded = orderBook.addOrder(order)
+                return isAdded
+            } catch (ex: Exception) {
+                return false
+            }
         }
     }
 
@@ -41,15 +46,6 @@ class MatchingEngine {
             return orderBook.getOrderBookDepth(levels)
         }
     }
-
-//    fun matchOrderV2(order: Order): List<MatchResult> {
-//        val orderBook = orderBooks.computeIfAbsent(order.pulseId) { OrderBook(it) }
-//
-//        synchronized(orderBook) {
-////            orderBook.addOrder(order)
-//            return orderBook.matchOrders()
-//        }
-//    }
 
     fun cancelOrder(order: Order) {
         val orderBook = orderBooks[order.pulseId]

@@ -29,7 +29,7 @@ class OrderController(
 
         try {
             val isOrderCreated = orderService.createOrder(request)
-            if(isOrderCreated) {
+            if (isOrderCreated) {
                 return ResponseEntity.status(HttpStatus.CREATED).body(
                     ApiResponse(
                         status = HttpStatus.CREATED.value(),
@@ -96,6 +96,16 @@ class OrderController(
                     data = null
                 )
             )
+        }
+    }
+
+    @GetMapping("/initialize/orderbook")
+    fun initializeOrderBook(): ResponseEntity<Boolean> {
+        try {
+            orderService.initializeOrderBook()
+            return ResponseEntity.ok(true)
+        } catch (e: Exception) {
+            return ResponseEntity.internalServerError().body(false)
         }
     }
 

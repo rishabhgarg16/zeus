@@ -15,9 +15,9 @@ class OrderBook(val pulseId: Int) {
     private val yesBuyOrders = PriorityQueue(compareByDescending<Order> { it.price }.thenBy { it.createdAt })
     private val noBuyOrders = PriorityQueue(compareByDescending<Order> { it.price }.thenBy { it.createdAt })
 
-//    fun findAllOpenOrders(): List<Order> {
-//        orderRepository.findAll()
-//    }
+    // HashSets to track existing orders in the queues
+    private val yesOrderIds = mutableSetOf<Long>()
+    private val noOrderIds = mutableSetOf<Long>()
 
     private fun validatePrice(price: BigDecimal, side: OrderSide): Boolean {
         if (price < BigDecimal("1.0") || price > BigDecimal("9.5")) {
@@ -96,110 +96,75 @@ class OrderBook(val pulseId: Int) {
             yesOrder?.let {
                 match.yesOrder.remainingQuantity -= match.matchedQuantity
                 it.remainingQuantity -= match.matchedQuantity
-                if (it.remainingQuantity == 0L) yesBuyOrders.remove(it)
+                if (it.remainingQuantity == 0L) {
+                    yesBuyOrders.remove(it)
+                    yesOrderIds.remove(it.id)
+                }
             }
 
             noOrder?.let {
+                // update order in the match as it is a temp copy
                 match.noOrder.remainingQuantity -= match.matchedQuantity
+                // actual order in the main Order Book
                 it.remainingQuantity -= match.matchedQuantity
-                if (it.remainingQuantity == 0L) noBuyOrders.remove(it)
+                // remove order from the main Order Book
+                if (it.remainingQuantity == 0L) {
+                    noBuyOrders.remove(it)
+                    noOrderIds.remove(it.id)
+                }
             }
 
             // Update LTP
             lastTradedYesPrice = match.matchedYesPrice
             lastTradedNoPrice = match.matchedNoPrice
         }
-
-//        // Add remaining quantity of new order if any
-//        if (newOrder.remainingQuantity > 0) {
-//            addOrder(newOrder)
-//        }
     }
 
     fun addOrder(order: Order): Boolean {
         if (!validatePrice(order.price, order.orderSide)) {
             throw OrderValidationException("Invalid price: ${order.price}")
         }
-        when (order.orderSide) {
-            OrderSide.Yes -> yesBuyOrders.offer(order)
-            OrderSide.No -> noBuyOrders.offer(order)
+
+        val added = when (order.orderSide) {
+            OrderSide.Yes -> addToQueue(order, yesBuyOrders, yesOrderIds)
+            OrderSide.No -> addToQueue(order, noBuyOrders, noOrderIds)
             OrderSide.UNKNOWN -> throw OrderValidationException("Unknown order side")
         }
+
+        return added
+    }
+
+    private fun addToQueue(
+        order: Order,
+        queue: PriorityQueue<Order>,
+        orderSet: MutableSet<Long>
+    ): Boolean {
+        // Check if the order is already present in the set
+        if (order.id in orderSet) return false
+
+        // Add to queue and set
+        queue.offer(order)
+        orderSet.add(order.id)
         return true
     }
 
-//    fun matchOrders(): List<MatchResult> {
-//        val matches = mutableListOf<MatchResult>()
-//        matches.addAll(matchCrossSideOrders())
-//        return matches
-//    }
-
     fun removeOrder(order: Order) {
         when (order.orderSide) {
-            OrderSide.Yes -> yesBuyOrders.remove(order)
-            OrderSide.No -> noBuyOrders.remove(order)
+            OrderSide.Yes -> removeFromQueue(order, yesBuyOrders, yesOrderIds)
+            OrderSide.No -> removeFromQueue(order, noBuyOrders, noOrderIds)
             OrderSide.UNKNOWN -> throw OrderValidationException("Unknown order side")
         }
     }
 
-    private fun matchCrossSideOrders(): List<MatchResult> {
-        val matches = mutableListOf<MatchResult>()
-        matches.addAll(matchCrossSideBuyOrders())
-        return matches
-    }
-
-    private fun matchCrossSideBuyOrders(): List<MatchResult> {
-        val matches = mutableListOf<MatchResult>()
-
-        while (yesBuyOrders.isNotEmpty() && noBuyOrders.isNotEmpty()) {
-            val yesBuyOrder = yesBuyOrders.peek()
-            val noBuyOrder = noBuyOrders.peek()
-
-            val (matchYesPrice, matchNoPrice) = if (yesBuyOrder.createdAt < noBuyOrder.createdAt) {
-                // YES order came first, gets price improvement
-                // If NO order is willing to pay 3.2, YES gets matched at 6.8
-                Pair(BigDecimal.TEN.subtract(noBuyOrder.price), noBuyOrder.price)
-            } else {
-                // NO order came first, gets their price
-                // If YES order is willing to pay 7.0, NO gets matched at 3.0
-                Pair(yesBuyOrder.price, BigDecimal.TEN.subtract(yesBuyOrder.price))
-            }
-
-            // Example:
-            // t1: YES bids 7.0 (first order)
-            // t2: NO bids 3.2
-            // Match at YES=6.8, NO=3.2 (YES gets better price)
-            // Validate if orders can match at these prices
-            if (yesBuyOrder.price >= matchYesPrice && noBuyOrder.price >= matchNoPrice) {
-                val matchedQuantity = minOf(yesBuyOrder.remainingQuantity, noBuyOrder.remainingQuantity)
-
-                matches.add(
-                    MatchResult(
-                        yesOrder = yesBuyOrder,
-                        noOrder = noBuyOrder,
-                        matchedQuantity = matchedQuantity,
-                        matchedYesPrice = matchYesPrice,
-                        matchedNoPrice = matchNoPrice,
-                    )
-                )
-
-
-                // Update LTP
-                lastTradedYesPrice = matchYesPrice
-                lastTradedNoPrice = matchNoPrice
-
-                // Update quantities
-                yesBuyOrder.remainingQuantity -= matchedQuantity
-                noBuyOrder.remainingQuantity -= matchedQuantity
-
-                // Remove filled orders
-                if (yesBuyOrder.remainingQuantity == 0L) yesBuyOrders.poll()
-                if (noBuyOrder.remainingQuantity == 0L) noBuyOrders.poll()
-            } else {
-                break // No match possible at these prices
-            }
+    private fun removeFromQueue(
+        order: Order,
+        queue: PriorityQueue<Order>,
+        orderSet: MutableSet<Long>
+    ) {
+        if (order.id in orderSet) {
+            queue.remove(order)
+            orderSet.remove(order.id)
         }
-        return matches
     }
 
     // Get order book depth
@@ -227,7 +192,6 @@ class OrderBook(val pulseId: Int) {
         val noVolume = noBuyOrders.sumOf { it.remainingQuantity }
         return Pair(yesVolume, noVolume)
     }
-
 
     fun getLastTradedPrices(): Pair<BigDecimal?, BigDecimal?> {
         return Pair(lastTradedYesPrice, lastTradedNoPrice)

@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
+import javax.annotation.PostConstruct
 import javax.transaction.Transactional
 
 @Service
@@ -30,6 +31,25 @@ class OrderService(
     private val objectMapper: ObjectMapper
 ) {
     private val logger = Logger.getLogger(this.javaClass)
+
+    @PostConstruct
+    fun initializeOrderBookOnStartup() {
+        initializeOrderBook()
+    }
+
+    fun initializeOrderBook() {
+        val openOrders = orderRepository.findAllByStatusIn(
+            listOf(
+                OrderStatus.OPEN,
+                OrderStatus.PARTIALLY_FILLED
+            ))
+        openOrders.forEach { order ->
+            val isAdded = matchingEngine.addOrder(order)
+            if (!isAdded) {
+                logger.warn("Order ${order.id} already exists in the queue. Skipping re-addition.")
+            }
+        }
+    }
 
     @Transactional
     fun createOrder(orderRequest: OrderRequest): Boolean {
@@ -121,7 +141,6 @@ class OrderService(
         }
         orderRepository.save(order)
     }
-
 
     @Transactional
     fun cancelOrder(orderId: Int): Order {
