@@ -31,12 +31,7 @@ class MatchingEngine {
     fun addOrder(order: Order) : Boolean {
         val orderBook = orderBooks.computeIfAbsent(order.pulseId) { OrderBook(it) }
         synchronized(orderBook) {
-            try {
-                val isAdded = orderBook.addOrder(order)
-                return isAdded
-            } catch (ex: Exception) {
-                return false
-            }
+            return orderBook.addOrder(order)
         }
     }
 

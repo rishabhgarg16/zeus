@@ -42,7 +42,8 @@ class OrderService(
             listOf(
                 OrderStatus.OPEN,
                 OrderStatus.PARTIALLY_FILLED
-            ))
+            )
+        )
         openOrders.forEach { order ->
             val isAdded = matchingEngine.addOrder(order)
             if (!isAdded) {
@@ -164,66 +165,29 @@ class OrderService(
 
 
     @Transactional
-    fun cancelAllOpenOrders(questionId: Int) {
-        val openOrders = orderRepository.findByPulseIdAndStatus(questionId, OrderStatus.OPEN)
-        openOrders.forEach { order ->
-            matchingEngine.cancelOrder(order)
-            order.status = OrderStatus.CANCELLED
-            if (order.orderType == OrderType.BUY) {
+    fun cancelAllOpenOrders(pulseId: Int) {
+        val openOrPartiallyFilledOrders = orderRepository.findByPulseIdAndStatusIn(
+            pulseId, listOf(OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED)
+        )
+        val updatedOrders = openOrPartiallyFilledOrders.map { order ->
+            try {
+                matchingEngine.cancelOrder(order)
+
                 val releaseAmount = order.price.multiply(BigDecimal(order.remainingQuantity))
                 userService.releaseReservedBalance(order.userId, releaseAmount)
+
+                order.apply {
+                    status = OrderStatus.CANCELLED
+                }
+            } catch (e: Exception) {
+                logger.error("Error cancelling order ${order.id}: ${e.message}", e)
+                throw e
             }
-            orderRepository.save(order)
         }
+
+        orderRepository.saveAll(updatedOrders)
+        logger.info("Successfully cancelled ${updatedOrders.size} orders for pulseId $pulseId")
     }
-
-    private fun releaseReservedBalance(order: Order) {
-        val releaseAmount = order.price.multiply(BigDecimal(order.remainingQuantity))
-        userService.releaseReservedBalance(order.userId, releaseAmount)
-    }
-
-    private fun reserveBalance(order: Order) {
-        val requiredBalance = order.price.multiply(BigDecimal(order.quantity))
-        userService.reserveBalance(order.userId, requiredBalance)
-    }
-
-//    @Transactional
-//    fun saveOrUpdateOrder(order: Order): Order {
-//        val existingOrder = orderRepository.findById(order.id)
-//        return if (existingOrder.isPresent) {
-//            val updated = existingOrder.get().copy(
-//                remainingQuantity = order.remainingQuantity,
-//                status = order.status
-//            )
-//            orderRepository.save(updated)
-//        } else {
-//            saveOrder(order)
-//        }
-//    }
-
-//    @Transactional
-//    fun saveOrder(order: Order): Order {
-//        try {
-//            val entity = Order(
-//                userId = order.userId,
-//                pulseId = order.pulseId,
-//                matchId = order.matchId,
-//                userAnswer = order.userAnswer,
-//                price = order.price,
-//                quantity = order.quantity,
-//                remainingQuantity = 0, // TODO Change it later
-//                status = OrderStatus.FILLED // TODO change it later
-//            )
-//            return orderRepository.save(entity)
-//        } catch (e: Exception) {
-//            logger.error("Error saving order for user id ${order.userId}", e)
-//            throw OrderNotSaveException("Not able to save order for User ${order.userId}")
-//        }
-//    }
-
-//    fun getAllTradesByPulseId(pulseId: Int): List<Order>? {
-//        return orderRepository.findTradesByPulseId(pulseId)
-//    }
 
     fun getOpenOrdersByUser(userId: Int): List<Order> {
         return orderRepository.findByUserIdAndStatus(userId, OrderStatus.OPEN)
@@ -232,19 +196,6 @@ class OrderService(
     fun getOpenOrdersByPulse(pulseId: Int): List<Order> {
         return orderRepository.findByPulseIdAndStatus(pulseId, OrderStatus.OPEN)
     }
-
-//    @Transactional
-//    fun createNewOrder(order: Order): Order {
-//        val amountToDeduct = "%.2f".format(order.totalAmount).toDouble()
-//        val balanceSuccess = userService.updateBalance(order.userId, -amountToDeduct)
-//
-//        if (!balanceSuccess) {
-//            logger.error("Error updating the user wallet for user id ${order.userId}")
-//            throw InsufficientBalanceException("Insufficient balance for user ${order.userId}")
-//        }
-//
-//        return saveOrder(order)
-//    }
 
     fun sendOrderToQueue(order: Order) {
         try {

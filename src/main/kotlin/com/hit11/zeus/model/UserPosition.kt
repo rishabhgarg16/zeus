@@ -47,7 +47,6 @@ data class UserPosition(
     @Column(name = "close_time")
     var closeTime: Instant? = null,
 
-    @Column(name = "final_result")
-    var finalResult: BigDecimal? = null
-
+    @Column(name = "settled_amount")
+    var settledAmount: BigDecimal? = null // Store the final computed payout
 )

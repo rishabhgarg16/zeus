@@ -32,6 +32,9 @@ class QuestionService(
         val response = QuestionAnswerUpdateResponse()
         try {
             val pulse = questionRepository.getPulseById(answerUpdateRequest.pulseId)
+            if (pulse.status == QuestionStatus.RESOLVED) {
+                throw QuestionValidationException("Pulse ${pulse.id} is already resolved.")
+            }
             pulse.pulseResult = answerUpdateRequest.pulseResult
             pulse.status = QuestionStatus.RESOLVED
             questionRepository.save(pulse)

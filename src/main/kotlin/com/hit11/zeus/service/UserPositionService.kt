@@ -1,9 +1,13 @@
 package com.hit11.zeus.service
 
 import com.hit11.zeus.exception.OrderValidationException
-import com.hit11.zeus.model.*
+import com.hit11.zeus.model.OrderSide
+import com.hit11.zeus.model.PositionStatus
+import com.hit11.zeus.model.PulseResult
+import com.hit11.zeus.model.UserPosition
 import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.UserPositionRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -18,6 +22,8 @@ class UserPositionService(
     private val questionRepository: QuestionRepository,
     private val userPositionRepository: UserPositionRepository,
 ) {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
     @Transactional
     fun updatePosition(
         userId: Int,
@@ -102,23 +108,35 @@ class UserPositionService(
     @Transactional
     fun closePulsePositions(pulseId: Int) {
         val pulse = questionRepository.findById(pulseId).getOrNull()
-        if (pulse != null) {
-            val result = pulse.pulseResult
-            if (result != PulseResult.UNDECIDED) {
-                val positions = userPositionRepository.findByPulseIdAndStatus(pulseId, PositionStatus.OPEN)
-                positions.forEach { position ->
-                    position.status = PositionStatus.CLOSED
-                    position.closeTime = Instant.now()
-                    position.finalResult = calculateFinalResult(position, result)
-                    userPositionRepository.save(position)
-                    userService.updateUserWallet(position.userId, position.finalResult!!)
+            ?: throw IllegalStateException("Pulse $pulseId not found")
 
-                }
+        if (pulse.pulseResult == PulseResult.UNDECIDED) {
+            throw IllegalStateException("Pulse $pulseId result is still undecided")
+        }
+
+        val positions = userPositionRepository.findByPulseIdAndStatus(pulseId, PositionStatus.OPEN)
+
+        if (positions.isEmpty()) {
+            logger.info("No open positions to close for Pulse $pulseId")
+            return
+        }
+
+        val updatedPositions = positions.map { position ->
+            position.apply {
+                position.status = PositionStatus.CLOSED
+                position.closeTime = Instant.now()
+                position.settledAmount = calculateFinalPayout(position, pulse.pulseResult)
+            }.also { updatedPosition ->
+                userService.updateUserWallet(updatedPosition.userId, updatedPosition.settledAmount ?: BigDecimal.ZERO)
             }
         }
+
+        // Batch save updated positions
+        userPositionRepository.saveAll(updatedPositions)
+        logger.info("Successfully closed ${updatedPositions.size} positions for Pulse $pulseId")
     }
 
-    private fun calculateFinalResult(position: UserPosition, result: PulseResult): BigDecimal {
+    private fun calculateFinalPayout(position: UserPosition, result: PulseResult): BigDecimal {
         return when (result) {
             PulseResult.Yes -> {
                 (BigDecimal.TEN.subtract(position.averageYesPrice)).multiply(BigDecimal(position.yesQuantity))
@@ -128,11 +146,15 @@ class UserPositionService(
             }
 
             PulseResult.No -> {
-                position.averageNoPrice.multiply(BigDecimal(position.noQuantity))
-                    .subtract(position.averageYesPrice.multiply(BigDecimal(position.yesQuantity)))
+                // Payout for 'No' positions: (10 - averageNoPrice) * noQuantity
+                // Loss for 'Yes' positions: - (10 - averageYesPrice) * yesQuantity
+                (BigDecimal.TEN.subtract(position.averageNoPrice)).multiply(BigDecimal(position.noQuantity))
+                    .add( // Adding because Yes position loss is negative
+                        position.averageYesPrice.subtract(BigDecimal.TEN).multiply(BigDecimal(position.yesQuantity))
+                    )
             }
 
-            PulseResult.UNDECIDED -> BigDecimal.ZERO
+            PulseResult.UNDECIDED -> BigDecimal.ZERO // No payouts for undecided results
         }
     }
 
@@ -150,5 +172,4 @@ class UserPositionService(
     fun getAllUserPositions(userId: Int): List<UserPosition> {
         return userPositionRepository.findByUserId(userId)
     }
-
 }
