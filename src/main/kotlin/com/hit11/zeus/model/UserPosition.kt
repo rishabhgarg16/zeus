@@ -5,11 +5,12 @@ import java.time.Instant
 import javax.persistence.*
 
 enum class PositionStatus { OPEN, CLOSED }
+
 @Entity
 @Table(
     name = "positions",
     indexes = [
-        Index(name = "idx_user_id_pulse_id", columnList = "user_id, pulse_id")
+        Index(name = "idx_user_id_pulse_id_side", columnList = "user_id, pulse_id, order_side")
     ]
 )
 data class UserPosition(
@@ -20,19 +21,20 @@ data class UserPosition(
     val userId: Int = 0,
 
     @Column(name = "pulse_id")
-    val pulseId: Int=0,
+    val pulseId: Int = 0,
 
-    @Column(name = "yes_quantity")
-    var yesQuantity: Long = 0,
+    @Column(name = "match_id")
+    val matchId: Int,
 
-    @Column(name = "no_quantity")
-    var noQuantity: Long = 0,
+    @Column(name = "quantity")
+    var quantity: Long = 0,
 
-    @Column(name = "average_yes_price")
-    var averageYesPrice: BigDecimal = BigDecimal.ZERO,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_side")
+    val orderSide: OrderSide, // Yes or No
 
-    @Column(name = "average_no_price")
-    var averageNoPrice: BigDecimal = BigDecimal.ZERO,
+    @Column(name = "average_price")
+    var averagePrice: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "realized_pnl")
     var realizedPnl: BigDecimal = BigDecimal.ZERO,
@@ -48,5 +50,11 @@ data class UserPosition(
     var closeTime: Instant? = null,
 
     @Column(name = "settled_amount")
-    var settledAmount: BigDecimal? = null // Store the final computed payout
+    var settledAmount: BigDecimal? = null, // Store the final computed payout
+
+    @Column(name = "created_at", updatable = false)
+    val createdAt: Instant = Instant.now(),
+
+    @Column(name = "updated_at")
+    var updatedAt: Instant = Instant.now()
 )

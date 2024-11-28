@@ -1,66 +1,45 @@
 package com.hit11.zeus.service
 
 import com.hit11.zeus.model.*
+import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.TradeRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.data.domain.Pageable
 import java.math.BigDecimal
 import java.time.Instant
 
 @Service
 class TradeService(
     private val tradeRepository: TradeRepository,
-    private val userService: UserService,
-    private val userPositionService: UserPositionService,
+    private val questionRepository: QuestionRepository,
 ) {
     @Transactional
-    fun createTrade(matchResult: MatchResult): Trade {
-        val trade = Trade(
-            yesOrderId = matchResult.yesOrder.id,
-            noOrderId = matchResult.noOrder.id,
-            pulseId = matchResult.yesOrder.pulseId,
-            tradedQuantity = matchResult.matchedQuantity,
-            tradedYesPrice = matchResult.matchedYesPrice,
-            tradedNoPrice = BigDecimal.TEN.subtract(matchResult.matchedYesPrice),
-            matchId = matchResult.yesOrder.matchId,
-            createdAt = Instant.now()
+    fun createTrade(orderMatch: OrderMatch) {
+        val trades = listOf(
+            Trade(
+                userId = orderMatch.yesOrder.userId,
+                orderId = orderMatch.yesOrder.id,
+                pulseId = orderMatch.yesOrder.pulseId,
+                matchId = orderMatch.yesOrder.matchId,
+                side = OrderSide.Yes,
+                price = orderMatch.matchedYesPrice,
+                quantity = orderMatch.matchedQuantity,
+                amount = orderMatch.matchedYesPrice.multiply(BigDecimal(orderMatch.matchedQuantity))
+            ),
+            Trade(
+                userId = orderMatch.noOrder.userId,
+                orderId = orderMatch.noOrder.id,
+                pulseId = orderMatch.noOrder.pulseId,
+                matchId = orderMatch.noOrder.matchId,
+                side = OrderSide.No,
+                price = BigDecimal.TEN.subtract(orderMatch.matchedYesPrice),
+                quantity = orderMatch.matchedQuantity,
+                amount = orderMatch.matchedNoPrice.multiply(BigDecimal(orderMatch.matchedQuantity))
+            )
         )
-        val savedTrade = tradeRepository.save(trade)
-
-        updateUserBalances(matchResult)
-        updateUserPositions(matchResult)
-
-        return savedTrade
-    }
-
-    private fun updateUserBalances(matchResult: MatchResult) {
-        val yesTradeAmount = matchResult.matchedYesPrice.multiply(BigDecimal(matchResult.matchedQuantity))
-        val noTradeAmount = matchResult.matchedNoPrice.multiply(BigDecimal(matchResult.matchedQuantity))
-
-        // Deduct from the Yes buyer's wallet
-        userService.confirmReservedBalance(matchResult.yesOrder.userId, yesTradeAmount)
-
-        // Deduct from the No buyer's wallet
-        userService.confirmReservedBalance(matchResult.noOrder.userId, noTradeAmount)
-    }
-
-    private fun updateUserPositions(matchResult: MatchResult) {
-        // Yes position
-        userPositionService.updatePosition(
-            matchResult.yesOrder.userId,
-            matchResult.yesOrder.pulseId,
-            OrderSide.Yes,
-            matchResult.matchedQuantity,
-            matchResult.matchedYesPrice
-        )
-        // No position
-        userPositionService.updatePosition(
-            matchResult.noOrder.userId,
-            matchResult.noOrder.pulseId,
-            OrderSide.No,
-            matchResult.matchedQuantity, // no order is also buy order hence adding the quantity
-            matchResult.matchedNoPrice
-        )
+        // Save the trades in the database
+        tradeRepository.saveAll(trades)
     }
 
     // Get all trades for a given pulse ID
@@ -75,7 +54,11 @@ class TradeService(
 
     // Get all trades for a given order (yesOrderId or noOrderId)
     fun getTradesByOrder(orderId: Long): List<Trade> {
-        return tradeRepository.findByYesOrderIdOrNoOrderId(orderId, orderId)
+        return tradeRepository.findByOrderId(orderId)
+    }
+
+    fun getTradesByUser(userId: Long): List<Trade> {
+        return tradeRepository.findByOrderId(userId)
     }
 
     // Get the most recent trades for a pulse ID (e.g., last 10 trades)
@@ -86,6 +69,37 @@ class TradeService(
     // Get trades within a date range for a pulse ID
     fun getTradesByPulseAndDateRange(pulseId: Int, startDate: Instant, endDate: Instant): List<Trade> {
         return tradeRepository.findByPulseIdAndCreatedAtBetween(pulseId, startDate, endDate)
+    }
+
+    fun getMyTradesResponse(
+        userId: Int,
+        matchIdList: List<Int>,
+        pageable: Pageable
+    ): List<UiMyTradesResponse>? {
+        try {
+            val allTrades = tradeRepository.findByUserIdAndMatchIdIn(
+                userId,
+                matchIdList,
+                pageable
+            )
+
+            val matchQuestions = questionRepository
+                .findAllByMatchIdIn(matchIdList)
+                .map { it.mapToQuestionDataModel() }
+
+            val questionIdToQuestionMap: Map<Int, QuestionDataModel> =
+                matchQuestions.associateBy { it.id }.mapValues { it.value }
+
+            return allTrades.mapNotNull { trade ->
+                questionIdToQuestionMap[trade.pulseId]?.let {
+                    trade.toUiUserPositionsResponse(
+                        it
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
 }

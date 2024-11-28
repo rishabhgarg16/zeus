@@ -39,7 +39,7 @@ class OrderBook(val pulseId: Int) {
         return true
     }
 
-    fun findPotentialMatches(order: Order): List<MatchResult> {
+    fun findPotentialMatches(order: Order): List<OrderMatch> {
         // Create deep copies for matching
         // Use copied orders to avoid side effects
         var tempYesOrders = PriorityQueue(orderComparator)
@@ -54,8 +54,8 @@ class OrderBook(val pulseId: Int) {
     private fun findMatchingOrders(
         tempYesOrders: PriorityQueue<Order>,
         tempNoOrders: PriorityQueue<Order>
-    ): List<MatchResult> {
-        val matches = mutableListOf<MatchResult>()
+    ): List<OrderMatch> {
+        val matches = mutableListOf<OrderMatch>()
 
         while (tempYesOrders.isNotEmpty() && tempNoOrders.isNotEmpty()) {
             val yesBuyOrder = tempYesOrders.peek() // 4
@@ -80,7 +80,7 @@ class OrderBook(val pulseId: Int) {
                 )
 
                 matches.add(
-                    MatchResult(
+                    OrderMatch(
                         yesOrder = yesBuyOrder.copy(),
                         noOrder = noBuyOrder.copy(),
                         matchedQuantity = matchedQuantity,
@@ -102,7 +102,7 @@ class OrderBook(val pulseId: Int) {
         return matches
     }
 
-    fun confirmMatches(newOrder: Order, matches: List<MatchResult>) {
+    fun confirmMatches(newOrder: Order, matches: List<OrderMatch>) {
         matches.forEach { match ->
             // Update the actual orders in the queues
             val yesOrder = yesBuyOrders.find { it.id == match.yesOrder.id }
@@ -222,7 +222,7 @@ class OrderBook(val pulseId: Int) {
     }
 }
 
-data class MatchResult(
+data class OrderMatch(
     val yesOrder: Order,
     val noOrder: Order,
     val matchedQuantity: Long,

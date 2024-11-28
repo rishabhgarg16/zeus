@@ -1,8 +1,9 @@
 package com.hit11.zeus.controller
 
 import com.hit11.zeus.model.UserPosition
+import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.UserPositionService
-import org.springframework.data.domain.PageRequest
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -11,29 +12,37 @@ import org.springframework.web.bind.annotation.*
 class UserPositionController(private val userPositionService: UserPositionService) {
 
     @GetMapping("/user/{userId}/pulse/{pulseId}")
-    fun getUserPosition(@PathVariable userId: Int, @PathVariable pulseId: Int): ResponseEntity<UserPosition> {
-        val position = userPositionService.getPosition(userId, pulseId)
+    fun getUserPositionsByPulse(
+        @PathVariable userId: Int,
+        @PathVariable pulseId: Int
+    ): ResponseEntity<List<UserPosition>> {
+        val position = userPositionService.getPositionsByUserAndPulse(userId, pulseId)
         return ResponseEntity.ok(position)
     }
 
     @GetMapping("/user/{userId}")
-    fun getAllUserPositions(@PathVariable userId: Int): ResponseEntity<List<UserPosition>> {
+    fun getPositionsByUser(@PathVariable userId: Int): ResponseEntity<ApiResponse<List<UserPosition>>> {
         val positions = userPositionService.getAllUserPositions(userId)
-        return ResponseEntity.ok(positions)
+        return ResponseEntity.status(HttpStatus.OK).body(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = positions
+            )
+        )
     }
 
     @GetMapping("/pulse/{pulseId}")
-    fun getPositionsByPulse(@PathVariable pulseId: Int): ResponseEntity<List<UserPosition>> {
+    fun getPositionsByPulse(@PathVariable pulseId: Int): ResponseEntity<ApiResponse<List<UserPosition>>> {
         val positions = userPositionService.getPositionsByPulse(pulseId)
-        return ResponseEntity.ok(positions)
-    }
-
-    @GetMapping("/pulse/{pulseId}/user/{userId}")
-    fun getUserPositionInPulse(
-        @PathVariable pulseId: Int,
-        @PathVariable userId: Int
-    ): ResponseEntity<UserPosition> {
-        val position = userPositionService.getPosition(userId, pulseId)
-        return ResponseEntity.ok(position)
+        return ResponseEntity.status(HttpStatus.OK).body(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = positions
+            )
+        )
     }
 }

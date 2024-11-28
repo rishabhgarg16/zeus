@@ -113,7 +113,6 @@ class UserService(
         userRepository.save(user)
     }
 
-
     @Transactional
     fun releaseReservedBalance(userId: Int, amount: BigDecimal) {
         val user = userRepository.findById(userId)

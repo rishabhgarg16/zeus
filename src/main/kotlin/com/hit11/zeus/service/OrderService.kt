@@ -27,7 +27,7 @@ class OrderService(
     private val awsProperties: AwsProperties,
     private val sqsClient: SqsClient,
     private val matchingEngine: MatchingEngine,
-    private val tradeService: TradeService,
+    private val orderExecutionService: OrderExecutionService,
     private val objectMapper: ObjectMapper
 ) {
     private val logger = Logger.getLogger(this.javaClass)
@@ -102,13 +102,10 @@ class OrderService(
     }
 
     @Transactional
-    private fun processMatchesAndTrades(order: Order, matches: List<MatchResult>) {
+    private fun processMatchesAndTrades(order: Order, matches: List<OrderMatch>) {
         try {
-            // Create trades first
-            // per match, create one trade
-            val trades = matches.map { match ->
-                tradeService.createTrade(match)
-            }
+            // Step 1: Create order match, create trades, updates positions and balance
+            orderExecutionService.processMatches(order, matches)
 
             // Step 2: Confirm matches in the order book
             matchingEngine.confirmMatches(order, matches)
@@ -299,21 +296,6 @@ class OrderService(
         // Validate price follows increment
         if (orderPrice.remainder(WAGER_INCREMENT).setScale(0, RoundingMode.DOWN) != BigDecimal.ZERO) {
             throw OrderValidationException("Wager must be in increments of ₹$WAGER_INCREMENT")
-        }
-
-        when (order.userAnswer) {
-            question.optionA -> {
-                if (order.price <= question.optionAWager.toDouble()) {
-                    throw OrderValidationException("Invalid wager for Option A")
-                }
-            }
-
-            question.optionB -> {
-                if (order.price <= question.optionBWager.toDouble())
-                    throw OrderValidationException("Invalid wager for Option B")
-            }
-
-            else -> throw OrderValidationException("Invalid answer option")
         }
     }
 

@@ -1,9 +1,6 @@
 package com.hit11.zeus.service
 
-import com.hit11.zeus.model.PulseResult
 import com.hit11.zeus.model.QuestionDataModel
-import com.hit11.zeus.model.Trade
-import com.hit11.zeus.model.TradeResult
 import org.springframework.stereotype.Service
 
 @Service

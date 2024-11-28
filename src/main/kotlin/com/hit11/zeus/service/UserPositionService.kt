@@ -1,25 +1,19 @@
 package com.hit11.zeus.service
 
-import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.OrderSide
-import com.hit11.zeus.model.PositionStatus
 import com.hit11.zeus.model.PulseResult
 import com.hit11.zeus.model.UserPosition
-import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.UserPositionRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.Instant
 import javax.transaction.Transactional
-import kotlin.jvm.optionals.getOrNull
 
 
 @Service
 class UserPositionService(
     private val userService: UserService,
-    private val questionRepository: QuestionRepository,
     private val userPositionRepository: UserPositionRepository,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -28,37 +22,26 @@ class UserPositionService(
     fun updatePosition(
         userId: Int,
         pulseId: Int,
+        matchId: Int,
         side: OrderSide,
         quantity: Long,
         price: BigDecimal
     ) {
-        val position = userPositionRepository.findByUserIdAndPulseId(userId, pulseId)
-            ?: UserPosition(userId = userId, pulseId = pulseId)
+        val position = userPositionRepository.findByUserIdAndPulseIdAndOrderSide(userId, pulseId, side)
+            ?: UserPosition(
+                userId = userId,
+                pulseId = pulseId,
+                orderSide = side,
+                matchId = matchId
+            )
 
-        when (side) {
-            OrderSide.Yes -> {
-                position.yesQuantity += quantity
-                position.averageYesPrice = calculateNewAveragePrice(
-                    position.yesQuantity,
-                    position.averageYesPrice,
-                    quantity,
-                    price
-                )
-            }
-
-            OrderSide.No -> {
-                position.noQuantity += quantity
-                position.averageNoPrice = calculateNewAveragePrice(
-                    position.noQuantity,
-                    position.averageNoPrice,
-                    quantity,
-                    price
-                )
-            }
-
-            OrderSide.UNKNOWN ->
-                throw OrderValidationException("Unknown side")
-        }
+        position.quantity += quantity
+        position.averagePrice = calculateNewAveragePrice(
+            position.quantity,
+            position.averagePrice,
+            quantity,
+            price
+        )
 
         updateUnrealizedPnl(position)
         userPositionRepository.save(position)
@@ -97,72 +80,71 @@ class UserPositionService(
 //        val currentYesPrice = pulseService.getCurrentYesPrice(position.pulseId)
         val currentNoPrice = BigDecimal.TEN.subtract(BigDecimal(5))
 
-        val yesPnl = (BigDecimal(10).subtract(position.averageYesPrice))
-            .multiply(BigDecimal(position.yesQuantity))
-        val noPnl = (currentNoPrice.subtract(position.averageNoPrice))
-            .multiply(BigDecimal(position.noQuantity))
-
-        position.unrealizedPnl = yesPnl.add(noPnl)
+        position.unrealizedPnl = (BigDecimal(10).subtract(position.averagePrice))
+            .multiply(BigDecimal(position.quantity))
     }
 
     @Transactional
     fun closePulsePositions(pulseId: Int) {
-        val pulse = questionRepository.findById(pulseId).getOrNull()
-            ?: throw IllegalStateException("Pulse $pulseId not found")
-
-        if (pulse.pulseResult == PulseResult.UNDECIDED) {
-            throw IllegalStateException("Pulse $pulseId result is still undecided")
-        }
-
-        val positions = userPositionRepository.findByPulseIdAndStatus(pulseId, PositionStatus.OPEN)
-
-        if (positions.isEmpty()) {
-            logger.info("No open positions to close for Pulse $pulseId")
-            return
-        }
-
-        val updatedPositions = positions.map { position ->
-            position.apply {
-                position.status = PositionStatus.CLOSED
-                position.closeTime = Instant.now()
-                position.settledAmount = calculateFinalPayout(position, pulse.pulseResult)
-            }.also { updatedPosition ->
-                userService.updateUserWallet(updatedPosition.userId, updatedPosition.settledAmount ?: BigDecimal.ZERO)
-            }
-        }
-
-        // Batch save updated positions
-        userPositionRepository.saveAll(updatedPositions)
-        logger.info("Successfully closed ${updatedPositions.size} positions for Pulse $pulseId")
+        return
+//        val pulse = questionRepository.findById(pulseId).getOrNull()
+//            ?: throw IllegalStateException("Pulse $pulseId not found")
+//
+//        if (pulse.pulseResult == PulseResult.UNDECIDED) {
+//            throw IllegalStateException("Pulse $pulseId result is still undecided")
+//        }
+//
+//        val positions = userPositionRepository.findByPulseIdAndStatus(pulseId, PositionStatus.OPEN)
+//
+//        if (positions.isNullOrEmpty()) {
+//            logger.info("No open positions to close for Pulse $pulseId")
+//            return
+//        }
+//
+//        val updatedPositions = positions.map { position ->
+//            position.apply {
+//                position.status = PositionStatus.CLOSED
+//                position.closeTime = Instant.now()
+//                position.settledAmount = calculateFinalPayout(position, pulse.pulseResult)
+//            }.also { updatedPosition ->
+//                userService.updateUserWallet(updatedPosition.userId, updatedPosition.settledAmount ?: BigDecimal.ZERO)
+//            }
+//        }
+//
+//        // Batch save updated positions
+//        userPositionRepository.saveAll(updatedPositions)
+//        logger.info("Successfully closed ${updatedPositions.size} positions for Pulse $pulseId")
     }
 
     private fun calculateFinalPayout(position: UserPosition, result: PulseResult): BigDecimal {
         return when (result) {
             PulseResult.Yes -> {
-                (BigDecimal.TEN.subtract(position.averageYesPrice)).multiply(BigDecimal(position.yesQuantity))
-                    .subtract(
-                        (BigDecimal.TEN.subtract(position.averageNoPrice)).multiply(BigDecimal(position.noQuantity))
-                    )
+                if (position.orderSide == OrderSide.Yes) {
+                    // Winning Yes position
+                    (BigDecimal.TEN.subtract(position.averagePrice)).multiply(BigDecimal(position.quantity))
+                } else {
+                    // Losing No position
+                    BigDecimal.ZERO
+                }
             }
 
             PulseResult.No -> {
-                // Payout for 'No' positions: (10 - averageNoPrice) * noQuantity
-                // Loss for 'Yes' positions: - (10 - averageYesPrice) * yesQuantity
-                (BigDecimal.TEN.subtract(position.averageNoPrice)).multiply(BigDecimal(position.noQuantity))
-                    .add( // Adding because Yes position loss is negative
-                        position.averageYesPrice.subtract(BigDecimal.TEN).multiply(BigDecimal(position.yesQuantity))
-                    )
+                if (position.orderSide == OrderSide.No) {
+                    // Winning No position
+                    (BigDecimal.TEN.subtract(position.averagePrice)).multiply(BigDecimal(position.quantity))
+                } else {
+                    // Losing Yes position
+                    BigDecimal.ZERO
+                }
             }
 
-            PulseResult.UNDECIDED -> BigDecimal.ZERO // No payouts for undecided results
+            PulseResult.UNDECIDED -> BigDecimal.ZERO
         }
     }
 
-    fun getPosition(userId: Int, pulseId: Int): UserPosition {
-        val position = userPositionRepository.findByUserIdAndPulseId(userId, pulseId)
-            ?: UserPosition(userId = userId, pulseId = pulseId)
-        updateUnrealizedPnl(position)
-        return position
+    fun getPositionsByUserAndPulse(userId: Int, pulseId: Int): List<UserPosition> {
+        return userPositionRepository.findByUserIdAndPulseId(userId, pulseId)
+            ?: throw IllegalStateException("No position found for user $userId and pulse $pulseId")
     }
 
     fun getPositionsByPulse(pulseId: Int): List<UserPosition> {

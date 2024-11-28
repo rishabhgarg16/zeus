@@ -10,7 +10,7 @@ class MatchingEngine {
     private val orderBooks = ConcurrentHashMap<Int, OrderBook>()
 
     // Find potential matches without modifying order book
-    fun findMatches(order: Order): List<MatchResult> {
+    fun findMatches(order: Order): List<OrderMatch> {
         val orderBook = orderBooks.computeIfAbsent(order.pulseId) { OrderBook(it) }
         return synchronized(orderBook) {
             orderBook.findPotentialMatches(order)
@@ -18,7 +18,7 @@ class MatchingEngine {
     }
 
     // Only modify order book after trades are confirmed
-    fun confirmMatches(order: Order, matches: List<MatchResult>) {
+    fun confirmMatches(order: Order, matches: List<OrderMatch>) {
         val orderBook = orderBooks[order.pulseId]
         orderBook?.let {
             synchronized(it) {
