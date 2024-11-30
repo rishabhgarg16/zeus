@@ -24,14 +24,14 @@ data class UserPosition(
     val pulseId: Int = 0,
 
     @Column(name = "match_id")
-    val matchId: Int,
+    val matchId: Int = 0,
 
     @Column(name = "quantity")
     var quantity: Long = 0,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_side")
-    val orderSide: OrderSide, // Yes or No
+    val orderSide: OrderSide = OrderSide.UNKNOWN, // Yes or No
 
     @Column(name = "average_price")
     var averagePrice: BigDecimal = BigDecimal.ZERO,

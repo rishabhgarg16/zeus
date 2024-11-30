@@ -50,7 +50,7 @@ class OrderExecutionService(
 
     private fun updateUserPositions(orderMatch: OrderMatch) {
         // Yes position
-        userPositionService.updatePosition(
+        userPositionService.updateOrCreateUserPosition(
             orderMatch.yesOrder.userId,
             orderMatch.yesOrder.pulseId,
             orderMatch.yesOrder.matchId,
@@ -59,7 +59,7 @@ class OrderExecutionService(
             orderMatch.matchedYesPrice
         )
         // No position
-        userPositionService.updatePosition(
+        userPositionService.updateOrCreateUserPosition(
             orderMatch.noOrder.userId,
             orderMatch.noOrder.pulseId,
             orderMatch.noOrder.matchId,

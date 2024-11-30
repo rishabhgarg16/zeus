@@ -8,9 +8,11 @@ import com.hit11.zeus.model.*
 import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
 import com.hit11.zeus.model.response.QuestionAnswerUpdateResponse
 import com.hit11.zeus.question.QuestionGenerator
+import com.hit11.zeus.question.QuestionResolution
 import com.hit11.zeus.question.ResolutionStrategy
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 @Service
 class QuestionService(
@@ -28,17 +30,17 @@ class QuestionService(
             ?.map { it.mapToQuestionDataModel() }
     }
 
-    fun updateQuestionAnswer(answerUpdateRequest: QuestionAnswerUpdateRequest): QuestionAnswerUpdateResponse {
+    @Transactional
+    fun updateQuestionAnswer(
+        answerUpdateRequest: QuestionAnswerUpdateRequest
+    ): QuestionAnswerUpdateResponse {
         val response = QuestionAnswerUpdateResponse()
         try {
             val pulse = questionRepository.getPulseById(answerUpdateRequest.pulseId)
-            if (pulse.status == QuestionStatus.RESOLVED) {
-                throw QuestionValidationException("Pulse ${pulse.id} is already resolved.")
-            }
-            pulse.pulseResult = answerUpdateRequest.pulseResult
-            pulse.status = QuestionStatus.RESOLVED
-            questionRepository.save(pulse)
-            payoutService.processPayouts(pulse.mapToQuestionDataModel())
+                .mapToQuestionDataModel()
+            val pulseResult = answerUpdateRequest.pulseResult
+            val updatedQuestion = updateQuestion(pulse, pulseResult)
+            payoutService.processPayouts(updatedQuestion, pulseResult)
         } catch (e: Exception) {
             logger.error("Error updating question answer", e)
             throw e
@@ -72,12 +74,14 @@ class QuestionService(
         )
     }
 
+    @Transactional
     private fun updateQuestions(
         matchState: MatchState
     ): UpdateQuestionsResponse {
         val matchId = matchState.liveScorecard.matchId
         val questions = questionRepository.findByMatchIdAndStatusIn(
-            matchId, listOf(QuestionStatus.LIVE, QuestionStatus.DISABLED)
+            matchId,
+            listOf(QuestionStatus.LIVE, QuestionStatus.DISABLED)
         )?.map { it.mapToQuestionDataModel() } ?: listOf()
 
         val updatedQuestions = mutableListOf<QuestionDataModel>()
@@ -90,13 +94,11 @@ class QuestionService(
                 if (resolutionStrategy?.canResolve(question, matchState) == true) {
                     val resolution = resolutionStrategy.resolve(question, matchState)
                     if (resolution.isResolved) {
-                        question.pulseResult = resolution.result
-                        question.status = QuestionStatus.RESOLVED
-                        questionRepository.save(question.maptoEntity())
+                        val updatedQuestion = updateQuestion(question, resolution.result)
                         if (resolution.result != PulseResult.UNDECIDED) {
-                            payoutService.processPayouts(question)
+                            payoutService.processPayouts(updatedQuestion, resolution.result)
                         }
-                        updatedQuestions.add(question)
+                        updatedQuestions.add(updatedQuestion)
                     } else {
                         notUpdatedQuestions.add(question)
                     }
@@ -117,6 +119,25 @@ class QuestionService(
         return UpdateQuestionsResponse(
             updatedQuestions, notUpdatedQuestions, errors
         )
+    }
+
+    @Transactional
+    private fun updateQuestion(
+        question: QuestionDataModel,
+        result: PulseResult
+    ): QuestionDataModel {
+        try {
+            if (question.status == QuestionStatus.RESOLVED) {
+                throw QuestionValidationException("Pulse ${question.id} is already resolved.")
+            }
+            question.pulseResult = result
+            question.status = QuestionStatus.RESOLVED
+            questionRepository.save(question.maptoEntity())
+            return question
+        } catch (e: Exception) {
+            logger.error("Error updating question ${question.id}", e)
+            throw e
+        }
     }
 
     private fun generateQuestions(currentState: MatchState): List<QuestionDataModel> {

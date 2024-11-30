@@ -1,13 +1,11 @@
 package com.hit11.zeus.controller
 
-
-import com.hit11.zeus.adapter.toQuestionResponse
 import com.hit11.zeus.exception.Logger
+import com.hit11.zeus.model.QuestionDataModel
 import com.hit11.zeus.model.request.GetActivePulseRequest
 import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.response.QuestionAnswerUpdateResponse
-import com.hit11.zeus.model.response.QuestionResponse
 import com.hit11.zeus.service.QuestionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,15 +13,15 @@ import org.springframework.web.bind.annotation.*
 import javax.validation.Valid
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/pulse/")
 class QuestionController(private val service: QuestionService) {
     private val logger = Logger.getLogger(this::class.java)
 
-    @PostMapping("/pulse/active")
+    @PostMapping("/active")
     fun getAllOpinions(
         @Valid @RequestBody request: GetActivePulseRequest
-    ): ResponseEntity<ApiResponse<List<QuestionResponse>?>> {
-        val response = service.getAllActiveQuestions(request.matchIdList)?.map { it.toQuestionResponse() }
+    ): ResponseEntity<ApiResponse<List<QuestionDataModel>?>> {
+        val response = service.getAllActiveQuestions(request.matchIdList)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
@@ -34,11 +32,11 @@ class QuestionController(private val service: QuestionService) {
         )
     }
 
-    @GetMapping("/pulse/{pulseId}")
+    @GetMapping("/{pulseId}")
     fun getPulseById(
         @PathVariable pulseId: Int
-    ): ResponseEntity<ApiResponse<QuestionResponse?>> {
-        val response = service.getQuestionById(pulseId)?.toQuestionResponse()
+    ): ResponseEntity<ApiResponse<QuestionDataModel?>> {
+        val response = service.getQuestionById(pulseId)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),

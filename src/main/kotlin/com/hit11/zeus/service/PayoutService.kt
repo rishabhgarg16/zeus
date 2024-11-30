@@ -1,17 +1,26 @@
 package com.hit11.zeus.service
 
+import com.hit11.zeus.model.PulseResult
 import com.hit11.zeus.model.QuestionDataModel
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 @Service
 class PayoutService (
+    private val tradeService: TradeService,
     private val userPositionService: UserPositionService,
     private val orderService: OrderService
 ){
-    fun processPayouts(question: QuestionDataModel) {
+    @Transactional
+    fun processPayouts(
+        question: QuestionDataModel,
+        pulseResult: PulseResult
+    ) {
         try {
+            // close all trades for this question
+            tradeService.closeTradesByPulse(question.id, pulseResult)
             // Close all positions for the pulse
-            userPositionService.closePulsePositions(question.id)
+            userPositionService.closePulsePositions(question.id, pulseResult)
 
             // Cancel all open and partially filled orders
             orderService.cancelAllOpenOrders(question.id)

@@ -1,7 +1,6 @@
 package com.hit11.zeus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import java.math.BigDecimal
 import java.time.Instant
 import javax.persistence.*
 
@@ -43,7 +42,7 @@ enum class QuestionStatus {
 
 
 enum class PulseResult { Yes, No, UNDECIDED }
-enum class PulseOption {Yes, No}
+enum class PulseOption { Yes, No }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class QuestionDataModel(
@@ -148,7 +147,7 @@ data class QuestionEntity(
     var status: QuestionStatus = QuestionStatus.SYSTEM_GENERATED,
 
     @Enumerated(EnumType.STRING)
-    @Column(name  = "pulse_result")
+    @Column(name = "pulse_result")
     var pulseResult: PulseResult = PulseResult.UNDECIDED,
 
     val pulseImageUrl: String? = "",
@@ -226,6 +225,6 @@ data class QuestionEntity(
             questionType = this.questionType,
             targetTeamId = this.targetTeamId,
             targetTossDecision = this.targetTossDecision,
-            )
+        )
     }
 }
