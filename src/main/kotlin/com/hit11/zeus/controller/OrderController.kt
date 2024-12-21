@@ -140,7 +140,7 @@ class OrderController(
         @PathVariable userId: Int
     ): ResponseEntity<ApiResponse<List<Order>>> {
         return try {
-            val orders = orderService.getOpenOrdersByUserAndPulseId(pulseId, userId)
+            val orders = orderService.getOpenOrdersByUserIdAndPulseId(pulseId, userId)
             ResponseEntity.ok(
                 ApiResponse(
                     status = HttpStatus.OK.value(),

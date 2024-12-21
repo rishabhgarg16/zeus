@@ -186,8 +186,13 @@ class OrderService(
         logger.info("Successfully cancelled ${updatedOrders.size} orders for pulseId $pulseId")
     }
 
-    fun getOpenOrdersByUser(userId: Int): List<Order> {
-        return orderRepository.findByUserIdAndStatus(userId, OrderStatus.OPEN)
+    fun getOpenOrdersByUserIdAndPulseId(userId: Int, pulseId: Int): List<Order> {
+        return orderRepository.findByUserIdAndPulseIdAndStatusIn(
+            userId, pulseId, listOf(
+                OrderStatus.OPEN,
+                OrderStatus.PARTIALLY_FILLED
+            )
+        )
     }
 
     fun getOpenOrdersByPulse(pulseId: Int): List<Order> {
