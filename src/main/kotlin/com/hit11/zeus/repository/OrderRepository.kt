@@ -14,6 +14,8 @@ interface OrderRepository : JpaRepository<Order, Int> {
     fun findByUserIdAndStatus(userId: Int, status: OrderStatus): List<Order>
     fun findByPulseIdAndStatus(pulseId: Int, status: OrderStatus): List<Order>
     fun findByPulseIdAndStatusIn(pulseId: Int, status: List<OrderStatus>): List<Order>
+    fun findByUserIdAndPulseIdAndStatusIn(userId: Int, pulseId: Int, status: List<OrderStatus>): List<Order>
+    fun findByUserIdAndPulseIdAndStatus(userId: Int, pulseId: Int, status: OrderStatus): List<Order>
     fun findAllByStatusIn(statusList: List<OrderStatus>): List<Order>
 //    fun findOrderByUserId(userId: Int): List<Order>
 //    fun findTradesByPulseId(pulseId: Int): List<Order>

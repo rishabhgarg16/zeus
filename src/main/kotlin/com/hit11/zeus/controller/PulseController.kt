@@ -17,11 +17,36 @@ import javax.validation.Valid
 class QuestionController(private val service: QuestionService) {
     private val logger = Logger.getLogger(this::class.java)
 
+    @GetMapping("/all-active")
+    fun getAllActivePulses(): ResponseEntity<ApiResponse<List<QuestionDataModel>?>> {
+        try {
+            val response = service.getAllActivePulses()
+            return ResponseEntity.ok(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    internalCode = null,
+                    message = "Successfully fetched active pulses",
+                    data = response
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Error fetching active pulses", e)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    internalCode = null,
+                    message = "Error fetching active pulses",
+                    data = null
+                )
+            )
+        }
+    }
+
     @PostMapping("/active")
     fun getAllOpinions(
         @Valid @RequestBody request: GetActivePulseRequest
     ): ResponseEntity<ApiResponse<List<QuestionDataModel>?>> {
-        val response = service.getAllActiveQuestions(request.matchIdList)
+        val response = service.getAllActiveQuestionsByMatch(request.matchIdList)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),

@@ -99,7 +99,7 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
     ): Boolean
 
     fun findByMatchId(matchId: Int): List<QuestionEntity>?
-    fun findAllByStatus(status: Boolean): List<QuestionEntity>
+    fun findAllByStatus(status: QuestionStatus): List<QuestionEntity>
     fun findAllByMatchIdIn(matchIds: List<Int>): List<QuestionEntity>
     fun getPulseById(id: Int): QuestionEntity
 }

@@ -24,8 +24,13 @@ class QuestionService(
     private var previousState: MatchState? = null
     private var lastProcessedBallNumber: Int = 0
 
+    fun getAllActivePulses(): List<QuestionDataModel>? {
+        return questionRepository.findAllByStatus(QuestionStatus.LIVE)
+            ?.map { it.mapToQuestionDataModel() }
+    }
+
     private val logger = Logger.getLogger(QuestionService::class.java)
-    fun getAllActiveQuestions(matchIdList: List<Int>): List<QuestionDataModel>? {
+    fun getAllActiveQuestionsByMatch(matchIdList: List<Int>): List<QuestionDataModel>? {
         return questionRepository.findByMatchIdInAndStatus(matchIdList, QuestionStatus.LIVE)
             ?.map { it.mapToQuestionDataModel() }
     }

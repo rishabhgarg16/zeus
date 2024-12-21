@@ -2,10 +2,11 @@ package com.hit11.zeus.controller
 
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.OrderValidationException
+import com.hit11.zeus.model.Order
 import com.hit11.zeus.model.OrderRequest
 import com.hit11.zeus.model.response.ApiResponse
+import com.hit11.zeus.model.response.OrderBookResponse
 import com.hit11.zeus.service.MatchingEngine
-import com.hit11.zeus.service.OrderBookDepth
 import com.hit11.zeus.service.OrderService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -69,23 +70,32 @@ class OrderController(
         }
     }
 
-    // Fetch order book depth
-    @GetMapping("/orderBookDepth")
+    @GetMapping("/orderbook/{pulseId}")
     fun getOrderBookDepth(
-        @RequestParam pulseId: Int,
+        @PathVariable pulseId: Int,
         @RequestParam(defaultValue = "5") levels: Int
-    ): ResponseEntity<ApiResponse<OrderBookDepth>> {
+    ): ResponseEntity<ApiResponse<OrderBookResponse>> {
         logger.info("Fetching order book depth for pulseId: $pulseId with levels: $levels")
         return try {
-            val depth = matchingEngine.getOrderBookDepth(pulseId, levels)
-            ResponseEntity.ok(
-                ApiResponse(
-                    status = HttpStatus.OK.value(),
-                    message = "Order book depth fetched successfully",
-                    internalCode = null,
-                    data = depth
+            val orderBook = matchingEngine.getOrderBook(pulseId)
+            return synchronized(orderBook) {
+                val result = OrderBookResponse(
+                    yesBids = orderBook.getOrderBookDepth(levels).yesBids,
+                    noBids = orderBook.getOrderBookDepth(levels).noBids,
+                    lastTradedYesPrice = orderBook.getLastTradedPrices().first,
+                    lastTradedNoPrice = orderBook.getLastTradedPrices().second,
+                    yesVolume = orderBook.getVolumes().first,
+                    noVolume = orderBook.getVolumes().second
                 )
-            )
+                ResponseEntity.ok(
+                    ApiResponse(
+                        status = HttpStatus.OK.value(),
+                        message = "Order book depth fetched successfully",
+                        internalCode = null,
+                        data = result
+                    )
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error fetching order book depth", e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
@@ -122,6 +132,34 @@ class OrderController(
                 data = true
             )
         )
+    }
+
+    @GetMapping("/open/{pulseId}/{userId}")
+    fun getAllOpenOrders(
+        @PathVariable pulseId: Int,
+        @PathVariable userId: Int
+    ): ResponseEntity<ApiResponse<List<Order>>> {
+        return try {
+            val orders = orderService.getOpenOrdersByUserAndPulseId(pulseId, userId)
+            ResponseEntity.ok(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    internalCode = null,
+                    message = "Order cancelled successfully",
+                    data = orders
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Error fetching open orders", e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    message = "Error fetching open orders",
+                    internalCode = null,
+                    data = null
+                )
+            )
+        }
     }
 }
 

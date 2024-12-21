@@ -9,6 +9,10 @@ class MatchingEngine {
 
     private val orderBooks = ConcurrentHashMap<Int, OrderBook>()
 
+    fun getOrderBook(pulseId: Int): OrderBook {
+        return orderBooks.computeIfAbsent(pulseId) { OrderBook(it) }
+    }
+
     // Find potential matches without modifying order book
     fun findMatches(order: Order): List<OrderMatch> {
         val orderBook = orderBooks.computeIfAbsent(order.pulseId) { OrderBook(it) }
