@@ -87,9 +87,11 @@ def create_match(cursor, match_header):
         'city': None,  # Not available in the provided data
         'stadium': None,  # Not available in the provided data
         'country': None,  # Not available in the provided data
-        'status': match_header['status'],
+        'status': match_header['state'],
+        'statusDescription': match_header['status'],
         'tournamentName': match_header.get('seriesName'),
-        'matchType': match_header['matchFormat'],
+        'matchType': match_header['matchType'],
+        'matchFormat': match_header['matchFormat'],
         'matchLink': None,  # Not available in the provided data
         'team1_id': team1_id,
         'team2_id': team2_id,
@@ -98,8 +100,8 @@ def create_match(cursor, match_header):
     }
 
     insert_query = """
-    INSERT INTO matches (cricbuzz_match_id, team1, team2, match_group, start_date, end_date, city, stadium, country, status, tournament_name, match_type, match_link, team1_id, team2_id, created_at, updated_at)
-    VALUES (%(cricbuzz_match_id)s, %(team1)s, %(team2)s, %(matchGroup)s, %(startDate)s, %(endDate)s, %(city)s, %(stadium)s, %(country)s, %(status)s, %(tournamentName)s, %(matchType)s, %(matchLink)s, %(team1_id)s, %(team2_id)s, %(created_at)s, %(updated_at)s)
+    INSERT INTO matches (cricbuzz_match_id, team1, team2, match_group, start_date, end_date, city, stadium, country, status, status_description, tournament_name, match_type, match_format, match_link, team1_id, team2_id, created_at, updated_at)
+    VALUES (%(cricbuzz_match_id)s, %(team1)s, %(team2)s, %(matchGroup)s, %(startDate)s, %(endDate)s, %(city)s, %(stadium)s, %(country)s, %(status)s, %(statusDescription)s, %(tournamentName)s, %(matchType)s, %(matchFormat)s, %(matchLink)s, %(team1_id)s, %(team2_id)s, %(created_at)s, %(updated_at)s)
     """
     cursor.execute(insert_query, new_match)
     id = cursor.lastrowid
@@ -110,14 +112,17 @@ def create_match(cursor, match_header):
 def update_match(cursor, match_header, match_id):
     update_data = {
         'status': match_header['state'],
+        'status_description': match_header['status'],
         'updated_at': datetime.now(),
         'id': match_id
     }
 
     update_query = """
-    UPDATE matches
-    SET status = %(status)s, updated_at = %(updated_at)s
-    WHERE id = %(id)s
+        UPDATE matches
+        SET status = %(status)s,
+        status_description = %(status_description)s, 
+        updated_at = %(updated_at)s
+        WHERE id = %(id)s
     """
     cursor.execute(update_query, update_data)
     print(f"Updated match: {match_id}")
@@ -127,14 +132,14 @@ lastUpdatedTime = 0
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
     headers = {
-        "x-rapidapi-key": "431a99b014msh80043dee4127356p13ecf1jsndcde82d54a11",
+        "x-rapidapi-key": "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9",
         "x-rapidapi-host": "cricbuzz-cricket.p.rapidapi.com"
     }
 
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
-        # print(f"Data fetched successfully from Cricbuzz. Response: {response.text}")
+        print(f"Data fetched successfully from Cricbuzz {match_id}. Response: {response.text}")
         response_json = response.json()
         return response_json
     except requests.exceptions.RequestException as e:
@@ -275,6 +280,7 @@ def convert_cricbuzz_to_hit11(cricbuzz_data):
 
     # Get or create match
     internal_match_id = get_or_create_match(match_header)
+    print(f"internal match id {internal_match_id}")
 
     # Check if the match has ended
     if match_header['state'] in ['Complete', 'Cancelled', 'Abandoned']:
@@ -599,7 +605,7 @@ def process_cricbuzz_data(cricbuzz_data):
 lastUpdatedTime = 0
 while True:
     try:
-        matchlist = [123456]
+        matchlist = [112317]
         for match_id in matchlist:
             cricbuzz_data = call_cricbuzz_commentry_api(match_id)
             if cricbuzz_data['responseLastUpdated'] > lastUpdatedTime:

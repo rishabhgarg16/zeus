@@ -17,7 +17,8 @@ enum class MatchStatus(val text: String) {
 
 enum class MatchFormat(matchFormat: String) {
     ODI("ODI"),
-    T20("T20")
+    T20("T20"),
+    TEST("TEST")
 }
 
 

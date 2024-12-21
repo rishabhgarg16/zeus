@@ -56,7 +56,8 @@ data class Team(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Innings(
     val inningsId: Int = 0,
-    @JsonProperty("isCurrentInnings") val isCurrentInnings: Boolean = false,
+    @JsonProperty("isCurrentInnings")
+    val isCurrentInnings: Boolean = false,
     val battingTeam: Team? = null,
     val bowlingTeam: Team? = null,
     val totalRuns: Int = 0,
