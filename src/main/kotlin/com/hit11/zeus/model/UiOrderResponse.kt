@@ -43,7 +43,7 @@ fun Order.toUiOrderResponse(
         quantity = quantity,
         remainingQuantity = remainingQuantity,
         status = status,
-        category = pulse.category?.split(",") ?: emptyList(),
+        category = pulse.categoryList,
         pulseEndDate = pulse.pulseEndDate,
         createdAt = createdAt,
         updatedAt = updatedAt,

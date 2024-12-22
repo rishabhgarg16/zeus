@@ -1,7 +1,7 @@
 package com.hit11.zeus.controller
 
 import com.hit11.zeus.exception.Logger
-import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.Question
 import com.hit11.zeus.model.request.GetActivePulseRequest
 import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
 import com.hit11.zeus.model.response.ApiResponse
@@ -18,7 +18,7 @@ class QuestionController(private val service: QuestionService) {
     private val logger = Logger.getLogger(this::class.java)
 
     @GetMapping("/all-active")
-    fun getAllActivePulses(): ResponseEntity<ApiResponse<List<QuestionDataModel>?>> {
+    fun getAllActivePulses(): ResponseEntity<ApiResponse<List<Question>?>> {
         try {
             val response = service.getAllActivePulses()
             return ResponseEntity.ok(
@@ -45,7 +45,7 @@ class QuestionController(private val service: QuestionService) {
     @PostMapping("/active")
     fun getAllOpinions(
         @Valid @RequestBody request: GetActivePulseRequest
-    ): ResponseEntity<ApiResponse<List<QuestionDataModel>?>> {
+    ): ResponseEntity<ApiResponse<List<Question>?>> {
         val response = service.getAllActiveQuestionsByMatch(request.matchIdList)
         return ResponseEntity.ok(
             ApiResponse(
@@ -60,7 +60,7 @@ class QuestionController(private val service: QuestionService) {
     @GetMapping("/{pulseId}")
     fun getPulseById(
         @PathVariable pulseId: Int
-    ): ResponseEntity<ApiResponse<QuestionDataModel?>> {
+    ): ResponseEntity<ApiResponse<Question?>> {
         val response = service.getQuestionById(pulseId)
         return ResponseEntity.ok(
             ApiResponse(

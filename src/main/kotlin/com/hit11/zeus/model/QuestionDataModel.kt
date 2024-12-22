@@ -1,6 +1,7 @@
 package com.hit11.zeus.model
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
+import org.hibernate.annotations.BatchSize
 import java.time.Instant
 import javax.persistence.*
 
@@ -31,6 +32,7 @@ enum class QuestionType {
     // invalid
     INVALID;
 }
+
 enum class QuestionStatus {
     SYSTEM_GENERATED,  // Newly created by the system, waiting for review
     DISABLED,
@@ -44,82 +46,18 @@ enum class QuestionStatus {
 enum class PulseResult { Yes, No, UNDECIDED }
 enum class PulseOption { Yes, No }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class QuestionDataModel(
-    val id: Int = 0,
-    val matchId: Int = 0,
-    val pulseQuestion: String = "",
-    val optionA: String = "",
-    val optionAWager: Long = -1L,
-    val optionB: String = "",
-    val optionBWager: Long = -1L,
-    val userACount: Long? = -1L,
-    val userBCount: Long? = -1L,
-    val category: List<String>? = ArrayList(),
-    var status: QuestionStatus = QuestionStatus.SYSTEM_GENERATED,
-    var pulseResult: PulseResult = PulseResult.UNDECIDED,
-    val pulseImageUrl: String? = "",
-    val pulseEndDate: Instant? = Instant.now(),
-    val targetRuns: Int? = 0,
-    val targetOvers: Int? = 0,
-    val targetWickets: Int? = 0,
-    val targetSixes: Int? = 0,
-    val targetSpecificOver: Int? = 0,
-    val targetExtras: Int? = 0,
-    val targetWides: Int? = 0,
-    val targetBoundaries: Int? = 0,
-    val questionType: QuestionType? = QuestionType.INVALID,
-    val targetBatsmanId: Int? = 0,
-    val targetBowlerId: Int? = 0,
-    val targetTeamId: Int? = 0,
-    val targetTossDecision: String? = "",
-) {
-
-    fun maptoEntity(): QuestionEntity {
-        return QuestionEntity(
-            id = this.id,
-            matchId = this.matchId,
-            pulseQuestion = this.pulseQuestion,
-            optionA = this.optionA,
-            optionAWager = this.optionAWager,
-            optionB = this.optionB,
-            optionBWager = this.optionBWager,
-            userACount = this.userACount,
-            userBCount = this.userBCount,
-            category = this.category.toString(),
-            status = this.status,
-            pulseResult = this.pulseResult,
-            pulseImageUrl = this.pulseImageUrl,
-            pulseEndDate = this.pulseEndDate,
-            targetRuns = this.targetRuns,
-            targetOvers = this.targetOvers,
-            targetExtras = this.targetExtras,
-            targetWickets = this.targetWickets,
-            targetWides = this.targetWides,
-            targetSixes = this.targetSixes,
-            targetBoundaries = this.targetBoundaries,
-            targetSpecificOver = this.targetSpecificOver,
-            targetBatsmanId = this.targetBatsmanId,
-            targetBowlerId = this.targetBowlerId,
-            targetTeamId = this.targetTeamId,
-            targetTossDecision = this.targetTossDecision,
-            questionType = this.questionType
-        )
-    }
-}
-
 @Entity
 @Table(name = "pulse_questions")
-data class QuestionEntity(
+@BatchSize(size = 50)
+data class Question(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
+
     val matchId: Int = 0,
+
     @Lob
-    @Column(
-        columnDefinition = "TEXT",
-        name = "pulse_question"
-    )
+    @Column(columnDefinition = "TEXT", name = "pulse_question")
     val pulseQuestion: String = "",
 
     @Column(name = "option_a")
@@ -140,6 +78,7 @@ data class QuestionEntity(
     @Column(name = "user_b_count")
     val userBCount: Long? = -1L,
 
+    @JsonIgnore
     val category: String? = "",
 
     @Enumerated(EnumType.STRING)
@@ -152,6 +91,8 @@ data class QuestionEntity(
 
     val pulseImageUrl: String? = "",
     val pulseEndDate: Instant? = Instant.now(),
+
+    // Target fields
     val targetRuns: Int? = 0,
     val targetOvers: Int? = 0,
     val targetBowlerId: Int? = 0,
@@ -163,23 +104,17 @@ data class QuestionEntity(
     val targetWides: Int? = 0,
     val targetBoundaries: Int? = 0,
     val targetTeamId: Int? = 0,
+
     @Column(name = "target_toss_decision")
     val targetTossDecision: String? = null,
 
     @Enumerated(EnumType.STRING)
     val questionType: QuestionType? = QuestionType.INVALID,
 
-    @Column(
-        name = "created_at",
-        nullable = false,
-        updatable = false
-    )
+    @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
 
-    @Column(
-        name = "updated_at",
-        nullable = false
-    )
+    @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now(),
 ) {
     @PrePersist
@@ -194,37 +129,7 @@ data class QuestionEntity(
         updatedAt = Instant.now()
     }
 
-    private fun getCategoryList(): List<String>? = category?.split(",")?.map { it.trim() }
-
-    fun mapToQuestionDataModel(): QuestionDataModel {
-        return QuestionDataModel(
-            id = this.id,
-            matchId = matchId,
-            pulseQuestion = this.pulseQuestion,
-            optionA = this.optionA,
-            optionAWager = this.optionAWager,
-            optionB = this.optionB,
-            optionBWager = this.optionBWager,
-            userACount = this.userACount ?: -1L,
-            userBCount = this.userBCount ?: -1L,
-            category = getCategoryList(),
-            status = this.status,
-            pulseResult = this.pulseResult,
-            pulseImageUrl = this.pulseImageUrl,
-            pulseEndDate = this.pulseEndDate,
-            targetRuns = this.targetRuns,
-            targetOvers = this.targetOvers,
-            targetExtras = this.targetExtras,
-            targetWides = this.targetWides,
-            targetWickets = this.targetWickets,
-            targetSixes = this.targetSixes,
-            targetBoundaries = this.targetBoundaries,
-            targetSpecificOver = this.targetSpecificOver,
-            targetBatsmanId = this.targetBatsmanId,
-            targetBowlerId = this.targetBowlerId,
-            questionType = this.questionType,
-            targetTeamId = this.targetTeamId,
-            targetTossDecision = this.targetTossDecision,
-        )
-    }
+    // Helper methods
+    fun getCategory(): List<String> = category?.split(",")?.map { it.trim() } ?: emptyList()
+    val categoryList: List<String> get() = getCategory()
 }

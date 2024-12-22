@@ -34,7 +34,7 @@ interface OrderRepository : JpaRepository<Order, Long> {
     LEFT JOIN FETCH o.match m
     LEFT JOIN FETCH m.team1
     LEFT JOIN FETCH m.team2
-    LEFT JOIN FETCH QuestionEntity q ON o.pulseId = q.id
+    LEFT JOIN FETCH Question q ON o.pulseId = q.id
     WHERE o.userId = :userId
     AND o.matchId IN :matchIds
     AND o.status IN :statuses

@@ -130,7 +130,6 @@ class TradeService(
             )
 
             val questions = questionRepository.findAllByMatchIdIn(matchIdList)
-                .map { it.mapToQuestionDataModel() }
             val activeStatuses =
                 listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
             val matches = matchRepository.findAllByIdInAndStatusIn(matchIdList, activeStatuses)

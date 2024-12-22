@@ -6,16 +6,16 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
 @Repository
-interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
+interface QuestionRepository : JpaRepository<Question, Int> {
     fun findByMatchIdInAndStatus(
         matchIdList: List<Int>,
         status: QuestionStatus
-    ): List<QuestionEntity>?
+    ): List<Question>?
 
     fun findByMatchIdAndStatusIn(
         matchIdList: Int,
         status: List<QuestionStatus>
-    ): List<QuestionEntity>?
+    ): List<Question>?
 
     // Match Winner
     fun existsByMatchIdAndQuestionTypeAndTargetTeamId(
@@ -98,10 +98,10 @@ interface QuestionRepository : JpaRepository<QuestionEntity, Int> {
         targetBatsmanId: Int
     ): Boolean
 
-    fun findByMatchId(matchId: Int): List<QuestionEntity>?
-    fun findAllByStatus(status: QuestionStatus): List<QuestionEntity>
-    fun findAllByMatchIdIn(matchIds: List<Int>): List<QuestionEntity>
-    fun getPulseById(id: Int): QuestionEntity
+    fun findByMatchId(matchId: Int): List<Question>?
+    fun findAllByStatus(status: QuestionStatus): List<Question>
+    fun findAllByMatchIdIn(matchIds: List<Int>): List<Question>
+    fun getPulseById(id: Int): Question
 }
 
 @Repository

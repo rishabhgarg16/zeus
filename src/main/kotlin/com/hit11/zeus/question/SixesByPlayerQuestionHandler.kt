@@ -62,10 +62,10 @@ class SixesByPlayerQuestionGenerator(
 
     override fun createQuestion(
         param: SixesByPlayerParameter, state: MatchState
-    ): QuestionDataModel? {
+    ): Question? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
         val batsman = currentInnings.battingPerformances.find { it.playerId == param.batsmanId.toInt() } ?: return null
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${batsman.playerName} hit ${param.targetSixes} or more sixes in this innings?",
             optionA = PulseOption.Yes.name,
@@ -109,7 +109,7 @@ class SixesByPlayerQuestionValidator : QuestionValidator {
         return currentInnings != null && currentInnings.battingPerformances.any { it.sixes > 0 }
     }
 
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.SIX_BY_PLAYER) {
             return false
         }
@@ -128,7 +128,7 @@ class SixesByPlayerQuestionValidator : QuestionValidator {
 }
 
 class SixesByPlayerResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
+    override fun canResolve(question: Question, matchState: MatchState): Boolean {
         val targetBatsmanId = question.targetBatsmanId ?: return false
         val targetSixes = question.targetSixes ?: return false
 
@@ -148,7 +148,7 @@ class SixesByPlayerResolutionStrategy : ResolutionStrategy {
                 )
     }
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetSixes = question.targetSixes ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 

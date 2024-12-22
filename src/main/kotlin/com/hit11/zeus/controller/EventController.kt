@@ -2,7 +2,7 @@ package com.hit11.zeus.controller
 
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.livedata.Hit11Scorecard
-import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.Question
 import com.hit11.zeus.service.EventService
 import com.hit11.zeus.service.QuestionError
 import com.hit11.zeus.service.QuestionService
@@ -17,9 +17,9 @@ data class LiveMatchRequest(
 )
 
 data class BallEventProcessResponse (
-    val updatedQuestions: List<QuestionDataModel>,
-    val notUpdatedQuestions: List<QuestionDataModel>,
-    val newQuestions: List<QuestionDataModel>?,
+    val updatedQuestions: List<Question>,
+    val notUpdatedQuestions: List<Question>,
+    val newQuestions: List<Question>?,
     val errors: List<QuestionError>
 )
 

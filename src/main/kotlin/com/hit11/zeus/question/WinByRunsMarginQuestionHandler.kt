@@ -74,10 +74,10 @@ class WinByRunsMarginQuestionGenerator(
         )
     }
 
-    override fun createQuestion(param: WinByRunsMarginParameter, state: MatchState): QuestionDataModel? {
+    override fun createQuestion(param: WinByRunsMarginParameter, state: MatchState): Question? {
         val battingTeam = state.liveScorecard.innings.find { it.isCurrentInnings }?.battingTeam
         val team = if (battingTeam?.id == param.targetTeamId) battingTeam else return null
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} win by ${param.targetMargin} or more runs?",
             optionA = PulseOption.Yes.name,
@@ -131,7 +131,7 @@ class WinByRunsMarginQuestionGenerator(
 }
 
 class WinByRunsMarginQuestionValidator : QuestionValidator {
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.WIN_BY_RUNS_MARGIN) {
             return false
         }
@@ -151,10 +151,10 @@ class WinByRunsMarginQuestionValidator : QuestionValidator {
 }
 
 class WinByRunsMarginResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean =
+    override fun canResolve(question: Question, matchState: MatchState): Boolean =
         matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val result = matchState.liveScorecard.result
         val isCorrectTeam = result?.winningTeamId == question.targetTeamId
         val isCorrectMargin = result?.winByRuns == true && (result.winningMargin >= (question.targetRuns ?: 0))

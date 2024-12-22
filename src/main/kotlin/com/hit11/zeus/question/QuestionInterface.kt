@@ -19,7 +19,7 @@ interface QuestionGenerator<T : QuestionParameter> {
     val parameterGenerator: QuestionParameterGenerator<T>
     val validator: QuestionValidator
 
-    fun generateQuestions(currentState: MatchState, previousState: MatchState?): List<QuestionDataModel> {
+    fun generateQuestions(currentState: MatchState, previousState: MatchState?): List<Question> {
         if (!triggerCondition.shouldTrigger(currentState, previousState)) {
             return emptyList()
         }
@@ -34,7 +34,7 @@ interface QuestionGenerator<T : QuestionParameter> {
         }
     }
 
-    fun createQuestion(param: T, state: MatchState): QuestionDataModel?
+    fun createQuestion(param: T, state: MatchState): Question?
     abstract fun questionExists(param: T, state: MatchState): Boolean
 }
 
@@ -60,7 +60,7 @@ abstract class BaseQuestionGenerator<T : QuestionParameter>(
     }
 
     // Helper method to create QuestionDataModel with default values
-    protected fun createDefaultQuestionDataModel(
+    protected fun createDefaultQuestion(
         matchId: Int,
         pulseQuestion: String,
         optionA: String,
@@ -81,11 +81,11 @@ abstract class BaseQuestionGenerator<T : QuestionParameter>(
         targetWides: Int? = null,
         targetBoundaries: Int? = null,
         targetTossDecision: String? = null
-    ): QuestionDataModel {
+    ): Question {
         val (wagerA, wagerB) = calculateInitialWagers(param, state)
         val (userACount, userBCount) = generateUserCounts()
 
-        return QuestionDataModel(
+        return Question(
             matchId = matchId,
             pulseQuestion = pulseQuestion,
             optionA = optionA,
@@ -94,7 +94,7 @@ abstract class BaseQuestionGenerator<T : QuestionParameter>(
             optionBWager = wagerB,
             userACount = userACount,
             userBCount = userBCount,
-            category = category,
+            category = category.joinToString(", "),
             status = QuestionStatus.SYSTEM_GENERATED,
             questionType = questionType,
             targetTeamId = targetTeamId,
@@ -118,12 +118,12 @@ abstract class BaseQuestionGenerator<T : QuestionParameter>(
 
 interface QuestionValidator {
     fun validateParameters(matchState: MatchState): Boolean
-    fun validateQuestion(question: QuestionDataModel): Boolean
+    fun validateQuestion(question: Question): Boolean
 }
 
 interface ResolutionStrategy {
-    fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean
-    fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution
+    fun canResolve(question: Question, matchState: MatchState): Boolean
+    fun resolve(question: Question, matchState: MatchState): QuestionResolution
 }
 
 data class QuestionResolution(

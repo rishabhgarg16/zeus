@@ -1,7 +1,7 @@
 package com.hit11.zeus.service
 
 import com.hit11.zeus.model.PulseResult
-import com.hit11.zeus.model.QuestionDataModel
+import com.hit11.zeus.model.Question
 import org.springframework.stereotype.Service
 import javax.transaction.Transactional
 
@@ -13,7 +13,7 @@ class PayoutService (
 ){
     @Transactional
     fun processPayouts(
-        question: QuestionDataModel,
+        question: Question,
         pulseResult: PulseResult
     ) {
         try {

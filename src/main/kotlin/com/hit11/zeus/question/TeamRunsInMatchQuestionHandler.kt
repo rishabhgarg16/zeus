@@ -69,7 +69,7 @@ class TeamRunsInMatchQuestionGenerator(
         )
     }
 
-    override fun generateQuestions(currentState: MatchState, previousState: MatchState?): List<QuestionDataModel> {
+    override fun generateQuestions(currentState: MatchState, previousState: MatchState?): List<Question> {
         if (!triggerCondition.shouldTrigger(currentState, previousState)) {
             return emptyList()
         }
@@ -81,10 +81,10 @@ class TeamRunsInMatchQuestionGenerator(
 
     override fun createQuestion(
         param: TeamRunsInQuestionParameter, state: MatchState
-    ): QuestionDataModel? {
+    ): Question? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
 
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${currentInnings.battingTeam!!.name} score ${param.targetRuns} or more runs by the ${param.targetOvers}th over?",
             optionA = PulseOption.Yes.name,
@@ -126,7 +126,7 @@ class TeamRunsInMatchQuestionValidator : QuestionValidator {
         return currentInnings != null && currentInnings.overs.toInt() < 20
     }
 
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.TEAM_RUNS_IN_MATCH) {
             return false
         }
@@ -157,7 +157,7 @@ class TeamRunsInMatchQuestionValidator : QuestionValidator {
 
 
 class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
+    override fun canResolve(question: Question, matchState: MatchState): Boolean {
         val targetTeamId = question.targetTeamId ?: return false
         val targetRuns = question.targetRuns ?: return false
         val targetOvers = question.targetOvers ?: return false
@@ -190,7 +190,7 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
     }
 
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val targetTeamId = question.targetTeamId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetRuns = question.targetRuns ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetOvers = question.targetOvers ?: return QuestionResolution(false, PulseResult.UNDECIDED)

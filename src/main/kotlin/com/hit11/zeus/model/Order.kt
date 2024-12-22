@@ -42,7 +42,7 @@ data class Order(
         insertable = false,
         updatable = false
     )
-    val pulse: QuestionEntity = QuestionEntity(),
+    val pulse: Question = Question(),
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_type")

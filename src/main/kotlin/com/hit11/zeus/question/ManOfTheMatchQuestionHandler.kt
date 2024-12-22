@@ -58,11 +58,11 @@ class ManOfTheMatchQuestionGenerator(
             param.targetPlayerId
         )
     }
-    override fun createQuestion(param: ManOfTheMatchParameter, state: MatchState): QuestionDataModel? {
+    override fun createQuestion(param: ManOfTheMatchParameter, state: MatchState): Question? {
         val battingPlayers = state.liveScorecard.innings.flatMap { it.battingPerformances }
         val player = battingPlayers.find { it.playerId == param.targetPlayerId }
         if (player != null) {
-            return createDefaultQuestionDataModel(
+            return createDefaultQuestion(
                 matchId = state.liveScorecard.matchId,
                 pulseQuestion = "Will ${player.playerName} be the Man of the Match?",
                 optionA = PulseOption.Yes.name,
@@ -78,7 +78,7 @@ class ManOfTheMatchQuestionGenerator(
         val bowlingPlayers = state.liveScorecard.innings.flatMap { it.bowlingPerformances }
         val bowlingplayer = bowlingPlayers.find { it.playerId == param.targetPlayerId } ?: return null
 
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${bowlingplayer.playerName} be the Man of the Match?",
             optionA = PulseOption.Yes.name,
@@ -100,7 +100,7 @@ class ManOfTheMatchQuestionValidator : QuestionValidator {
         return matchState.liveScorecard.state == CricbuzzMatchPlayingState.IN_PROGRESS
     }
 
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.MAN_OF_THE_MATCH) {
             return false
         }
@@ -112,10 +112,10 @@ class ManOfTheMatchQuestionValidator : QuestionValidator {
 }
 
 class ManOfTheMatchResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean =
+    override fun canResolve(question: Question, matchState: MatchState): Boolean =
         matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE && matchState.liveScorecard.playerOfTheMatch != null
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val playerOfTheMatch = matchState.liveScorecard.playerOfTheMatch
         val result = if (playerOfTheMatch?.id == question.targetBatsmanId) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)

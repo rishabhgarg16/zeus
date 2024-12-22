@@ -50,8 +50,8 @@ class TossDecisionQuestionGenerator(
         )
     }
 
-    override fun createQuestion(param: TossDecisionParameter, state: MatchState): QuestionDataModel {
-        return createDefaultQuestionDataModel(
+    override fun createQuestion(param: TossDecisionParameter, state: MatchState): Question {
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will the toss winner choose to ${param.targetDecision}?",
             optionA = PulseOption.Yes.name,
@@ -66,7 +66,7 @@ class TossDecisionQuestionGenerator(
 }
 
 class TossDecisionQuestionValidator : QuestionValidator {
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.TOSS_DECISION) {
             return false
         }
@@ -82,10 +82,10 @@ class TossDecisionQuestionValidator : QuestionValidator {
 }
 
 class TossDecisionResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean =
+    override fun canResolve(question: Question, matchState: MatchState): Boolean =
         matchState.liveScorecard.tossResult != null
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val tossResult = matchState.liveScorecard.tossResult ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val result = if (question.targetTossDecision.equals(tossResult.tossDecision, ignoreCase = true)) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)

@@ -59,12 +59,12 @@ class TotalExtrasQuestionGenerator(
         )
     }
 
-    override fun createQuestion(param: TotalExtrasParameter, state: MatchState): QuestionDataModel? {
+    override fun createQuestion(param: TotalExtrasParameter, state: MatchState): Question? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
         val team = state.liveScorecard.innings.map { it.bowlingTeam }.find {
             it?.id == param.targetTeamId
         } ?: return null
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} concede ${param.targetExtras} or more extras in this innings?",
             optionA = PulseOption.Yes.name,
@@ -80,7 +80,7 @@ class TotalExtrasQuestionGenerator(
 }
 
 class TotalExtrasQuestionValidator : QuestionValidator {
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.TOTAL_EXTRAS) {
             return false
         }
@@ -99,7 +99,7 @@ class TotalExtrasQuestionValidator : QuestionValidator {
 }
 
 class TotalExtrasResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
+    override fun canResolve(question: Question, matchState: MatchState): Boolean {
         val targetTeamId = question.targetTeamId ?: return false
         val targetExtras = question.targetExtras ?: return false
         val currentInnings = matchState.liveScorecard.innings.find { it.bowlingTeam?.id == targetTeamId }
@@ -109,7 +109,7 @@ class TotalExtrasResolutionStrategy : ResolutionStrategy {
                         matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE)
     }
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val targetTeamId = question.targetTeamId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetExtras = question.targetExtras ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetInnings = matchState.liveScorecard.innings.find { it.bowlingTeam?.id == targetTeamId }

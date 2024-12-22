@@ -87,13 +87,13 @@ class RunsScoredByBatsmanQuestionGenerator(
         )
     }
 
-    override fun createQuestion(param: RunsScoredByBatsmanParameter, state: MatchState): QuestionDataModel? {
+    override fun createQuestion(param: RunsScoredByBatsmanParameter, state: MatchState): Question? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
         val batsman = currentInnings.battingPerformances.find { it.playerId == param.targetBatsmanId } ?: return null
 
         val (wagerA, wagerB) = calculateInitialWagers(param, state)
 
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${batsman.playerName} score ${param.targetRuns} or more runs in this innings?",
             optionA = PulseOption.Yes.name,
@@ -132,7 +132,7 @@ class RunsScoredByBatsmanQuestionGenerator(
 }
 
 class RunsScoredByBatsmanQuestionValidator : QuestionValidator {
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.RUNS_SCORED_BY_BATSMAN) {
             return false
         }
@@ -156,7 +156,7 @@ class RunsScoredByBatsmanQuestionValidator : QuestionValidator {
 }
 
 class RunsScoredByBatsmanResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
+    override fun canResolve(question: Question, matchState: MatchState): Boolean {
         val targetBatsmanId = question.targetBatsmanId ?: return false
         val targetRuns = question.targetRuns ?: return false
 
@@ -176,7 +176,7 @@ class RunsScoredByBatsmanResolutionStrategy : ResolutionStrategy {
                 )
     }
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val targetBatsmanId = question.targetBatsmanId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetRuns = question.targetRuns ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 

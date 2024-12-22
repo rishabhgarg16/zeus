@@ -8,7 +8,6 @@ import com.hit11.zeus.model.*
 import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
 import com.hit11.zeus.model.response.QuestionAnswerUpdateResponse
 import com.hit11.zeus.question.QuestionGenerator
-import com.hit11.zeus.question.QuestionResolution
 import com.hit11.zeus.question.ResolutionStrategy
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
@@ -24,15 +23,13 @@ class QuestionService(
     private var previousState: MatchState? = null
     private var lastProcessedBallNumber: Int = 0
 
-    fun getAllActivePulses(): List<QuestionDataModel>? {
+    fun getAllActivePulses(): List<Question>? {
         return questionRepository.findAllByStatus(QuestionStatus.LIVE)
-            ?.map { it.mapToQuestionDataModel() }
     }
 
     private val logger = Logger.getLogger(QuestionService::class.java)
-    fun getAllActiveQuestionsByMatch(matchIdList: List<Int>): List<QuestionDataModel>? {
+    fun getAllActiveQuestionsByMatch(matchIdList: List<Int>): List<Question>? {
         return questionRepository.findByMatchIdInAndStatus(matchIdList, QuestionStatus.LIVE)
-            ?.map { it.mapToQuestionDataModel() }
     }
 
     @Transactional
@@ -42,7 +39,6 @@ class QuestionService(
         val response = QuestionAnswerUpdateResponse()
         try {
             val pulse = questionRepository.getPulseById(answerUpdateRequest.pulseId)
-                .mapToQuestionDataModel()
             val pulseResult = answerUpdateRequest.pulseResult
             val updatedQuestion = updateQuestion(pulse, pulseResult)
             payoutService.processPayouts(updatedQuestion, pulseResult)
@@ -87,10 +83,10 @@ class QuestionService(
         val questions = questionRepository.findByMatchIdAndStatusIn(
             matchId,
             listOf(QuestionStatus.LIVE, QuestionStatus.DISABLED)
-        )?.map { it.mapToQuestionDataModel() } ?: listOf()
+        ) ?: listOf()
 
-        val updatedQuestions = mutableListOf<QuestionDataModel>()
-        val notUpdatedQuestions = mutableListOf<QuestionDataModel>()
+        val updatedQuestions = mutableListOf<Question>()
+        val notUpdatedQuestions = mutableListOf<Question>()
         val errors = mutableListOf<QuestionError>()
 
         for (question in questions) {
@@ -128,16 +124,16 @@ class QuestionService(
 
     @Transactional
     private fun updateQuestion(
-        question: QuestionDataModel,
+        question: Question,
         result: PulseResult
-    ): QuestionDataModel {
+    ): Question {
         try {
             if (question.status == QuestionStatus.RESOLVED) {
                 throw QuestionValidationException("Pulse ${question.id} is already resolved.")
             }
             question.pulseResult = result
             question.status = QuestionStatus.RESOLVED
-            questionRepository.save(question.maptoEntity())
+            questionRepository.save(question)
             return question
         } catch (e: Exception) {
             logger.error("Error updating question ${question.id}", e)
@@ -145,21 +141,21 @@ class QuestionService(
         }
     }
 
-    private fun generateQuestions(currentState: MatchState): List<QuestionDataModel> {
+    private fun generateQuestions(currentState: MatchState): List<Question> {
         return questionGenerators.flatMap { generator ->
             try {
                 generator.generateQuestions(currentState, previousState)
             } catch (e: Exception) {
                 logger.error("Error generating questions with ${generator::class.simpleName}", e)
-                emptyList<QuestionDataModel>()
+                emptyList<Question>()
             }
         }.also { questions ->
-            questionRepository.saveAll(questions.map { it.maptoEntity() })
+            questionRepository.saveAll(questions)
         }
     }
 
-    fun getQuestionById(questionId: Int): QuestionDataModel? {
-        return questionRepository.findById(questionId).map { it.mapToQuestionDataModel() }.orElse(null)
+    fun getQuestionById(questionId: Int): Question? {
+        return questionRepository.findById(questionId).orElse(null)
     }
 }
 
@@ -168,7 +164,7 @@ data class QuestionError(
 )
 
 data class UpdateQuestionsResponse(
-    val updatedQuestions: List<QuestionDataModel>,
-    val notUpdatedQuestions: List<QuestionDataModel>,
+    val updatedQuestions: List<Question>,
+    val notUpdatedQuestions: List<Question>,
     val errors: List<QuestionError>
 )

@@ -50,10 +50,10 @@ class WicketsInOverQuestionGenerator(
         )
     }
 
-    override fun createQuestion(param: WicketsInOverParameter, state: MatchState): QuestionDataModel? {
+    override fun createQuestion(param: WicketsInOverParameter, state: MatchState): Question? {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return null
         val bowler = currentInnings.bowlingPerformances.find { it.playerId == param.targetBowlerId } ?: return null
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${bowler.playerName} take ${param.targetWickets} or more wickets in the ${param.targetOver}th over?",
             optionA = PulseOption.Yes.name,
@@ -70,7 +70,7 @@ class WicketsInOverQuestionGenerator(
 }
 
 class WicketsInOverQuestionValidator : QuestionValidator {
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.WICKETS_IN_OVER) {
             return false
         }
@@ -92,13 +92,13 @@ class WicketsInOverQuestionValidator : QuestionValidator {
 }
 
 class WicketsInOverResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
+    override fun canResolve(question: Question, matchState: MatchState): Boolean {
         val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
         val currentOver = currentInnings?.overs?.toInt() ?: -1
         return currentOver > (question.targetSpecificOver ?: -1)
     }
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val targetOver = question.targetSpecificOver ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetWickets = question.targetWickets ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, PulseResult.UNDECIDED)

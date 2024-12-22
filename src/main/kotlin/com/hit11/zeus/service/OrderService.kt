@@ -338,12 +338,12 @@ class OrderService(
             throw OrderValidationException("Insufficient balance")
         }
 
-        validateWager(order, question.mapToQuestionDataModel())
+        validateWager(order, question)
         validateQuantity(order)
         validateOrderTime(order)
     }
 
-    private fun validateWager(order: OrderRequest, question: QuestionDataModel) {
+    private fun validateWager(order: OrderRequest, question: Question) {
         val MIN_WAGER = BigDecimal("0.5")
         val MAX_WAGER = BigDecimal("9.5")
         val WAGER_INCREMENT = BigDecimal("0.1")

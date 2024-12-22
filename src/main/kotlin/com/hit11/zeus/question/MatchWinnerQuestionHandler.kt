@@ -50,11 +50,11 @@ class MatchWinnerQuestionGenerator(
         )
     }
 
-    override fun createQuestion(param: MatchWinnerParameter, state: MatchState): QuestionDataModel? {
+    override fun createQuestion(param: MatchWinnerParameter, state: MatchState): Question? {
         val teams = listOf(state.liveScorecard.team1, state.liveScorecard.team2)
         val team = teams.find { it.id == param.targetTeamId } ?: return null
         val (wagerA, wagerB) = calculateInitialWagers(param, state)
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} win the match?",
             optionA = PulseOption.Yes.name,
@@ -73,7 +73,7 @@ class MatchWinnerQuestionGenerator(
 }
 
 class MatchWinnerQuestionValidator : QuestionValidator {
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.MATCH_WINNER) {
             return false
         }
@@ -92,13 +92,13 @@ class MatchWinnerQuestionValidator : QuestionValidator {
 }
 
 class MatchWinnerResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean {
+    override fun canResolve(question: Question, matchState: MatchState): Boolean {
         return (matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE ||
                 matchState.liveScorecard.result != null && matchState.liveScorecard.result.winningTeamId > 0)
     }
 
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val result = if (matchState.liveScorecard.result?.winningTeamId == question.targetTeamId) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)
     }

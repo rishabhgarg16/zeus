@@ -37,10 +37,10 @@ class TossWinnerQuestionGenerator(
         )
     }
 
-    override fun createQuestion(param: TossWinnerParameter, state: MatchState): QuestionDataModel? {
+    override fun createQuestion(param: TossWinnerParameter, state: MatchState): Question? {
         val teams = listOf(state.liveScorecard.team1, state.liveScorecard.team2)
         val team = teams.find { it.id == param.targetTeamId } ?: return null
-        return createDefaultQuestionDataModel(
+        return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} win the toss?",
             optionA = PulseOption.Yes.name,
@@ -55,7 +55,7 @@ class TossWinnerQuestionGenerator(
 }
 
 class TossWinnerQuestionValidator : QuestionValidator {
-    override fun validateQuestion(question: QuestionDataModel): Boolean {
+    override fun validateQuestion(question: Question): Boolean {
         if (question.questionType != QuestionType.TOSS_WINNER) {
             return false
         }
@@ -71,10 +71,10 @@ class TossWinnerQuestionValidator : QuestionValidator {
 }
 
 class TossWinnerResolutionStrategy : ResolutionStrategy {
-    override fun canResolve(question: QuestionDataModel, matchState: MatchState): Boolean =
+    override fun canResolve(question: Question, matchState: MatchState): Boolean =
         matchState.liveScorecard.tossResult != null
 
-    override fun resolve(question: QuestionDataModel, matchState: MatchState): QuestionResolution {
+    override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val tossResult = matchState.liveScorecard.tossResult ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val result = if (tossResult.tossWinnerTeamId == question.targetTeamId) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)
