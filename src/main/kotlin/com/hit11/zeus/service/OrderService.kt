@@ -186,7 +186,7 @@ class OrderService(
         logger.info("Successfully cancelled ${updatedOrders.size} orders for pulseId $pulseId")
     }
 
-    fun getOpenOrdersByUserIdAndPulseId(userId: Int, pulseId: Int): List<Order> {
+    fun getPendingOrdersByUserIdAndPulseId(userId: Int, pulseId: Int): List<Order> {
         return orderRepository.findByUserIdAndPulseIdAndStatusIn(
             userId, pulseId, listOf(
                 OrderStatus.OPEN,
@@ -194,6 +194,39 @@ class OrderService(
             )
         )
     }
+
+    fun getPendingOrdersByUserIdAndMatchIds(
+        userId: Int,
+        matchIds: List<Int>
+    ): List<UiOrderResponse> {
+        val orders = orderRepository.findByUserIdAndMatchIdInAndStatusIn(
+            userId,
+            matchIds,
+            listOf(OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED)
+        )
+
+        // Fetch questions and matches in parallel
+        val questions = questionRepository.findAllByMatchIdIn(matchIds)
+            .map { it.mapToQuestionDataModel() }
+        val activeStatuses =
+            listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
+        val matches = matchRepository.findAllByIdInAndStatusIn(matchIds, activeStatuses)
+            .map { it.mapToMatch() }
+
+        val questionMap = questions.associateBy { it.id }
+        val matchMap = matches.associateBy { it.id }
+
+        return orders.mapNotNull { order ->
+            val question = questionMap[order.pulseId] ?: return@mapNotNull null
+            val match = matchMap[order.matchId] ?: return@mapNotNull null
+
+            order.toUiOrderResponse(
+                question = question,
+                match = match
+            )
+        }
+    }
+
 
     fun getOpenOrdersByPulse(pulseId: Int): List<Order> {
         return orderRepository.findByPulseIdAndStatus(pulseId, OrderStatus.OPEN)

@@ -133,7 +133,7 @@ class TradeService(
 
             return allTrades.mapNotNull { trade ->
                 questionIdToQuestionMap[trade.pulseId]?.let {
-                    trade.toUiUserPositionsResponse(
+                    trade.toUiMyTradesResponse(
                         it
                     )
                 }

@@ -175,18 +175,20 @@ class MarketMaker:
                 headers=self.headers
             )
             open_orders = response.json()['data']
+            orders_to_cancel = []
 
             for order in open_orders:
                 # Cancel if order is too old
                 order_time = datetime.fromisoformat(order['createdAt'])
                 if datetime.now() - order_time > timedelta(minutes=5):
-                    self.cancel_order(order['id'])
+
 
                 # Cancel if price is far from current fair price
                 fair_price = self.calculate_fair_price(self.get_order_book(pulse_id))
                 if abs(order['price'] - fair_price) > Decimal('0.5'):
                     self.cancel_order(order['id'])
-
+                if(orders_to_cancel.length > 0):
+                    self.cancel_order(order['id'])
         except Exception as e:
             self.logger.error(f"Error cleaning up orders: {e}")
 

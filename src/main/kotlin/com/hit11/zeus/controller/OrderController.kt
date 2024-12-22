@@ -4,6 +4,7 @@ import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.Order
 import com.hit11.zeus.model.OrderRequest
+import com.hit11.zeus.model.UiOrderResponse
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.response.OrderBookResponse
 import com.hit11.zeus.service.MatchingEngine
@@ -19,7 +20,6 @@ class OrderController(
     private val orderService: OrderService,
     private val matchingEngine: MatchingEngine
 ) {
-
     private val logger = Logger.getLogger(this::class.java)
 
     @PostMapping("/bookOrder")
@@ -135,12 +135,12 @@ class OrderController(
     }
 
     @GetMapping("/open/{pulseId}/{userId}")
-    fun getAllOpenOrders(
+    fun getAllPendingOrdersByPulseAndUser(
         @PathVariable pulseId: Int,
         @PathVariable userId: Int
     ): ResponseEntity<ApiResponse<List<Order>>> {
         return try {
-            val orders = orderService.getOpenOrdersByUserIdAndPulseId(pulseId, userId)
+            val orders = orderService.getPendingOrdersByUserIdAndPulseId(pulseId, userId)
             ResponseEntity.ok(
                 ApiResponse(
                     status = HttpStatus.OK.value(),
@@ -155,6 +155,34 @@ class OrderController(
                 ApiResponse(
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     message = "Error fetching open orders",
+                    internalCode = null,
+                    data = null
+                )
+            )
+        }
+    }
+
+    @GetMapping("/pending")
+    fun getPendingOrdersByUserAndMatches(
+        @RequestParam userId: Int,
+        @RequestParam matchIds: List<Int>
+    ): ResponseEntity<ApiResponse<List<UiOrderResponse>>> {
+        return try {
+            val orders = orderService.getPendingOrdersByUserIdAndMatchIds(userId, matchIds)
+            ResponseEntity.ok(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    internalCode = null,
+                    message = "Orders fetched successfully",
+                    data = orders
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Error fetching pending orders", e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    message = "Error fetching pending orders",
                     internalCode = null,
                     data = null
                 )

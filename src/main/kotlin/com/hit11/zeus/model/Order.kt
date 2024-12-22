@@ -5,7 +5,7 @@ import java.time.Instant
 import javax.persistence.*
 
 enum class OrderStatus { OPEN, PARTIALLY_FILLED, FILLED, CANCELLED, EXPIRED }
-enum class OrderType { BUY, SELL }
+enum class OrderType { BUY, SELL, UNKNOWN }
 enum class OrderExecutionType { MARKET, LIMIT, UNKNOWN }
 enum class OrderSide {
     UNKNOWN ,Yes, No
@@ -62,18 +62,4 @@ data class Order(
     fun preUpdate() {
         updatedAt = Instant.now()
     }
-
-//    fun toDataModel() = Order(
-//        id = id,
-//        userId = userId,
-//        pulseId = pulseId,
-//        matchId = matchId,
-//        orderType = orderType,
-//        orderSide = orderSide,
-//        price = price,
-//        quantity = quantity,
-//        remainingQuantity = remainingQuantity,
-//        state = state,
-//        totalAmount = totalAmount
-//    )
 }

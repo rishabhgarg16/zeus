@@ -4,8 +4,6 @@ import java.math.BigDecimal
 import java.time.Instant
 import javax.persistence.*
 
-enum class TradeType { BUY, SELL }
-
 @Entity
 @Table(
     name = "order_executions", indexes = [
@@ -15,7 +13,7 @@ enum class TradeType { BUY, SELL }
         Index(name = "idx_no_order_id", columnList = "no_order_id"),
     ]
 )
-data class MatchedOrderEntity(
+data class OrderExecution(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 

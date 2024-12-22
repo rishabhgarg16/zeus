@@ -9,16 +9,36 @@ import java.math.BigDecimal
 
 @Repository
 interface OrderRepository : JpaRepository<Order, Int> {
-//    fun findTradesByUserIdAndMatchIdIn(userId: Int, matchId: List<Int>): List<Order>?
-//    fun findOrderByUserIdAndMatchIdAndPulseId(userId: Int, matchId: Int, pulseId: Int): Order?
+
     fun findByUserIdAndStatus(userId: Int, status: OrderStatus): List<Order>
-    fun findByPulseIdAndStatus(pulseId: Int, status: OrderStatus): List<Order>
-    fun findByPulseIdAndStatusIn(pulseId: Int, status: List<OrderStatus>): List<Order>
-    fun findByUserIdAndPulseIdAndStatusIn(userId: Int, pulseId: Int, status: List<OrderStatus>): List<Order>
-    fun findByUserIdAndPulseIdAndStatus(userId: Int, pulseId: Int, status: OrderStatus): List<Order>
+    fun findByPulseIdAndStatus(
+        pulseId: Int,
+        status: OrderStatus
+    ): List<Order>
+
+    fun findByPulseIdAndStatusIn(
+        pulseId: Int,
+        status: List<OrderStatus>
+    ): List<Order>
+
+
+    fun findByUserIdAndPulseIdAndStatusIn(
+        userId: Int,
+        pulseId: Int,
+        status: List<OrderStatus>
+    ): List<Order>
+
+    fun findByUserIdAndMatchIdInAndStatusIn(
+        userId: Int,
+        matchIds: List<Int>,
+        statuses: List<OrderStatus>
+    ): List<Order>
+
+    fun findByUserIdAndPulseIdAndStatus(
+        userId: Int,
+        pulseId: Int,
+        status: OrderStatus
+    ): List<Order>
+
     fun findAllByStatusIn(statusList: List<OrderStatus>): List<Order>
-//    fun findOrderByUserId(userId: Int): List<Order>
-//    fun findTradesByPulseId(pulseId: Int): List<Order>
-
-
 }

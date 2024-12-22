@@ -23,7 +23,7 @@ class UiMyTradesResponse(
 )
 
 // combines user response + pulse data together
-fun Trade.toUiUserPositionsResponse(
+fun Trade.toUiMyTradesResponse(
     questionDataModel: QuestionDataModel
 ): UiMyTradesResponse {
     return UiMyTradesResponse(

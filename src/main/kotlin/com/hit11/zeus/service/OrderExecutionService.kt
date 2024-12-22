@@ -1,6 +1,6 @@
 package com.hit11.zeus.service
 
-import com.hit11.zeus.model.MatchedOrderEntity
+import com.hit11.zeus.model.OrderExecution
 import com.hit11.zeus.model.Order
 import com.hit11.zeus.model.OrderSide
 import com.hit11.zeus.repository.MatchedOrderRepository
@@ -26,7 +26,7 @@ class OrderExecutionService(
         }
     }
 
-    private fun createOrderExecution(match: OrderMatch) = MatchedOrderEntity(
+    private fun createOrderExecution(match: OrderMatch) = OrderExecution(
         yesOrderId = match.yesOrder.id,
         noOrderId = match.noOrder.id,
         pulseId = match.yesOrder.pulseId,
@@ -70,17 +70,17 @@ class OrderExecutionService(
     }
 
     // Get all trades for a given pulse ID
-    fun getMatchedOrdersByPulse(pulseId: Int): List<MatchedOrderEntity> {
+    fun getMatchedOrdersByPulse(pulseId: Int): List<OrderExecution> {
         return matchedOrderRepository.findByPulseId(pulseId)
     }
 
     // Get all trades for a given match ID
-    fun getMatchedOrdersByMatch(matchId: Int): List<MatchedOrderEntity> {
+    fun getMatchedOrdersByMatch(matchId: Int): List<OrderExecution> {
         return matchedOrderRepository.findByMatchId(matchId)
     }
 
     // Get all trades for a given order (yesOrderId or noOrderId)
-    fun getMatchedOrdersByOrder(orderId: Long): List<MatchedOrderEntity> {
+    fun getMatchedOrdersByOrder(orderId: Long): List<OrderExecution> {
         return matchedOrderRepository.findByYesOrderIdOrNoOrderId(orderId, orderId)
     }
 }
