@@ -134,6 +134,32 @@ class OrderController(
         )
     }
 
+    @PostMapping("/bulkCancel")
+    fun bulkCancelOrders(
+        @Valid @RequestBody request: BulkCancelOrderRequest
+    ): ResponseEntity<ApiResponse<Boolean>> {
+        return try {
+            val result = orderService.bulkCancelOrders(request.orderIds)
+            ResponseEntity.ok(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    internalCode = null,
+                    message = "Orders cancelled successfully",
+                    data = result
+                )
+            )
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    internalCode = null,
+                    message = "Error cancelling orders",
+                    data = false
+                )
+            )
+        }
+    }
+
     @GetMapping("/open/{pulseId}/{userId}")
     fun getAllPendingOrdersByPulseAndUser(
         @PathVariable pulseId: Int,
@@ -193,4 +219,8 @@ class OrderController(
 
 data class CancelOrderRequest(
     val orderId: Long = 0
+)
+
+data class BulkCancelOrderRequest(
+    val orderIds: List<Long>
 )

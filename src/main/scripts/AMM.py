@@ -29,6 +29,12 @@ class MarketMaker:
         self.base_url = base_url
         self.headers = headers
 
+        # Order cleanup parameters
+        self.MAX_ORDER_AGE = 300  # 5 minutes in seconds
+        self.MAX_PRICE_DEVIATION = Decimal('0.5')  # Maximum acceptable price deviation
+        self.CLEANUP_INTERVAL = 60  # How often to run cleanup (seconds)
+        self.last_cleanup_time = {}  # Track last cleanup per pulse
+
         # Risk parameters
         self.min_price = Decimal('1.0')
         self.max_price = Decimal('9.0')
@@ -167,6 +173,36 @@ class MarketMaker:
 
         return True
 
+    def bulk_cancel_orders(self, order_ids: List[int]) -> bool:
+        """Cancel multiple orders in a single API call"""
+        try:
+            payload = {
+                "orderIds": order_ids
+            }
+
+            response = requests.post(
+                f"{self.base_url}/api/order/bulkCancel",  # New endpoint for bulk cancellation
+                headers=self.headers,
+                json=payload,
+                timeout=10  # Increased timeout for bulk operation
+            )
+
+            if response.status_code == 200:
+                response_data = response.json()
+                if response_data.get('data') == True:
+                    self.logger.info(f"Successfully canceled {len(order_ids)} orders")
+                    return True
+                else:
+                    self.logger.error(f"Bulk cancellation failed: {response_data.get('message', 'Unknown error')}")
+                    return False
+            else:
+                self.logger.error(f"Bulk cancellation failed: HTTP {response.status_code}")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"Error in bulk order cancellation: {e}")
+            return False
+
     def cleanup_old_orders(self, pulse_id: int):
         """Cancel old orders that are no longer needed"""
         try:
@@ -174,23 +210,59 @@ class MarketMaker:
                 f"{self.base_url}/api/order/open/{pulse_id}/5",
                 headers=self.headers
             )
-            open_orders = response.json()['data']
+            if response.status_code != 200:
+                self.logger.error(f"Failed to fetch open orders for pulse {pulse_id}")
+            return
+
+            data = response.json()
+            if not data.get('data'):
+                return
+
+            open_orders = data['data']
             orders_to_cancel = []
 
+            # Get current order book for price checking
+            order_book = self.get_order_book(pulse_id)
+            if order_book:
+                fair_yes, fair_no = self.calculate_fair_price(order_book, pulse_id)
+
+            # Identify orders that need cancellation
             for order in open_orders:
-                # Cancel if order is too old
-                order_time = datetime.fromisoformat(order['createdAt'])
-                if datetime.now() - order_time > timedelta(minutes=5):
+                should_cancel = False
 
+                # Check order age
+                order_time = datetime.fromisoformat(order['createdAt'].replace('Z', '+00:00'))
+                order_age = datetime.now(timezone.utc) - order_time
 
-                # Cancel if price is far from current fair price
-                fair_price = self.calculate_fair_price(self.get_order_book(pulse_id))
-                if abs(order['price'] - fair_price) > Decimal('0.5'):
-                    self.cancel_order(order['id'])
-                if(orders_to_cancel.length > 0):
-                    self.cancel_order(order['id'])
+                # Age check
+                if order_age.total_seconds() > self.MAX_ORDER_AGE:
+                    should_cancel = True
+                    self.logger.info(f"Order {order['id']} queued for cancellation (age: {order_age.total_seconds()}s)")
+
+                # Price deviation check
+                if order_book:
+                    order_price = Decimal(str(order['price']))
+                    fair_price = fair_yes if order['orderSide'] == 'Yes' else fair_no
+                    price_deviation = abs(order_price - fair_price)
+
+                    if price_deviation > self.MAX_PRICE_DEVIATION:
+                        should_cancel = True
+                        self.logger.info(f"Order {order['id']} queued for cancellation (deviation: {price_deviation})")
+
+                if should_cancel:
+                    orders_to_cancel.append(order['id'])
+
+                # Bulk cancel orders if any found
+                if orders_to_cancel:
+                    success = self.bulk_cancel_orders(orders_to_cancel)
+                if success:
+                    self.logger.info(f"Successfully canceled {len(orders_to_cancel)} orders for pulse {pulse_id}")
+                else:
+                    self.logger.error(f"Failed to cancel orders in bulk for pulse {pulse_id}")
+
         except Exception as e:
-            self.logger.error(f"Error cleaning up orders: {e}")
+            self.logger.error(f"Error cleaning up orders for pulse {pulse_id}: {e}")
+
 
     def place_order(self, pulse_id: int, match_id: int, user_id: int, side: str, price: Decimal, quantity: int) -> bool:
         try:

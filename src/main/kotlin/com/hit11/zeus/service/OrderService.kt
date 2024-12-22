@@ -186,6 +186,38 @@ class OrderService(
         logger.info("Successfully cancelled ${updatedOrders.size} orders for pulseId $pulseId")
     }
 
+    @Transactional
+    fun bulkCancelOrders(orderIds: List<Long>): Boolean {
+        try {
+            val orders = orderRepository.findAllById(orderIds)
+
+            // Filter orders that can be cancelled
+            val cancellableOrders = orders.filter { order ->
+                order.status == OrderStatus.OPEN || order.status == OrderStatus.PARTIALLY_FILLED
+            }
+
+            // Cancel each order
+            cancellableOrders.forEach { order ->
+                matchingEngine.cancelOrder(order)
+                order.status = OrderStatus.CANCELLED
+
+                // Handle fund return logic
+                if (order.orderType == OrderType.BUY) {
+                    val releaseAmount = order.price.multiply(BigDecimal(order.remainingQuantity))
+                    userService.releaseReservedBalance(order.userId, releaseAmount)
+                }
+            }
+
+            // Save all cancelled orders
+            orderRepository.saveAll(cancellableOrders)
+
+            return true
+        } catch (e: Exception) {
+            logger.error("Failed to cancel orders in bulk", e)
+            throw e
+        }
+    }
+
     fun getPendingOrdersByUserIdAndPulseId(userId: Int, pulseId: Int): List<Order> {
         return orderRepository.findByUserIdAndPulseIdAndStatusIn(
             userId, pulseId, listOf(
