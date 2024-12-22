@@ -10,6 +10,8 @@ class UiMyTradesResponse(
     val userId: Int = 0,
     val pulseId: Int = 0,
     val questionText: String = "",
+    val matchFormat: String, // Added for match format
+    val matchTitle: String,  // Added for team names
     val price: BigDecimal = BigDecimal.valueOf(0),
     val userAnswer: String = "",
     val answerTime: Instant = Instant.now(),
@@ -24,21 +26,24 @@ class UiMyTradesResponse(
 
 // combines user response + pulse data together
 fun Trade.toUiMyTradesResponse(
-    questionDataModel: QuestionDataModel
+    question: QuestionDataModel,
+    match: Match
 ): UiMyTradesResponse {
     return UiMyTradesResponse(
         matchId = matchId,
         userId = userId,
         pulseId = pulseId,
-        questionText = questionDataModel.pulseQuestion,
+        questionText = question.pulseQuestion,
+        matchFormat = match.matchFormat ?: "T20",
+        matchTitle = "${match.team1ShortName} vs ${match.team2ShortName}",
         price = price,
         userAnswer = side.name,
         answerTime = createdAt,
-        tradeResult = checkIfUserWon(side, questionDataModel.pulseResult),
-        isPulseActive = (questionDataModel.status == QuestionStatus.LIVE),
-        pulseImageUrl = questionDataModel.pulseImageUrl,
-        pulseEndDate = questionDataModel.pulseEndDate,
+        tradeResult = checkIfUserWon(side, question.pulseResult),
+        isPulseActive = (question.status == QuestionStatus.LIVE),
+        pulseImageUrl = question.pulseImageUrl,
+        pulseEndDate = question.pulseEndDate,
         userTradeQuantity = quantity,
-        totalTraders = questionDataModel.userACount ?: (questionDataModel.userBCount ?: 0)
+        totalTraders = question.userACount ?: (question.userBCount ?: 0)
     )
 }

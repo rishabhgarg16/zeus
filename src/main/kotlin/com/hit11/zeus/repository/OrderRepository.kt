@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 
 @Repository
-interface OrderRepository : JpaRepository<Order, Int> {
+interface OrderRepository : JpaRepository<Order, Long> {
 
     fun findByUserIdAndStatus(userId: Int, status: OrderStatus): List<Order>
     fun findByPulseIdAndStatus(

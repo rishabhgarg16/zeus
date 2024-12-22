@@ -192,5 +192,5 @@ class OrderController(
 }
 
 data class CancelOrderRequest(
-    val orderId: Int
+    val orderId: Long = 0
 )

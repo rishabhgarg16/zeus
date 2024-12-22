@@ -141,7 +141,7 @@ class OrderService(
     }
 
     @Transactional
-    fun cancelOrder(orderId: Int): Order {
+    fun cancelOrder(orderId: Long): Order {
         val order = orderRepository.findById(orderId)
             .orElseThrow { IllegalArgumentException("Order not found") }
 
@@ -246,7 +246,7 @@ class OrderService(
     }
 
     @Transactional
-    fun updateOrderStatus(orderId: Int, newStatus: OrderStatus) {
+    fun updateOrderStatus(orderId: Long, newStatus: OrderStatus) {
         val order = orderRepository.findById(orderId)
             .orElseThrow { OrderNotFoundException("Order not found with id: $orderId") }
         validateStateTransition(order.status, newStatus)

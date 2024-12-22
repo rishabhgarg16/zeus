@@ -1,6 +1,7 @@
 package com.hit11.zeus.service
 
 import com.hit11.zeus.model.*
+import com.hit11.zeus.repository.MatchRepository
 import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.TradeRepository
 import org.slf4j.LoggerFactory
@@ -13,9 +14,11 @@ import java.time.Instant
 @Service
 class TradeService(
     private val tradeRepository: TradeRepository,
+    private val matchRepository: MatchRepository,
     private val questionRepository: QuestionRepository,
 ) {
     private val logger = LoggerFactory.getLogger(TradeService::class.java)
+
     @Transactional
     fun createTrade(orderMatch: OrderMatch) {
         val trades = listOf(
@@ -76,9 +79,11 @@ class TradeService(
             pulseResult == PulseResult.Yes && trade.side == OrderSide.Yes -> {
                 (BigDecimal.TEN.subtract(trade.price)).multiply(BigDecimal(trade.quantity))
             }
+
             pulseResult == PulseResult.No && trade.side == OrderSide.No -> {
                 (BigDecimal.TEN.subtract(trade.price)).multiply(BigDecimal(trade.quantity))
             }
+
             else -> BigDecimal.ZERO
         }
     }
@@ -124,19 +129,24 @@ class TradeService(
                 pageable
             )
 
-            val matchQuestions = questionRepository
-                .findAllByMatchIdIn(matchIdList)
+            val questions = questionRepository.findAllByMatchIdIn(matchIdList)
                 .map { it.mapToQuestionDataModel() }
+            val activeStatuses =
+                listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
+            val matches = matchRepository.findAllByIdInAndStatusIn(matchIdList, activeStatuses)
+                .map { it.mapToMatch() }
 
-            val questionIdToQuestionMap: Map<Int, QuestionDataModel> =
-                matchQuestions.associateBy { it.id }.mapValues { it.value }
+            val questionMap = questions.associateBy { it.id }
+            val matchMap = matches.associateBy { it.id }
 
             return allTrades.mapNotNull { trade ->
-                questionIdToQuestionMap[trade.pulseId]?.let {
-                    trade.toUiMyTradesResponse(
-                        it
-                    )
-                }
+                val question = questionMap[trade.pulseId] ?: return@mapNotNull null
+                val match = matchMap[trade.matchId] ?: return@mapNotNull null
+
+                trade.toUiMyTradesResponse(
+                    question = question,
+                    match = match
+                )
             }
         } catch (e: Exception) {
             throw e

@@ -32,23 +32,6 @@ class EventController(
 ) {
     private val logger = Logger.getLogger(EventController::class.java)
 
-//    @PostMapping("/scorecard")
-//    fun sendMatchData(
-//        @RequestBody request: Hit11Scorecard
-//    ): ResponseEntity<String> {
-//        try {
-//            val score = "Team A: 11 (10.0 ov)"
-//            val topic = "match${request.matchId}"
-//            println("Sending message to topic: $topic, score: $score")
-//            eventService.processBallEvent(request)
-//            webSocketHandler.sendMessageToTopic(topic, score)
-//            return ResponseEntity.ok("Message sent to WebSocket")
-//        } catch (e: Exception) {
-//            println("${e.message}")
-//            return ResponseEntity.badRequest().body("Error sending message to WebSocket")
-//        }
-//    }
-
     @PostMapping("/scorecardV2")
     fun newSendMatchData(
         @RequestBody scoreCard: Hit11Scorecard
