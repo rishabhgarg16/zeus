@@ -29,28 +29,26 @@ class UiOrderResponse(
 
 // Extension function to convert Order to UiOrderResponse
 fun Order.toUiOrderResponse(
-    question: QuestionDataModel,
-    match: Match
 ): UiOrderResponse {
     return UiOrderResponse(
         id = id,
-        matchId = matchId,
+        matchId = match.id,
         userId = userId,
-        pulseId = pulseId,
-        questionText = question.pulseQuestion,
+        pulseId = pulse.id,
+        questionText = pulse.pulseQuestion,
         matchFormat = match.matchFormat ?: "T20",
-        matchTitle = "${match.team1ShortName} vs ${match.team2ShortName}",
+        matchTitle = match.matchTitle,
         price = price,
         orderSide = orderSide,
         quantity = quantity,
         remainingQuantity = remainingQuantity,
         status = status,
-        category = question.category ?: emptyList(),
-        pulseEndDate = question.pulseEndDate,
+        category = pulse.category?.split(",") ?: emptyList(),
+        pulseEndDate = pulse.pulseEndDate,
         createdAt = createdAt,
         updatedAt = updatedAt,
-        isPulseActive = question.status == QuestionStatus.LIVE,
-        pulseImageUrl = question.pulseImageUrl,
-        totalTraders = (question.userACount ?: 0) + (question.userBCount ?: 0)
+        isPulseActive = pulse.status == QuestionStatus.LIVE,
+        pulseImageUrl = pulse.pulseImageUrl,
+        totalTraders = (pulse.userACount ?: 0) + (pulse.userBCount ?: 0)
     )
 }

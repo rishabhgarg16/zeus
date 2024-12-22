@@ -28,6 +28,24 @@ interface OrderRepository : JpaRepository<Order, Long> {
         status: List<OrderStatus>
     ): List<Order>
 
+
+     @Query("""
+    SELECT o FROM Order o
+    LEFT JOIN FETCH o.match m
+    LEFT JOIN FETCH m.team1
+    LEFT JOIN FETCH m.team2
+    LEFT JOIN FETCH QuestionEntity q ON o.pulseId = q.id
+    WHERE o.userId = :userId
+    AND o.matchId IN :matchIds
+    AND o.status IN :statuses
+    """)
+    fun findPendingOrdersWithDetails(
+        userId: Int,
+        matchIds: List<Int>,
+        statuses: List<OrderStatus>
+    ): List<Order>
+
+
     fun findByUserIdAndMatchIdInAndStatusIn(
         userId: Int,
         matchIds: List<Int>,

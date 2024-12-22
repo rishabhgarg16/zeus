@@ -1,6 +1,6 @@
 package com.hit11.zeus.repository
 
-import com.hit11.zeus.model.MatchEntity
+import com.hit11.zeus.model.Match
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -10,35 +10,34 @@ import java.time.Instant
 import java.util.*
 
 @Repository
-interface MatchRepository : JpaRepository<MatchEntity, Int> {
-    @Query(
-        """SELECT m FROM MatchEntity m
+interface MatchRepository : JpaRepository<Match, Int> {
+    @Query("""SELECT m FROM Match m
     JOIN FETCH m.team1 t1
     JOIN FETCH m.team2 t2
     WHERE m.status IN :statuses
     AND m.startDate >= :startDate
     ORDER BY m.startDate ASC"""
     )
-    fun findMatchesWithTeams(statuses: List<String>, startDate: Instant, pageable: Pageable): List<MatchEntity>
-    fun findAllByIdInAndStatusIn(ids: List<Int>, statuses: List<String>): List<MatchEntity>
+    fun findMatchesWithTeams(statuses: List<String>, startDate: Instant, pageable: Pageable): List<Match>
+    fun findAllByIdInAndStatusIn(ids: List<Int>, statuses: List<String>): List<Match>
 
     @Query(
         """
-    SELECT m FROM MatchEntity m
+    SELECT m FROM Match m
     JOIN FETCH m.team1
     JOIN FETCH m.team2
     WHERE m.id = :matchId
     """
     )
-    fun findMatchWithTeamsById(@Param("matchId") matchId: Int): Optional<MatchEntity>
+    fun findMatchWithTeamsById(@Param("matchId") matchId: Int): Match?
 
     @Query(
         """
-    SELECT m FROM MatchEntity m
+    SELECT m FROM Match m
     WHERE m.id = :matchId
     AND m.status IN ('Scheduled', 'Preview', 'In Progress')
     """
     )
-    fun findActiveMatchById(@Param("matchId") matchId: Int): Optional<MatchEntity>
+    fun findActiveMatchById(@Param("matchId") matchId: Int): Optional<Match>
 
 }

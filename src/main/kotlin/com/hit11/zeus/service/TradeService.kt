@@ -134,7 +134,6 @@ class TradeService(
             val activeStatuses =
                 listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
             val matches = matchRepository.findAllByIdInAndStatusIn(matchIdList, activeStatuses)
-                .map { it.mapToMatch() }
 
             val questionMap = questions.associateBy { it.id }
             val matchMap = matches.associateBy { it.id }

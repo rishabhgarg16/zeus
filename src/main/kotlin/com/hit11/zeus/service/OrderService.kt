@@ -86,9 +86,17 @@ class OrderService(
     }
 
     private fun createInitialOrder(request: OrderRequest): Order {
+        // First fetch the related entities
+        val match = matchRepository.findById(request.matchId)
+            .orElseThrow { OrderValidationException("Match not found") }
+
+        val question = questionRepository.findById(request.pulseId)
+            .orElseThrow { OrderValidationException("Question not found") }
         return Order(
             userId = request.userId,
             pulseId = request.pulseId,
+            pulse = question,
+            match = match,
             matchId = request.matchId,
             orderType = request.orderType,
             orderSide = if (request.userAnswer == OrderSide.No.name) OrderSide.No else OrderSide.Yes,
@@ -231,31 +239,15 @@ class OrderService(
         userId: Int,
         matchIds: List<Int>
     ): List<UiOrderResponse> {
-        val orders = orderRepository.findByUserIdAndMatchIdInAndStatusIn(
+        val orders = orderRepository.findPendingOrdersWithDetails(
             userId,
             matchIds,
             listOf(OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED)
         )
 
-        // Fetch questions and matches in parallel
-        val questions = questionRepository.findAllByMatchIdIn(matchIds)
-            .map { it.mapToQuestionDataModel() }
-        val activeStatuses =
-            listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
-        val matches = matchRepository.findAllByIdInAndStatusIn(matchIds, activeStatuses)
-            .map { it.mapToMatch() }
-
-        val questionMap = questions.associateBy { it.id }
-        val matchMap = matches.associateBy { it.id }
 
         return orders.mapNotNull { order ->
-            val question = questionMap[order.pulseId] ?: return@mapNotNull null
-            val match = matchMap[order.matchId] ?: return@mapNotNull null
-
-            order.toUiOrderResponse(
-                question = question,
-                match = match
-            )
+            order.toUiOrderResponse()
         }
     }
 

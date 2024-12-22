@@ -3,7 +3,6 @@ package com.hit11.zeus.service
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.model.MatchStatus
 import com.hit11.zeus.repository.MatchRepository
-import com.hit11.zeus.repository.TeamRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -20,15 +19,7 @@ class MatchService(
         val pageable = PageRequest.of(0, limit)
 
         return try {
-            val matchEntities = matchRepository.findMatchesWithTeams(activeStatuses, startDate, pageable)
-            matchEntities.mapNotNull { matchEntity ->
-                try {
-                    matchEntity.mapToMatch()
-                } catch (e: Exception) {
-                    println("Error deserializing match : ${matchEntity.id} $e")
-                    null
-                }
-            }
+            matchRepository.findMatchesWithTeams(activeStatuses, startDate, pageable)
         } catch (e: Exception) {
             println("Error fetching upcoming matches: $e")
             emptyList()
@@ -37,12 +28,7 @@ class MatchService(
 
     fun getMatchById(matchId: Int): Match? {
         return try {
-            val matchEntity = matchRepository.findMatchWithTeamsById(matchId)
-            if (matchEntity.isPresent) {
-                matchEntity.get().mapToMatch()
-            } else {
-                null
-            }
+            matchRepository.findMatchWithTeamsById(matchId)
         } catch (e: Exception) {
             println("Error fetching match by ID: $e")
             null

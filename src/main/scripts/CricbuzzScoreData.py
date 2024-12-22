@@ -1,11 +1,12 @@
 import json
 import mysql.connector
 import os
-import requests
-import time
 import re
+import time
 import traceback
 from datetime import timezone, datetime
+
+import requests
 
 # Database connection
 db_config = {
@@ -45,6 +46,7 @@ def disable_all_active_questions(match_id):
         conn.rollback()
     finally:
         cursor.close()
+
 
 def get_or_create_match(match_header):
     conn = db_connection
@@ -129,6 +131,8 @@ def update_match(cursor, match_header, match_id):
 
 
 lastUpdatedTime = 0
+
+
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
     headers = {
@@ -328,6 +332,7 @@ def convert_player_of_the_match(match_header):
         }
     return None
 
+
 def convert_result(match_header):
     cricbuzz_result = match_header['result']
     winTeamId = cricbuzz_result.get('winningteamId', 0)
@@ -398,6 +403,7 @@ def convert_completed_innings(innings, match_header):
         'ballByBallEvents': []
     }
 
+
 def convert_current_innings(miniscore, commentary_list, matchHeader):
     if miniscore is None:
         # Return a default innings object when the match is not live
@@ -463,6 +469,7 @@ def parse_last_wicket(last_wicket):
         }
     return None
 
+
 def convert_batting_performances(miniscore, commentary_list):
     performances = []
     cricbuzz_team_id = miniscore['batTeam']['teamId']
@@ -499,7 +506,8 @@ def convert_batting_performances(miniscore, commentary_list):
             'balls': last_wicket_info['balls'],
             'fours': 0,  # We don't have this information
             'sixes': 0,  # We don't have this information
-            'strikeRate': (last_wicket_info['runs'] / last_wicket_info['balls']) * 100 if last_wicket_info['balls'] > 0 else 0,
+            'strikeRate': (last_wicket_info['runs'] / last_wicket_info['balls']) * 100 if last_wicket_info[
+                                                                                              'balls'] > 0 else 0,
             'outDescription': miniscore['lastWicket'],
             'wicketTaker': last_wicket_info['bowler'],
             'dismissed': True
@@ -525,6 +533,7 @@ def convert_batting_performances(miniscore, commentary_list):
                 })
 
     return performances
+
 
 def get_teams(miniscore, match_header):
     bat_team_id = miniscore['batTeam']['teamId']
@@ -603,23 +612,21 @@ def process_cricbuzz_data(cricbuzz_data):
 
 
 lastUpdatedTime = 0
-while True:
-    try:
-        matchlist = [112317]
-        for match_id in matchlist:
-            cricbuzz_data = call_cricbuzz_commentry_api(match_id)
-            if cricbuzz_data['responseLastUpdated'] > lastUpdatedTime:
-                lastUpdatedTime = cricbuzz_data['responseLastUpdated']
-                process_cricbuzz_data(cricbuzz_data)
 
-    except FileNotFoundError:
-        print("Error: cricbuzz_data.json file not found.")
-    except json.JSONDecodeError:
-        print("Error: Invalid JSON data in cricbuzz_data.json.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+try:
+    matchlist = [94363]
+    for match_id in matchlist:
+        cricbuzz_data = call_cricbuzz_commentry_api(match_id)
+        if cricbuzz_data['responseLastUpdated'] > lastUpdatedTime:
+            lastUpdatedTime = cricbuzz_data['responseLastUpdated']
+            process_cricbuzz_data(cricbuzz_data)
 
-    if os.getenv("PROD", False):
-        time.sleep(3)
-    else:
-        break
+except FileNotFoundError:
+    print("Error: cricbuzz_data.json file not found.")
+except json.JSONDecodeError:
+    print("Error: Invalid JSON data in cricbuzz_data.json.")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
+
+if os.getenv("PROD", False):
+    time.sleep(3)

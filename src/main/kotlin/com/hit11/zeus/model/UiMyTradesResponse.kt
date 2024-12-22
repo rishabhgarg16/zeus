@@ -35,7 +35,7 @@ fun Trade.toUiMyTradesResponse(
         pulseId = pulseId,
         questionText = question.pulseQuestion,
         matchFormat = match.matchFormat ?: "T20",
-        matchTitle = "${match.team1ShortName} vs ${match.team2ShortName}",
+        matchTitle = match.matchTitle,
         price = price,
         userAnswer = side.name,
         answerTime = createdAt,

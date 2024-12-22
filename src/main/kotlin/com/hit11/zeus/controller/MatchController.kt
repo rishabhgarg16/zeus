@@ -4,6 +4,8 @@ import com.google.cloud.firestore.Firestore
 import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.model.response.ApiResponse
+import com.hit11.zeus.model.response.GetMatchApiResponse
+import com.hit11.zeus.model.response.toGetMatchApiResponse
 import com.hit11.zeus.service.MatchService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,8 +24,8 @@ class MatchController(private val matchService: MatchService) {
 
     @GetMapping("/upcoming")
     fun getUpcomingMatches(@RequestParam("limit", defaultValue = "4") limit: Int):
-            ResponseEntity<ApiResponse<List<Match>>> {
-        val data = matchService.getUpcomingMatches(limit)
+            ResponseEntity<ApiResponse<List<GetMatchApiResponse>>> {
+        val data = matchService.getUpcomingMatches(limit).map { it.toGetMatchApiResponse() }
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),

@@ -8,7 +8,7 @@ enum class OrderStatus { OPEN, PARTIALLY_FILLED, FILLED, CANCELLED, EXPIRED }
 enum class OrderType { BUY, SELL, UNKNOWN }
 enum class OrderExecutionType { MARKET, LIMIT, UNKNOWN }
 enum class OrderSide {
-    UNKNOWN ,Yes, No
+    UNKNOWN, Yes, No
 }
 
 @Entity
@@ -19,9 +19,30 @@ data class Order(
 
     val userId: Int = -1,
 
-    val pulseId: Int = -1,
+    // Direct ID fields for simple queries
+    @Column(name = "match_id")
+    val matchId: Int = 0,
 
-    val matchId: Int = -1,
+    @Column(name = "pulse_id")
+    val pulseId: Int = 0,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "match_id",
+        referencedColumnName = "id",
+        insertable = false,
+        updatable = false
+    )
+    val match: Match = Match(),
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "pulse_id",
+        referencedColumnName = "id",
+        insertable = false,
+        updatable = false
+    )
+    val pulse: QuestionEntity = QuestionEntity(),
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_type")

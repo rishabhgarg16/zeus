@@ -32,7 +32,6 @@ class EventService(
 
         val match = matchRepository.findById(liveScoreEvent.matchId)
             .orElseThrow { ResourceNotFoundException("Match not found") }
-            .mapToMatch()
 
         val currentInnings = findCurrentInnings(liveScoreEvent) ?: throw Exception("Match completed")
 
@@ -92,7 +91,7 @@ class EventService(
         )
 
         ballEventRepository.save(ballEventEntity)
-        matchRepository.save(match.mapToEntity())
+        matchRepository.save(match)
 
         // Call QuestionService to update questions based on the ball event
         val updatedQuestionsResponse =
