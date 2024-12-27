@@ -30,22 +30,21 @@ class MarketMaker:
         self.headers = headers
 
         # Order cleanup parameters
-        self.MAX_ORDER_AGE = 300  # 5 minutes in seconds
+        self.MAX_ORDER_AGE = 60  # 1 minute in seconds
         self.MAX_PRICE_DEVIATION = Decimal('0.5')  # Maximum acceptable price deviation
-        self.CLEANUP_INTERVAL = 60  # How often to run cleanup (seconds)
         self.last_cleanup_time = {}  # Track last cleanup per pulse
 
         # Risk parameters
-        self.min_price = Decimal('1.0')
-        self.max_price = Decimal('9.0')
-        self.min_time_between_orders = 60        # Minimum seconds between orders for same pulse/side
+        self.min_price = Decimal('0.5')
+        self.max_price = Decimal('9.5')
         self.max_position_per_pulse = 1000  # Maximum position size per pulse
-        self.max_total_position = 5000      # Maximum total position across all pulses
-        self.min_spread = Decimal('0.2')    # Minimum spread to maintain
-        self.max_spread = Decimal('1.0')    # Maximum spread to maintain
         self.min_order_size = 5             # Minimum order size
         self.max_order_size = 50            # Maximum order size
         self.last_order_time = {}           # {pulse_id: timestamp}
+
+        # Layered order parameters
+        self.LAYER_SPREADS = [Decimal('0.0'), Decimal('0.1'), Decimal('0.2')]  # Spreads for each layer
+        self.LAYER_SIZES = [0.3, 0.3, 0.4]  # Size distribution for each layer
 
         # Position tracking
         self.positions: Dict[int, Dict[str, int]] = {}  # {pulse_id: {'Yes': qty, 'No': qty}}
@@ -90,6 +89,18 @@ class MarketMaker:
             self.logger.error(f"Error fetching active pulses: {e}")
             return []
 
+    def calculate_layer_quantities(self, total_size: int) -> List[int]:
+        """Calculate order sizes for each layer"""
+        return [max(self.min_order_size, int(total_size * pct)) for pct in self.LAYER_SIZES]
+
+    def get_layer_prices(self, base_price: Decimal) -> List[Decimal]:
+        """Calculate prices for each layer"""
+        prices = []
+        for spread in self.LAYER_SPREADS:
+            price = (base_price - spread).quantize(Decimal('0.1'))
+            prices.append(price)
+        return prices
+
     def get_order_book(self, pulse_id: int) -> Optional[OrderBookState]:
         """Fetch order book for a specific pulse"""
         try:
@@ -102,7 +113,7 @@ class MarketMaker:
             response.raise_for_status()
             data = response.json()['data']
 
-            return OrderBookState(
+            order_book = OrderBookState(
                 yes_bids=[(Decimal(str(bid['first'])), int(bid['second']))
                           for bid in data['yesBids']],
                 no_bids=[(Decimal(str(bid['first'])), int(bid['second']))
@@ -114,71 +125,48 @@ class MarketMaker:
                 yes_volume=int(data['yesVolume']),
                 no_volume=int(data['noVolume'])
             )
+            self.logger.info(f"OrderBookState for pulse ${pulse_id} is ${order_book}")
+            return order_book
+
         except Exception as e:
             self.logger.error(f"Error fetching order book for pulse {pulse_id}: {e}")
             return None
 
-    def calculate_order_size(self, pulse_id: int, side: str, price: Decimal) -> int:
-        """Calculate appropriate order size based on risk parameters"""
-        # Get current position
-        position = self.positions.get(pulse_id, {'Yes': 0, 'No': 0})
-        current_position = position[side]
-
-        # Base size calculation
-        base_size = self.min_order_size
-
-        # Adjust based on position limits
-        position_utilization = abs(current_position) / self.max_position_per_pulse
-        size_factor = 1 - position_utilization
-
-        # Adjust based on price - larger sizes when price is more favorable
-        price_factor = 1.0
-        if side == 'Yes':
-            price_factor = float((Decimal('10') - price) / Decimal('5')) # at 5, qty = 1, at 7, qty = 1
-        else:
-            price_factor = float(price / Decimal('10'))
-
-        final_size = int(base_size * size_factor * price_factor)
-        return max(self.min_order_size, min(final_size, self.max_order_size))
-
     def can_place_order(self, pulse_id: int, price: Decimal) -> bool:
-        """Basic safety checks before placing order"""
-        current_time = time.time()
-
         # Price range check
         if price < self.min_price or price > self.max_price:
+            self.logger.info(f"[cannot_place_order] Order cannot be placed for pulse ${pulse_id}")
             return False
 
-        # Time check - don't spam orders
-        if pulse_id in self.last_order_time:
-            time_since_last = current_time - self.last_order_time[pulse_id]
-            if time_since_last < self.min_time_between_orders:
-                return False
+        # Position check
+        position = self.positions.get(pulse_id, {'Yes': 0, 'No': 0})
+        total_position = abs(position['Yes']) + abs(position['No'])
+        if total_position >= self.max_position_per_pulse:
+            self.logger.info(f"[cannot_place_order] Order cannot be placed for pulse ${pulse_id}")
+            return False
 
+        self.logger.info(f"[can_place_order] Order can be placed for pulse ${pulse_id}")
         return True
 
-    def should_create_orders(self, order_book: OrderBookState) -> bool:
+    def should_create_orders(self, order_book: OrderBookState, pulse_id: int) -> bool:
         """Only create orders if needed"""
         # Don't create if market is already liquid
-        if order_book.yes_volume > 50 and order_book.no_volume > 50:
+        if order_book.yes_volume > 150 and order_book.no_volume > 150:
+            self.logger.info(f"[should_create_orders] volume more than 50 for pulse {pulse_id} & ${order_book}")
             return False
 
-        # Don't create if spread is tight
-        best_yes = min([bid[0] for bid in order_book.yes_bids]) if order_book.yes_bids else None
-        best_no = min([bid[0] for bid in order_book.no_bids]) if order_book.no_bids else None
-        if best_yes and best_no:
-            current_spread = abs(Decimal('10') - best_yes - best_no)
-            if current_spread < Decimal('0.4'):
-                return False
-
+        self.logger.info(f"[should_create_orders] should create orders for ${order_book}")
         return True
 
     def bulk_cancel_orders(self, order_ids: List[int]) -> bool:
         """Cancel multiple orders in a single API call"""
+        long_order_ids = [int(order_id) for order_id in order_ids]
+
         try:
             payload = {
-                "orderIds": order_ids
+                "orderIds": long_order_ids
             }
+            self.logger.info(f"[bulk_cancel_orders] Found ${order_ids} to be canceled")
 
             response = requests.post(
                 f"{self.base_url}/api/order/bulkCancel",  # New endpoint for bulk cancellation
@@ -187,24 +175,28 @@ class MarketMaker:
                 timeout=10  # Increased timeout for bulk operation
             )
 
+            # Log the actual response
+            self.logger.info(f"Bulk cancel response: {response.text}")
+
             if response.status_code == 200:
                 response_data = response.json()
                 if response_data.get('data') == True:
                     self.logger.info(f"Successfully canceled {len(order_ids)} orders")
                     return True
                 else:
-                    self.logger.error(f"Bulk cancellation failed: {response_data.get('message', 'Unknown error')}")
+                    self.logger.error(f"Bulk cancellation failed: {response_data}")
                     return False
             else:
-                self.logger.error(f"Bulk cancellation failed: HTTP {response.status_code}")
+                self.logger.error(f"Bulk cancellation failed: HTTP {response.status_code}, Response: {response.text}")
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error in bulk order cancellation: {e}")
+            self.logger.error(f"Error in bulk order cancellation: {str(e)}", exc_info=True)
             return False
 
     def cleanup_old_orders(self, pulse_id: int):
         """Cancel old orders that are no longer needed"""
+        self.logger.info(f"Fetching open orders for pulse for clean up {pulse_id}")
         try:
             response = requests.get(
                 f"{self.base_url}/api/order/open/{pulse_id}/5",
@@ -212,57 +204,98 @@ class MarketMaker:
             )
             if response.status_code != 200:
                 self.logger.error(f"Failed to fetch open orders for pulse {pulse_id}")
-            return
-
-            data = response.json()
-            if not data.get('data'):
                 return
 
-            open_orders = data['data']
-            orders_to_cancel = []
+            response.raise_for_status()  # This will raise an exception for non-200 status codes
 
-            # Get current order book for price checking
-            order_book = self.get_order_book(pulse_id)
-            if order_book:
-                fair_yes, fair_no = self.calculate_fair_price(order_book, pulse_id)
+            data = response.json()
+            orders = data.get('data', [])
+
+            if not orders:
+                self.logger.info("No open orders found")
+                return
+
+            self.logger.info(f"Found {len(orders)} open orders")
+            orders_to_cancel = []
+            current_time = datetime.now(timezone.utc)
 
             # Identify orders that need cancellation
-            for order in open_orders:
-                should_cancel = False
-
-                # Check order age
+            for order in orders:
                 order_time = datetime.fromisoformat(order['createdAt'].replace('Z', '+00:00'))
-                order_age = datetime.now(timezone.utc) - order_time
+                order_age = (current_time - order_time).total_seconds()
 
-                # Age check
-                if order_age.total_seconds() > self.MAX_ORDER_AGE:
-                    should_cancel = True
-                    self.logger.info(f"Order {order['id']} queued for cancellation (age: {order_age.total_seconds()}s)")
+                self.logger.info(f"Order {order['id']} age: {order_age}s")
 
-                # Price deviation check
-                if order_book:
-                    order_price = Decimal(str(order['price']))
-                    fair_price = fair_yes if order['orderSide'] == 'Yes' else fair_no
-                    price_deviation = abs(order_price - fair_price)
-
-                    if price_deviation > self.MAX_PRICE_DEVIATION:
-                        should_cancel = True
-                        self.logger.info(f"Order {order['id']} queued for cancellation (deviation: {price_deviation})")
-
-                if should_cancel:
+                if order_age > self.MAX_ORDER_AGE:
                     orders_to_cancel.append(order['id'])
+                    self.logger.info(f"Order {order['id']} queued for cancellation (age: {order_age}s)")
 
-                # Bulk cancel orders if any found
-                if orders_to_cancel:
-                    success = self.bulk_cancel_orders(orders_to_cancel)
+            # Bulk cancel orders if any found
+            if orders_to_cancel:
+                self.logger.info(f"Attempting to cancel {len(orders_to_cancel)} orders")
+                success = self.bulk_cancel_orders(orders_to_cancel)
                 if success:
-                    self.logger.info(f"Successfully canceled {len(orders_to_cancel)} orders for pulse {pulse_id}")
-                else:
-                    self.logger.error(f"Failed to cancel orders in bulk for pulse {pulse_id}")
+                    self.logger.info(f"Successfully cancelled {len(orders_to_cancel)} orders")
+                    # Update positions after successful cancellation
+                    for order in orders:
+                        if order['id'] in orders_to_cancel:
+                            side = order['orderSide']
+                            qty = order['remainingQuantity']
+                            if pulse_id in self.positions:
+                                self.positions[pulse_id][side] -= qty
+                        else:
+                            self.logger.error("Failed to cancel orders")
 
         except Exception as e:
             self.logger.error(f"Error cleaning up orders for pulse {pulse_id}: {e}")
 
+    def provide_layered_liquidity(self, pulse: Pulse, user_id: int, order_book: OrderBookState):
+        """Provide layered liquidity on both sides"""
+        # Base size for total liquidity
+        base_size = 100  # Adjust based on your needs
+
+        # Calculate sizes for each layer
+        layer_sizes = self.calculate_layer_quantities(base_size)
+
+        # Determine base prices
+        base_yes_price = Decimal('5.0')
+        base_no_price = Decimal('5.0')
+
+        if order_book.last_traded_yes_price:
+            base_yes_price = order_book.last_traded_yes_price
+        if order_book.last_traded_no_price:
+            base_no_price = order_book.last_traded_no_price
+
+        # Get layer prices
+        yes_prices = self.get_layer_prices(base_yes_price)
+        no_prices = self.get_layer_prices(base_no_price)
+
+        # Place layered orders
+        for i in range(len(self.LAYER_SPREADS)):
+            # Place Yes orders
+            if self.can_place_order(pulse.id, yes_prices[i]):
+                self.place_order(
+                    pulse_id=pulse.id,
+                    match_id=pulse.match_id,
+                    user_id=user_id,
+                    side="Yes",
+                    price=yes_prices[i],
+                    quantity=layer_sizes[i]
+                )
+
+            # Place No orders
+            if self.can_place_order(pulse.id, no_prices[i]):
+                self.place_order(
+                    pulse_id=pulse.id,
+                    match_id=pulse.match_id,
+                    user_id=user_id,
+                    side="No",
+                    price=no_prices[i],
+                    quantity=layer_sizes[i]
+                )
+
+            # Add small delay between orders to prevent overwhelming the system
+            time.sleep(0.1)
 
     def place_order(self, pulse_id: int, match_id: int, user_id: int, side: str, price: Decimal, quantity: int) -> bool:
         try:
@@ -308,118 +341,32 @@ class MarketMaker:
             self.logger.error(f"Error placing order: {e}")
             return False
 
-    def calculate_fair_price(self, order_book: OrderBookState, pulse_id: int) -> Tuple[Decimal, Decimal]:
-        # Start with last traded prices or mid-market
-        if order_book.last_traded_yes_price and order_book.last_traded_no_price:
-            fair_yes = order_book.last_traded_yes_price
-            fair_no = order_book.last_traded_no_price
-        else:
-            fair_yes = Decimal('5.0')
-            fair_no = Decimal('5.0')
-
-        # Adjust for volume imbalance
-        '''
-        Example: "Will Virat score 50 runs?"
-        Current State:
-            YES volume: 800 orders
-            NO volume: 200 orders
-        
-        Initial prices:
-        YES: 5.0
-        NO: 5.0
-
-        If YES volume (800) >> NO volume (200):
-        imbalance = (800 - 200) / 800 = 0.75
-        fair_yes = 5.0 + (0.1 * 0.75) = 5.075 (more expensive to buy YES)
-        fair_no = 5.0 - (0.1 * 0.75) = 4.925 (cheaper to buy NO)
-
-        This encourages:
-        - People to take NO positions (better value)
-        - People to avoid taking more YES positions (more expensive)
-        
-        Volume_adjustment of 0.1 is a tuning parameter that determines 
-        how aggressively the market maker adjusts prices in response to imbalances. 
-        A larger value would mean more aggressive price adjustments.
-        '''
-        volume_adjustment = Decimal('0.1')
-        if order_book.yes_volume > order_book.no_volume:
-            # Too many YES orders, so:
-            imbalance = (order_book.yes_volume - order_book.no_volume) / max(order_book.yes_volume, 1)
-            fair_yes += volume_adjustment * Decimal(str(imbalance))  # Make YES more expensive
-            fair_no -= volume_adjustment * Decimal(str(imbalance))   # Make NO cheaper
-        elif order_book.no_volume > order_book.yes_volume:
-            # Too many NO orders, so:
-            imbalance = (order_book.no_volume - order_book.yes_volume) / max(order_book.no_volume, 1)
-            fair_yes -= volume_adjustment * Decimal(str(imbalance))  # Make YES cheaper
-            fair_no += volume_adjustment * Decimal(str(imbalance))   # Make NO more expensive
-
-        # Adjust for our position
-        position = self.positions.get(pulse_id, {'Yes': 0, 'No': 0})
-        position_adjustment = Decimal('0.05')
-        net_position = position['Yes'] - position['No']
-        if net_position > 0:
-            # We have more YES positions, adjust prices to encourage NO orders
-            fair_yes += position_adjustment
-            fair_no -= position_adjustment
-        elif net_position < 0:
-            # We have more NO positions, adjust prices to encourage YES orders
-            fair_yes -= position_adjustment
-            fair_no += position_adjustment
-
-        return fair_yes, fair_no
-
     def process_pulse(self, pulse: Pulse, user_id: int):
         """Process a single pulse"""
+        self.logger.info(f"processing pulse ${pulse.id}")
         try:
             # 1. Get order book
             order_book = self.get_order_book(pulse.id)
             if not order_book:
+                self.logger.error(f"No order book exist for pulse ${pulse.id}")
                 return
 
             # 2 Cleanup old orders first
+            self.logger.info(f"2 processing pulse cleaning up old orders for ${pulse.id}")
             self.cleanup_old_orders(pulse.id)
 
-            # Check if we should create new orders
-            if not self.should_create_orders(order_book):
+            #3 Check if we should create new orders
+            if not self.should_create_orders(order_book, pulse.id):
+                self.logger.info(f"3 processing pulse ${pulse.id}")
                 self.logger.info(f"Skipping order creation for pulse {pulse.id} - market conditions not met")
                 return
 
-            # 3. Calculate fair prices
-            fair_yes, fair_no = self.calculate_fair_price(order_book, pulse.id)
-
-            # 4. Calculate spreads
-            spread = Decimal('0.2')
-            yes_price = (fair_yes - spread).quantize(Decimal('0.1'))
-            no_price = (fair_no - spread).quantize(Decimal('0.1'))
-
-            # 5. Calculate and place orders
-            # yes_quantity = self.calculate_order_size(pulse.id, "Yes", yes_price)
-            # no_quantity = self.calculate_order_size(pulse.id, "No", no_price)
-
-            # Place orders with rate limiting
-            for side, price in [("Yes", yes_price), ("No", no_price)]:
-                if self.can_place_order(pulse.id, price):
-                    quantity = self.calculate_order_size(pulse.id, side, price)
-                    if quantity > 0:
-                        success = self.place_order(pulse.id, pulse.match_id, user_id, side, price, quantity)
-                        if success:
-                            self.last_order_time[pulse.id] = time.time()
-                            if side == "Yes":
-                                self.logger.info(f"""
-                                    Pulse {pulse.id} ({pulse.question_details}):
-                                    Fair YES: {fair_yes:.2f}, Quote YES: {yes_price:.2f}
-                                    Position YES: {self.positions.get(pulse.id, {'Yes': 0})['Yes']}
-                                """)
-                            else:
-                                self.logger.info(f"""
-                                    Pulse {pulse.id} ({pulse.question_details}):
-                                    Fair NO: {fair_no:.2f}, Quote NO: {no_price:.2f}
-                                    Position NO: {self.positions.get(pulse.id, {'No': 0})['No']}
-                                """)
+            # 4. Calculate and place order
+            self.logger.info(f"4 processing pulse ${pulse.id}")
+            self.provide_layered_liquidity(pulse, user_id, order_book)
 
         except Exception as e:
             self.logger.error(f"Error processing pulse {pulse.id}: {e}")
-
 
     def run(self, user_id: int):
         """Main market making loop for all active pulses"""
@@ -429,6 +376,7 @@ class MarketMaker:
 
                 # 1. Fetch all active pulses
                 active_pulses = self.get_active_pulses()
+                self.logger.info(f"active pulse ${active_pulses[0].id}")
 
                 # 2. Process each pulse concurrently
                 with futures.ThreadPoolExecutor(max_workers=5) as executor:

@@ -166,12 +166,12 @@ class OrderController(
         @PathVariable userId: Int
     ): ResponseEntity<ApiResponse<List<Order>>> {
         return try {
-            val orders = orderService.getPendingOrdersByUserIdAndPulseId(pulseId, userId)
+            val orders = orderService.getPendingOrdersByUserIdAndPulseId(userId = userId, pulseId = pulseId)
             ResponseEntity.ok(
                 ApiResponse(
                     status = HttpStatus.OK.value(),
                     internalCode = null,
-                    message = "Order cancelled successfully",
+                    message = "Pending orders fetched successfully",
                     data = orders
                 )
             )
@@ -222,5 +222,5 @@ data class CancelOrderRequest(
 )
 
 data class BulkCancelOrderRequest(
-    val orderIds: List<Long>
+    val orderIds: List<Long> = emptyList()
 )

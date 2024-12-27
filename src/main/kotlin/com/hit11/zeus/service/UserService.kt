@@ -41,29 +41,28 @@ class UserService(
         return userRepository.findByFirebaseUID(firebaseUID)
     }
 
-    fun createUser(firebaseUID: String): User? {
+    fun createUser(firebaseUID: String, fcmToken: String): User {
         val firebaseUser = FirebaseAuth.getInstance().getUser(firebaseUID)
-        if (firebaseUser != null) {
-            val newUser = User(
-                0,
-                firebaseUID = firebaseUser.uid,
-                email = firebaseUser.email,
-                firebaseUser.displayName,
-                firebaseUser.phoneNumber,
-                BigDecimal(500),
-                BigDecimal.ZERO,
-                lastLoginDate = Date(),
-            )
-            try {
-                return userRepository.save(newUser)
-            } catch (e: SQLIntegrityConstraintViolationException) {
-                throw Exception("User Already Exists")
-            } catch (e: Exception) {
-                throw Exception(e.message)
-            }
+        val newUser = User(
+            0,
+            firebaseUID = firebaseUser.uid,
+            fcmToken = fcmToken,
+            email = firebaseUser.email,
+            firebaseUser.displayName,
+            firebaseUser.phoneNumber,
+            BigDecimal(500),
+            BigDecimal.ZERO,
+            lastLoginDate = Date(),
+        )
+        try {
+            return userRepository.save(newUser)
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            throw Exception("User Already Exists")
+        } catch (e: Exception) {
+            throw Exception(e.message)
         }
-        return null
     }
+
 
     fun checkUserReward(firebaseUID: String): UserReward? {
         val userRecord = userRepository.findByFirebaseUID(firebaseUID) ?: return null

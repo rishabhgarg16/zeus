@@ -18,7 +18,7 @@ class PayoutService (
     ) {
         try {
             // close all trades for this question
-            tradeService.closeTradesByPulse(question.id, pulseResult)
+            tradeService.settleTradesByPulse(question.id, pulseResult)
             // Close all positions for the pulse
             userPositionService.closePulsePositions(question.id, pulseResult)
 

@@ -88,10 +88,10 @@ class OrderService(
     private fun createInitialOrder(request: OrderRequest): Order {
         // First fetch the related entities
         val match = matchRepository.findById(request.matchId)
-            .orElseThrow { OrderValidationException("Match not found") }
+            .orElseThrow { OrderValidationException("Match not found matchId ${request.matchId}") }
 
         val question = questionRepository.findById(request.pulseId)
-            .orElseThrow { OrderValidationException("Question not found") }
+            .orElseThrow { OrderValidationException("Question not found questionId ${request.pulseId}") }
         return Order(
             userId = request.userId,
             pulseId = request.pulseId,

@@ -12,7 +12,6 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import javax.transaction.Transactional
-import kotlin.jvm.optionals.getOrNull
 
 
 @Service
@@ -29,27 +28,48 @@ class UserPositionService(
         pulseId: Int,
         matchId: Int,
         side: OrderSide,
-        quantity: Long,
-        price: BigDecimal
+        newQuantity: Long,
+        newPrice: BigDecimal
     ) {
-        val position = userPositionRepository.findByUserIdAndPulseIdAndOrderSide(userId, pulseId, side)
-            ?: UserPosition(
-                userId = userId,
-                pulseId = pulseId,
-                orderSide = side,
-                matchId = matchId
+        val existingPositions =
+            userPositionRepository.findAllByUserIdAndPulseIdAndOrderSideAndStatus(
+                userId,
+                pulseId,
+                side,
+                status = PositionStatus.OPEN
             )
 
-        position.quantity += quantity
-        position.averagePrice = calculateNewAveragePrice(
-            position.quantity,
-            position.averagePrice,
-            quantity,
-            price
+        val mergedPosition = existingPositions.reduceOrNull { acc, position ->
+            acc.apply {
+                this.quantity += position.quantity
+                this.averagePrice = calculateNewAveragePrice(
+                    this.quantity,
+                    this.averagePrice,
+                    position.quantity,
+                    position.averagePrice
+                )
+                this.unrealizedPnl += position.unrealizedPnl
+                this.realizedPnl += position.realizedPnl
+            }
+        } ?: UserPosition(
+            userId = userId,
+            pulseId = pulseId,
+            orderSide = side,
+            matchId = matchId,
+            quantity = 0,
+            averagePrice = BigDecimal.ZERO
         )
 
-        updateUnrealizedPnl(position)
-        userPositionRepository.save(position)
+        mergedPosition.quantity += newQuantity
+        mergedPosition.averagePrice = calculateNewAveragePrice(
+            mergedPosition.quantity,
+            mergedPosition.averagePrice,
+            newQuantity,
+            newPrice
+        )
+        updateUnrealizedPnl(mergedPosition)
+
+        userPositionRepository.save(mergedPosition)
     }
 
     private fun calculateNewAveragePrice(
@@ -109,9 +129,11 @@ class UserPositionService(
                 position.settledAmount = calculateFinalPayout(position, pulseResult)
             }.also { updatedPosition ->
                 try {
-                    userService.updateUserWallet(updatedPosition.userId, updatedPosition.settledAmount ?: BigDecimal.ZERO)
+                    userService.updateUserWallet(
+                        updatedPosition.userId, updatedPosition.settledAmount ?: BigDecimal.ZERO
+                    )
                 } catch (e: Exception) {
-                    logger.error("Failed to update wallet for user ${updatedPosition.userId}", e)
+                    logger.error("Failed to updaxte wallet for user ${updatedPosition.userId}", e)
                     throw RuntimeException("Wallet update failed for user ${updatedPosition.userId}")
                 }
             }

@@ -1,5 +1,6 @@
 package com.hit11.zeus.controller
 
+import com.hit11.zeus.websocket.WebSocketHandler
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.model.Question
@@ -27,7 +28,7 @@ data class BallEventProcessResponse (
 @RequestMapping("/api/events")
 class EventController(
     private val eventService: EventService,
-    private val webSocketHandler: MyWebSocketHandler,
+    private val webSocketHandler: WebSocketHandler,
     private val questionService: QuestionService
 ) {
     private val logger = Logger.getLogger(EventController::class.java)
@@ -53,11 +54,10 @@ class EventController(
             "[QuestionUpdate] processed scorecard for match ${scoreCard.matchId} and ball number ${latestBallEvent?.ballNumber}"
         )
 
-        val topic = "match${scoreCard.matchId}"
         logger.info("[WSLiveScore] sending data to ws for match ${scoreCard.matchId} and ball number $latestBallEvent")
         webSocketHandler.sendMessageToTopic(
-            topic,
-            scoreCard
+            topic = "match${scoreCard.matchId}", // match21
+            message = scoreCard
         )
         logger.info("[WSLiveScore] data sent to ws for match ${scoreCard.matchId} and ball number $latestBallEvent")
         return ResponseEntity.ok(updatedQuestionsResponse)

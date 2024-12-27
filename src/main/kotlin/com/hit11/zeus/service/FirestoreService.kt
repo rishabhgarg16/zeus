@@ -5,9 +5,9 @@ import com.google.firebase.cloud.FirestoreClient
 import org.springframework.stereotype.Service
 
 @Service
-class FirestoreService {
-
-    private val firestore: Firestore = FirestoreClient.getFirestore()
+class FirestoreService(
+    private val firestore: Firestore
+) {
 
     fun getCollection(collectionName: String) = firestore.collection(collectionName).get()
 

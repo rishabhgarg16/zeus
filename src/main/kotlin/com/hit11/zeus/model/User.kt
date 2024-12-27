@@ -5,17 +5,6 @@ import java.time.Instant
 import java.util.*
 import javax.persistence.*
 
-//data class User(
-//    val id: Int  = 0,
-//    val firebaseUID: String = "",
-//    val email: String? = "",
-//    val name: String? = "",
-//    val phone: String = "",
-//    val walletBalance: BigDecimal = BigDecimal.ZERO,
-//    val withdrawalBalance: BigDecimal = BigDecimal.ZERO,
-//    val lastLoginDate: Date? = null
-//)
-
 @Entity
 @Table(name = "users")
 data class User(
@@ -25,6 +14,7 @@ data class User(
 
     @Column(name = "firebase_uid", nullable = false, unique = true)
     val firebaseUID: String = "",
+    val fcmToken: String? = null,
     val email: String? = "",
     val name: String? = "",
     val phone: String = "",
@@ -64,15 +54,3 @@ data class User(
         updatedAt = Instant.now()
     }
 }
-//fun mapToUser(userEntity: UserEntity): User {
-//    return User(
-//        id = userEntity.id,
-//        firebaseUID = userEntity.firebaseUID,
-//        email = userEntity.email,
-//        name = userEntity.name,
-//        phone = userEntity.phone,
-//        walletBalance = userEntity.walletBalance,
-//        withdrawalBalance = userEntity.withdrawalBalance,
-//        lastLoginDate = userEntity.lastLoginDate
-//    )
-//}

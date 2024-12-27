@@ -31,9 +31,9 @@ class EventService(
         validateBallEvent(liveScoreEvent)
 
         val match = matchRepository.findById(liveScoreEvent.matchId)
-            .orElseThrow { ResourceNotFoundException("Match not found") }
+            .orElseThrow { ResourceNotFoundException("Match not found matchId ${liveScoreEvent.matchId}") }
 
-        val currentInnings = findCurrentInnings(liveScoreEvent) ?: throw Exception("Match completed")
+        val currentInnings = findCurrentInnings(liveScoreEvent) ?: throw Exception("Match completed ${liveScoreEvent.matchId}")
 
         val inningEntity = inningRepository.findByMatchIdAndInningsNumber(
             liveScoreEvent.matchId,

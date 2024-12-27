@@ -1,7 +1,6 @@
 package com.hit11.zeus.controller
 
 import com.google.cloud.firestore.Firestore
-import com.google.firebase.cloud.FirestoreClient
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.response.GetMatchApiResponse
@@ -18,10 +17,10 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/match")
-class MatchController(private val matchService: MatchService) {
-
-    private val firestore: Firestore = FirestoreClient.getFirestore()
-
+class MatchController(
+    private val firestore: Firestore,
+    private val matchService: MatchService
+) {
     @GetMapping("/upcoming")
     fun getUpcomingMatches(@RequestParam("limit", defaultValue = "4") limit: Int):
             ResponseEntity<ApiResponse<List<GetMatchApiResponse>>> {

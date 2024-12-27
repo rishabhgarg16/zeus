@@ -1,6 +1,10 @@
 package com.hit11.zeus.service
 
 import com.hit11.zeus.model.*
+import com.hit11.zeus.notification.DeliveryType
+import com.hit11.zeus.notification.NotificationPayload
+import com.hit11.zeus.notification.NotificationService
+import com.hit11.zeus.notification.NotificationType
 import com.hit11.zeus.repository.MatchRepository
 import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.TradeRepository
@@ -16,6 +20,7 @@ class TradeService(
     private val tradeRepository: TradeRepository,
     private val matchRepository: MatchRepository,
     private val questionRepository: QuestionRepository,
+    private val notificationService: NotificationService,
 ) {
     private val logger = LoggerFactory.getLogger(TradeService::class.java)
 
@@ -50,7 +55,7 @@ class TradeService(
     }
 
     @Transactional
-    fun closeTradesByPulse(pulseId: Int, pulseResult: PulseResult) {
+    fun settleTradesByPulse(pulseId: Int, pulseResult: PulseResult) {
         val trades = tradeRepository.findByPulseIdAndStatus(pulseId, TradeStatus.ACTIVE)
         if (trades.isEmpty()) {
             logger.info("No active trades to close for Pulse $pulseId")
@@ -71,7 +76,36 @@ class TradeService(
 
         // Save updated trades in a batch
         tradeRepository.saveAll(updatedTrades)
+        sendTradeNotification(updatedTrades)
         logger.info("Successfully closed ${updatedTrades.size} trades for Pulse $pulseId")
+    }
+
+    private fun sendTradeNotification(trades: List<Trade>) {
+        trades.map { trade ->
+            val deliveryType = DeliveryType.BOTH // You can customize this as needed
+            val title = if (trade.status == TradeStatus.WON) "Congratulations! You Won 🎉" else "Better Luck Next Time!"
+            val message = if (trade.status == TradeStatus.WON) {
+                "Your trade on Pulse ${trade.pulseId} was a success. You've won ₹${trade.pnl}!"
+            } else {
+                "Your trade on Pulse ${trade.pulseId} did not succeed. Try again next time!"
+            }
+
+            val payload = NotificationPayload(
+                userId = trade.userId,
+                type = NotificationType.TRADE_SETTLED,
+                title = title,
+                message = message,
+                metadata = mapOf(
+                    "tradeId" to trade.id.toString(),
+                    "pulseId" to trade.pulseId.toString(),
+                    "status" to trade.status.name
+                ),
+                deliveryType = deliveryType
+            )
+
+            notificationService.handleNotification(payload)
+        }
+
     }
 
     private fun calculatePnl(trade: Trade, pulseResult: PulseResult): BigDecimal {
