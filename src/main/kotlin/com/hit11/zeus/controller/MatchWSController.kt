@@ -28,7 +28,7 @@ class MatchWSController(private val matchService: MatchService) {
     @SendTo("/topic/greetings")
     @Throws(Exception::class)
     fun upcomingMatchesWS(message: HelloMessage): Greeting {
-        val data = matchService.getUpcomingMatches(4)
+        val data = matchService.getRelevantMatches(4)
         return Greeting("Hello, " + HtmlUtils.htmlEscape(message.name) + "!")
     }
 
@@ -39,7 +39,7 @@ class MatchWSController(private val matchService: MatchService) {
         Thread(Runnable {
             while (true) {
                 try {
-                    val data = matchService.getUpcomingMatches(4)
+                    val data = matchService.getRelevantMatches(4)
                     val response = ApiResponse(
                         status = HttpStatus.OK.value(),
                         internalCode = null,

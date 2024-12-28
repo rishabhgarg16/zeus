@@ -11,14 +11,39 @@ import java.util.*
 
 @Repository
 interface MatchRepository : JpaRepository<Match, Int> {
-    @Query("""SELECT m FROM Match m
-    JOIN FETCH m.team1 t1
-    JOIN FETCH m.team2 t2
-    WHERE m.status IN :statuses
-    AND m.startDate >= :startDate
-    ORDER BY m.startDate ASC"""
+    @Query(
+        """  
+    SELECT m FROM Match m 
+    JOIN FETCH m.team1 t1 
+    JOIN FETCH m.team2 t2 
+    WHERE (
+        m.status IN :activeStatuses 
+        OR (
+            m.startDate <= :currentTimestamp 
+            AND m.endDate >= :currentTimestamp
+        )
+        OR (
+            m.status = 'Complete' 
+            AND m.endDate >= :recentCompletedMatchThreshold
+        )
     )
-    fun findMatchesWithTeams(statuses: List<String>, startDate: Instant, pageable: Pageable): List<Match>
+    ORDER BY 
+        CASE 
+            WHEN m.status = 'In Progress' THEN 0 
+            WHEN m.status = 'Preview' THEN 1 
+            WHEN m.status = 'Scheduled' THEN 2
+            WHEN m.status = 'Complete' THEN 3
+        END, 
+        m.startDate ASC
+    """
+    )
+    fun findMatchesWithTeams(
+        activeStatuses: List<String>,
+        currentTimestamp: Instant,
+        recentCompletedMatchThreshold: Instant,
+        pageable: Pageable
+    ): List<Match>
+
     fun findAllByIdInAndStatusIn(ids: List<Int>, statuses: List<String>): List<Match>
 
     @Query(

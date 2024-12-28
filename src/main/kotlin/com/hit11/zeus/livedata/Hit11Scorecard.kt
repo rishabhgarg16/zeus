@@ -55,21 +55,20 @@ data class Team(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Innings(
-    val inningsId: Int = 0,
-    @JsonProperty("isCurrentInnings")
-    val isCurrentInnings: Boolean = false,
-    val battingTeam: Team? = null,
-    val bowlingTeam: Team? = null,
-    val totalRuns: Int = 0,
-    val wickets: Int = 0,
-    val totalExtras: Int = 0,
-    val overs: BigDecimal = BigDecimal.ZERO,
-    val runRate: Float = 0f,
-    val battingPerformances: List<BattingPerformance> = listOf(),
-    val bowlingPerformances: List<BowlingPerformance> = listOf(),
-    val fallOfWickets: List<FallOfWicket> = listOf(),
-    val partnerships: List<Partnership> = listOf(),
-    val ballByBallEvents: List<BallEvent> = listOf()
+    @JsonProperty("inningsId") val inningsId: Int = 0,
+    @JsonProperty("isCurrentInnings") val isCurrentInnings: Boolean = false,
+    @JsonProperty("battingTeam") val battingTeam: Team? = null,
+    @JsonProperty("bowlingTeam") val bowlingTeam: Team? = null,
+    @JsonProperty("totalRuns") val totalRuns: Int = 0,
+    @JsonProperty("wickets") val wickets: Int = 0,
+    @JsonProperty("totalExtras") val totalExtras: Int = 0,
+    @JsonProperty("overs") val overs: BigDecimal = BigDecimal.ZERO,
+    @JsonProperty("runRate") val runRate: Float = 0f,
+    @JsonProperty("battingPerformances") val battingPerformances: List<BattingPerformance> = listOf(),
+    @JsonProperty("bowlingPerformances") val bowlingPerformances: List<BowlingPerformance> = listOf(),
+    @JsonProperty("fallOfWickets") val fallOfWickets: List<FallOfWicket> = listOf(),
+    @JsonProperty("partnerships") val partnerships: List<Partnership> = listOf(),
+    @JsonProperty("ballByBallEvents") val ballByBallEvents: List<BallEvent> = listOf()
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

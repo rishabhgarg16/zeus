@@ -610,7 +610,7 @@ def process_cricbuzz_data(cricbuzz_data):
 lastUpdatedTime = 0
 while True:
     try:
-        matchlist = [112317]
+        matchlist = [94372]
         for match_id in matchlist:
             cricbuzz_data = call_cricbuzz_commentry_api(match_id)
             if cricbuzz_data['responseLastUpdated'] > lastUpdatedTime:
@@ -625,6 +625,6 @@ while True:
         print(f"An unexpected error occurred: {e}")
 
     if os.getenv("PROD", False):
-        time.sleep(3)
+        time.sleep(10)
     else:
         break

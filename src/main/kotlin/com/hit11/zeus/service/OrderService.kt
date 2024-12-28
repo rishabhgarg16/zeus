@@ -164,7 +164,6 @@ class OrderService(
             val releaseAmount = order.price.multiply(BigDecimal(order.remainingQuantity))
             userService.releaseReservedBalance(order.userId, releaseAmount)
         }
-
         return orderRepository.save(order)
     }
 

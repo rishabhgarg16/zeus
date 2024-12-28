@@ -12,14 +12,26 @@ import java.time.temporal.ChronoUnit
 class MatchService(
     private val matchRepository: MatchRepository,
 ) {
-    fun getUpcomingMatches(limit: Int): List<Match> {
+    fun getRelevantMatches(limit: Int): List<Match> {
+        val recentCompletedMatchThreshold =
+            Instant.now().minus(24, ChronoUnit.HOURS)
+
         val activeStatuses =
-            listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
-        val startDate = Instant.now().minus(1, ChronoUnit.DAYS)
+            listOf(
+                MatchStatus.SCHEDULED.text,
+                MatchStatus.IN_PROGRESS.text,
+                MatchStatus.PREVIEW.text
+            )
+
         val pageable = PageRequest.of(0, limit)
 
         return try {
-            matchRepository.findMatchesWithTeams(activeStatuses, startDate, pageable)
+            matchRepository.findMatchesWithTeams(
+                activeStatuses = activeStatuses,
+                currentTimestamp = Instant.now(),
+                recentCompletedMatchThreshold = recentCompletedMatchThreshold,
+                pageable = pageable
+            )
         } catch (e: Exception) {
             println("Error fetching upcoming matches: $e")
             emptyList()

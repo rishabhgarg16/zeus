@@ -47,6 +47,7 @@ local.properties
 .kotlin
 
 *.csv
+*.log
 
 # appsmith
 stacks

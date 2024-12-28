@@ -22,9 +22,9 @@ class MatchController(
     private val matchService: MatchService
 ) {
     @GetMapping("/upcoming")
-    fun getUpcomingMatches(@RequestParam("limit", defaultValue = "4") limit: Int):
+    fun getLiveMatches(@RequestParam("limit", defaultValue = "4") limit: Int):
             ResponseEntity<ApiResponse<List<GetMatchApiResponse>>> {
-        val data = matchService.getUpcomingMatches(limit).map { it.toGetMatchApiResponse() }
+        val data = matchService.getRelevantMatches(limit).map { it.toGetMatchApiResponse() }
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
