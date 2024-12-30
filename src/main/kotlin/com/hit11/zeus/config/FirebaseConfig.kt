@@ -5,6 +5,7 @@ import com.google.firebase.FirebaseApp
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.cloud.FirestoreClient
 import com.google.firebase.FirebaseOptions
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -42,5 +43,15 @@ class FirebaseConfig {
         val messaging = FirebaseMessaging.getInstance(firebaseApp)
         println("FirebaseMessaging initialized for app: ${firebaseApp.name}")
         return messaging
+    }
+
+    @Bean
+    fun firebaseAuth(firebaseApp: FirebaseApp): FirebaseAuth {
+        return try {
+            val auth = FirebaseAuth.getInstance(firebaseApp)
+            auth
+        } catch (e: Exception) {
+            throw e
+        }
     }
 }

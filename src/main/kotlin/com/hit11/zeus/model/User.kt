@@ -14,7 +14,7 @@ data class User(
 
     @Column(name = "firebase_uid", nullable = false, unique = true)
     val firebaseUID: String = "",
-    val fcmToken: String? = null,
+    var fcmToken: String? = null,
     val email: String? = "",
     val name: String? = "",
     val phone: String = "",
