@@ -29,7 +29,6 @@ class WebSocketHandler(
 
     private val logger = Logger.getLogger(WebSocketHandler::class.java)
     private val sessions = ConcurrentHashMap<String, WebSocketSession>()
-//    private val sessionToUser = ConcurrentHashMap<String, Int>() // Map session to userId
     private val lastSessionMessage = ConcurrentHashMap<String, CharSequence>()
     private val matchSubscriptions = ConcurrentHashMap<String, MutableSet<WebSocketSession>>()
     private val userNotifications = ConcurrentHashMap<Int, WebSocketSession>()
@@ -37,13 +36,13 @@ class WebSocketHandler(
 
     @PostConstruct
     fun init() {
-        println("WebSocketHandler initialized. Instance: ${this.hashCode()}")
+        logger.info("WebSocketHandler initialized. Instance: ${this.hashCode()}")
     }
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
         val sessionId = session.id
         sessions[sessionId] = session
-        println(
+        logger.info(
             "New WebSocket connection: $sessionId. Total sessions: ${sessions.size}. Handler instance: ${this.hashCode()}"
         )
         lastSessionMessage[session.id]?.let {
@@ -53,7 +52,7 @@ class WebSocketHandler(
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val payload = message.payload
-        println("Received message: $payload")
+        logger.info("WebSocketHandler Received message: $payload")
 
         try {
             val subscriptionMessage = objectMapper.readValue<WebSocketSubscriptionMessage>(message.payload)
@@ -64,7 +63,7 @@ class WebSocketHandler(
                 else -> logger.warn("Unknown action received: ${subscriptionMessage.action}")
             }
         } catch (e: Exception) {
-            logger.error("Error processing message", e)
+            logger.error("WebSocketHandler Error processing message", e)
         }
     }
 
@@ -73,12 +72,13 @@ class WebSocketHandler(
             SubscriptionType.MATCH.name -> {
                 val matchId = message.metadata["matchId"] as String
                 matchSubscriptions.getOrPut(matchId) { ConcurrentHashMap.newKeySet() }.add(session)
-                logger.info("Session ${session.id} subscribed to match $matchId")
+                logger.info("WebSocketHandler Session ${session.id} subscribed to match $matchId")
             }
+
             SubscriptionType.NOTIFICATION.name -> {
                 val userId = (message.metadata["userId"] as Number).toInt()
                 userNotifications[userId] = session
-                logger.info("User $userId subscribed to notifications")
+                logger.info("WebSocketHandler User $userId subscribed to notifications")
             }
         }
     }
@@ -88,12 +88,13 @@ class WebSocketHandler(
             SubscriptionType.MATCH.name -> {
                 val matchId = message.metadata["matchId"] as String
                 matchSubscriptions[matchId]?.remove(session)
-                logger.info("Session ${session.id} unsubscribed from match $matchId")
+                logger.info("WebSocketHandler Session ${session.id} unsubscribed from match $matchId")
             }
+
             SubscriptionType.NOTIFICATION.name -> {
                 val userId = (message.metadata["userId"] as Number).toInt()
                 userNotifications.remove(userId)
-                logger.info("User $userId unsubscribed from notifications")
+                logger.info("WebSocketHandler User $userId unsubscribed from notifications")
             }
         }
     }
@@ -106,14 +107,15 @@ class WebSocketHandler(
                     matchSubscriptions[matchId]?.forEach { session ->
                         val webSocketMessage = createLiveScoreMessage(topic, message)
                         session.sendMessage(TextMessage(webSocketMessage))
-                        logger.info("Sent live score update for match $matchId")
+                        logger.info("WebSocketHandler Sent live score update for match $matchId")
                     }
                 }
+
                 is NotificationPayload -> {
                     userNotifications[message.userId]?.let { session ->
                         val webSocketMessage = createNotificationMessage(topic, message)
                         session.sendMessage(TextMessage(webSocketMessage))
-                        logger.info("Sent notification to user ${message.userId}")
+                        logger.info("WebSocketHandler Sent notification to user ${message.userId}")
                     }
                 }
             }
@@ -122,12 +124,22 @@ class WebSocketHandler(
         }
     }
 
+    fun broadcastToAllSessions(message: String) {
+        sessions.values.forEach { session ->
+            try {
+                session.sendMessage(TextMessage(message))
+            } catch (e: Exception) {
+                logger.error("WebSocketHandler Failed to send price update to session ${session.id}", e)
+            }
+        }
+    }
+
     override fun afterConnectionClosed(
         session: WebSocketSession,
         status: CloseStatus
     ) {
         sessions.remove(session.id)
-        println("WebSocket connection closed: ${session.id}")
+        logger.info("WebSocket connection closed: ${session.id}")
     }
 
     private fun createLiveScoreMessage(topic: String, scorecard: Hit11Scorecard): String {
@@ -160,56 +172,4 @@ class WebSocketHandler(
             )
         )
     }
-
-//        sessions.values.forEach { session ->
-//            val subscribedTopicsBySession = session.attributes["subscribedTopics"] as? Set<String>
-//
-//            // For notifications, check if the user is the target recipient
-//            if (message is NotificationPayload) {
-//                val sessionUserId = sessionToUser[session.id]
-//                if (sessionUserId == message.userId) {
-//                    val jsonMessage = objectMapper.writeValueAsString(webSocketMessage)
-//                    session.sendMessage(TextMessage(jsonMessage))
-//                    println("Sent notification to user $sessionUserId")
-//                }
-//            } else if (subscribedTopicsBySession?.contains(topic) == true) {
-//                println("Session ${session.id} subscribed topics: $subscribedTopicsBySession")
-//                val jsonMessage = JsonObject().apply {
-//                    addProperty(
-//                        "topic",
-//                        topic
-//                    )
-//                    addProperty("matchId", topic.removePrefix("match"))
-//                    addProperty("liveScore", Gson().toJson(message))
-//                }.toString()
-//                lastSessionMessage[session.id] = jsonMessage
-//                if (subscribedTopicsBySession?.contains(topic) == true) {
-//                    session.sendMessage(TextMessage(jsonMessage))
-//                    println("Sent message to session ${session.id} for topic $topic")
-//                }
-//            }
-//        }
-//    }
-
-
-//    private fun handleSubscribe(
-//        topic: String?,
-//        session: WebSocketSession
-//    ) {
-//        if (topic == null) return
-//        val subscribedTopics =
-//            session.attributes.getOrPut("subscribedTopics") { mutableSetOf<String>() } as MutableSet<String>
-//        subscribedTopics.add(topic)
-//        println("Session ${session.id} subscribed to topic: $topic")
-//    }
-//
-//    private fun handleUnsubscribe(
-//        topic: String?,
-//        session: WebSocketSession
-//    ) {
-//        if (topic == null) return
-//        val subscribedTopics = session.attributes["subscribedTopics"] as? MutableSet<String>
-//        subscribedTopics?.remove(topic)
-//        println("Session ${session.id} unsubscribed from topic: $topic")
-//    }
 }

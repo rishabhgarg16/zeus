@@ -109,7 +109,10 @@ abstract class BaseQuestionGenerator<T : QuestionParameter>(
             targetWides = targetWides,
             targetBoundaries = targetBoundaries,
             targetTossDecision = targetTossDecision,
-            pulseEndDate = Instant.now().plus(30, ChronoUnit.MINUTES),
+            pulseEndDate = when {
+                state.liveScorecard.endTimestamp == 0L -> Instant.now().plus(3, ChronoUnit.HOURS)
+                else -> Instant.ofEpochMilli(state.liveScorecard.endTimestamp)
+            },
             // TODO add pulseimage in question creation
             pulseImageUrl = getQuestionImage()
         )

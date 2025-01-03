@@ -8,7 +8,10 @@ import com.hit11.zeus.model.OrderStatus
 import java.math.BigDecimal
 import java.util.*
 
-class OrderBook(val pulseId: Int) {
+class OrderBook(
+    val pulseId: Int,
+    private val priceUpdateService: PriceUpdateService
+) {
     private val logger = Logger.getLogger(this::class.java)
     private var lastTradedYesPrice: BigDecimal? = null
     private var lastTradedNoPrice: BigDecimal? = null
@@ -133,6 +136,27 @@ class OrderBook(val pulseId: Int) {
             lastTradedYesPrice = match.matchedYesPrice
             lastTradedNoPrice = match.matchedNoPrice
         }
+        // send to websocket price update
+        sendPriceUpdate()
+    }
+
+    private fun sendPriceUpdate() {
+        val yesBest = yesBuyOrders.peek()?.price
+        val noBest = noBuyOrders.peek()?.price
+        val (yesVol, noVol) = getVolumes()
+
+        priceUpdateService.broadcastPrice(
+            pulseId,
+            PriceUpdate(
+                pulseId = pulseId,
+                yesBestPrice = yesBest,
+                noBestPrice = noBest,
+                lastYesPrice = lastTradedYesPrice,
+                lastNoPrice = lastTradedNoPrice,
+                yesVolume = yesVol,
+                noVolume = noVol
+            )
+        )
     }
 
     fun addOrder(order: Order): Boolean {

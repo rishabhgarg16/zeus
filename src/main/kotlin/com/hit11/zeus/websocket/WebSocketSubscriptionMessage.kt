@@ -9,7 +9,7 @@ data class WebSocketSubscriptionMessage(
 
 enum class SubscriptionType {
     MATCH,
-    NOTIFICATION
+    NOTIFICATION,
 }
 
 enum class SubscriptionAction {

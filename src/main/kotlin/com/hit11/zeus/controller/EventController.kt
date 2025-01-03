@@ -13,10 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-data class LiveMatchRequest(
-    val matchId: Int = -1, val score: String = ""
-)
-
 data class BallEventProcessResponse (
     val updatedQuestions: List<Question>,
     val notUpdatedQuestions: List<Question>,

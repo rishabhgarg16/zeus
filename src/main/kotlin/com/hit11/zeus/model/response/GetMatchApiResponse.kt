@@ -16,6 +16,8 @@ data class GetMatchApiResponse(
     val matchType: String? = null,
     val matchStatus: String = "Scheduled",
     val matchLink: String? = null,
+    val matchFormat: String? = null,  // ODI, T20, TEST
+    val matchTitle:  String? = null,
     val startDate: String = "",
     val team1ShortName: String? = null,
     val team2ShortName: String? = null,
@@ -38,6 +40,8 @@ fun Match.toGetMatchApiResponse(): GetMatchApiResponse {
         matchType = matchType,
         matchStatus = status,
         matchLink = matchLink,
+        matchFormat = matchFormat ?: "T20",
+        matchTitle = matchTitle,
         startDate = startDate.toString(),
         team1ShortName = team1ShortName,
         team2ShortName = team2ShortName,
