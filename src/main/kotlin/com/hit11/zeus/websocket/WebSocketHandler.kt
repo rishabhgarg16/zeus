@@ -125,7 +125,7 @@ class WebSocketHandler(
     }
 
     fun broadcastToAllSessions(message: String) {
-        sessions.values.forEach { session ->
+        sessions.values.forEach { session -> // TODO can do async
             try {
                 session.sendMessage(TextMessage(message))
             } catch (e: Exception) {
