@@ -40,7 +40,11 @@ class UserService(
     }
 
     fun getUser(firebaseUID: String): User? {
-        return userRepository.findByFirebaseUID(firebaseUID)
+        var hit11User = userRepository.findByFirebaseUID(firebaseUID)
+        if (hit11User == null) {
+            hit11User = createUser(firebaseUID, "")
+        }
+        return hit11User
     }
 
     fun createUser(firebaseUID: String, fcmToken: String): User {
