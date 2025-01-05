@@ -12,12 +12,12 @@ function showSlide(index) {
 }
 
 function nextSlide() {
-    currentIndex = (currentIndex + 1) % slides.length;
+    currentIndex = (currentIndex + 1) % dots.length;
     showSlide(currentIndex);
 }
 
 // Auto-slide every 5 seconds
-setInterval(nextSlide, 5000);
+//setInterval(nextSlide, 50000);
 
 // Add event listeners for dots
 dots.forEach(dot => {
