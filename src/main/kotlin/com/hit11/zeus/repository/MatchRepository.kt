@@ -60,7 +60,7 @@ interface MatchRepository : JpaRepository<Match, Int> {
         """
     SELECT m FROM Match m
     WHERE m.id = :matchId
-    AND m.status IN ('Scheduled', 'Preview', 'In Progress')
+    AND m.status NOT IN ('Complete')
     """
     )
     fun findActiveMatchById(@Param("matchId") matchId: Int): Optional<Match>
