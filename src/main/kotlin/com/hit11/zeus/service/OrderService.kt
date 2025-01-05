@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.hit11.zeus.config.AwsProperties
 import com.hit11.zeus.exception.*
 import com.hit11.zeus.model.*
+import com.hit11.zeus.notification.NotificationService
 import com.hit11.zeus.repository.MatchRepository
 import com.hit11.zeus.repository.OrderRepository
 import com.hit11.zeus.repository.QuestionRepository
@@ -28,7 +29,8 @@ class OrderService(
     private val sqsClient: SqsClient,
     private val matchingEngine: MatchingEngine,
     private val orderExecutionService: OrderExecutionService,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val notificationService: NotificationService
 ) {
     private val logger = Logger.getLogger(this.javaClass)
 
@@ -164,9 +166,13 @@ class OrderService(
             val releaseAmount = order.price.multiply(BigDecimal(order.remainingQuantity))
             userService.releaseReservedBalance(order.userId, releaseAmount)
         }
-        return orderRepository.save(order)
-    }
+        val savedOrder = orderRepository.save(order)
 
+        // Send notification asynchronously
+        notificationService.notifyOrderCancelled(savedOrder)
+
+        return savedOrder
+    }
 
     @Transactional
     fun cancelAllOpenOrders(pulseId: Int) {
@@ -189,7 +195,8 @@ class OrderService(
             }
         }
 
-        orderRepository.saveAll(updatedOrders)
+        val savedOrders = orderRepository.saveAll(updatedOrders)
+        savedOrders.forEach { order -> notificationService.notifyOrderCancelled(order) }
         logger.info("Successfully cancelled ${updatedOrders.size} orders for pulseId $pulseId")
     }
 
@@ -216,7 +223,8 @@ class OrderService(
             }
 
             // Save all cancelled orders
-            orderRepository.saveAll(cancellableOrders)
+            val savedOrders = orderRepository.saveAll(cancellableOrders)
+            savedOrders.forEach { order -> notificationService.notifyOrderCancelled(order) }
 
             return true
         } catch (e: Exception) {

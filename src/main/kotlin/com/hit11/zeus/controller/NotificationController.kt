@@ -15,7 +15,7 @@ class NotificationController(
     @PostMapping("/send")
     fun sendNotification(@RequestBody @Valid payload: NotificationPayload): ResponseEntity<String> {
         return try {
-            notificationService.handleNotification(payload)
+            notificationService.sendNotificationAsync(payload)
             ResponseEntity.ok("Notification sent successfully")
         } catch (e: Exception) {
             ResponseEntity.internalServerError().body("Failed to send notification: ${e.message}")

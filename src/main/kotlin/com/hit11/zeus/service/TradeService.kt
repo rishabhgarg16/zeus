@@ -51,7 +51,12 @@ class TradeService(
             )
         )
         // Save the trades in the database
-        tradeRepository.saveAll(trades)
+        val savedTrades = tradeRepository.saveAll(trades)
+
+        // Send notifications asynchronously for each trade
+        savedTrades.forEach { trade ->
+            notificationService.notifyTradeCreated(trade)
+        }
     }
 
     @Transactional
@@ -87,7 +92,7 @@ class TradeService(
             val message = if (trade.status == TradeStatus.WON) {
                 "Your trade on Pulse ${trade.pulseId} was a success. You've won ₹${trade.pnl}!"
             } else {
-                "Your trade on Pulse ${trade.pulseId} did not succeed. Try again next time!"
+                "Your trade on Pulse ${trade.pulseId} did not succeed. Trade more to win next time!"
             }
 
             val payload = NotificationPayload(
@@ -103,7 +108,7 @@ class TradeService(
                 deliveryType = deliveryType
             )
 
-            notificationService.handleNotification(payload)
+            notificationService.sendNotificationAsync(payload)
         }
 
     }
