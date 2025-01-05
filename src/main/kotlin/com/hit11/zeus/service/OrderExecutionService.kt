@@ -6,6 +6,7 @@ import com.hit11.zeus.model.OrderSide
 import com.hit11.zeus.repository.MatchedOrderRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.Instant
 import javax.transaction.Transactional
 
 @Service
@@ -72,6 +73,29 @@ class OrderExecutionService(
     // Get all trades for a given pulse ID
     fun getMatchedOrdersByPulse(pulseId: Int): List<OrderExecution> {
         return matchedOrderRepository.findByPulseId(pulseId)
+    }
+
+    private val pulseIdToOrderExecution: HashMap<Int, OrderExecution> = HashMap()
+    private val pulseIdToUpdatedAt: HashMap<Int, Instant> = HashMap()
+    private val cacheMsTTL: Long = 1000L
+
+    fun getLastTradedPulses(pulseIds: List<Int>): List<OrderExecution> {
+        val orderExecutions = mutableListOf<OrderExecution>()
+        for (pulseId in pulseIds) {
+            val updatedAt = pulseIdToUpdatedAt[pulseId]
+            val orderExecution = pulseIdToOrderExecution[pulseId]
+            if (updatedAt != null && updatedAt.plusMillis(cacheMsTTL) < Instant.now() && orderExecution != null) {
+                orderExecutions.add(orderExecution)
+            } else {
+                val lastOrderExecution = matchedOrderRepository.findTopByPulseIdOrderByCreatedAtDesc(pulseId)
+                if (lastOrderExecution != null) {
+                    pulseIdToOrderExecution[pulseId] = lastOrderExecution
+                    pulseIdToUpdatedAt[pulseId] = Instant.now()
+                    orderExecutions.add(lastOrderExecution)
+                }
+            }
+        }
+        return orderExecutions
     }
 
     // Get all trades for a given match ID

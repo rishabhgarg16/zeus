@@ -3,6 +3,7 @@ package com.hit11.zeus.question
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
+import java.math.BigDecimal
 
 data class WinByRunsMarginParameter(
     val targetTeamId: Int,
@@ -91,11 +92,11 @@ class WinByRunsMarginQuestionGenerator(
         )
     }
 
-    override fun calculateInitialWagers(param: WinByRunsMarginParameter, state: MatchState): Pair<Long, Long> {
-        if (state.liveScorecard.innings.size < 2) return Pair(0, 0)
+    override fun calculateInitialWagers(param: WinByRunsMarginParameter, state: MatchState): Pair<BigDecimal, BigDecimal> {
+        if (state.liveScorecard.innings.size < 2) return INITIAL_WAGER
 
         val secondInnings = state.liveScorecard.innings.find { it.isCurrentInnings }
-        if (secondInnings == null) return Pair(0, 0)
+        if (secondInnings == null) return INITIAL_WAGER
 
         val previousInningsId = if (secondInnings.inningsId == 1) 0 else 1
         val firstInnings = state.liveScorecard.innings[previousInningsId]
@@ -123,8 +124,8 @@ class WinByRunsMarginQuestionGenerator(
             }
         }
 
-        val wagerA = (10 * probability).toLong().coerceIn(1L, 9L)
-        val wagerB = 10 - wagerA
+        val wagerA = BigDecimal(10 * probability)
+        val wagerB = BigDecimal(10).minus(wagerA)
 
         return Pair(wagerA, wagerB)
     }

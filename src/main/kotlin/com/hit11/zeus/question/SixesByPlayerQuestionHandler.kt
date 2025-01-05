@@ -3,6 +3,7 @@ package com.hit11.zeus.question
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
+import java.math.BigDecimal
 
 data class SixesByPlayerParameter(
     val batsmanId: Long, val targetSixes: Int
@@ -79,10 +80,11 @@ class SixesByPlayerQuestionGenerator(
         )
     }
 
-     override fun calculateInitialWagers(param: SixesByPlayerParameter, state: MatchState): Pair<Long, Long> {
-        val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return Pair(5L, 5L)
+    val INITIAL_WAGER = Pair(BigDecimal(5), BigDecimal(5))
+     override fun calculateInitialWagers(param: SixesByPlayerParameter, state: MatchState): Pair<BigDecimal, BigDecimal> {
+        val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return INITIAL_WAGER
         val batsman =
-            currentInnings.battingPerformances.find { it.playerId == param.batsmanId.toInt() } ?: return Pair(5L, 5L)
+            currentInnings.battingPerformances.find { it.playerId == param.batsmanId.toInt() } ?: return INITIAL_WAGER
 
         val currentSixes = batsman.sixes
         val ballsFaced = batsman.balls
@@ -96,8 +98,8 @@ class SixesByPlayerQuestionGenerator(
             else -> 0.4
         }
 
-        val wagerA = (10 * probability).toLong().coerceIn(1L, 9L)
-        val wagerB = 10 - wagerA
+        val wagerA = BigDecimal(10 * probability)
+        val wagerB = BigDecimal(10).minus(wagerA)
 
         return Pair(wagerA, wagerB)
     }

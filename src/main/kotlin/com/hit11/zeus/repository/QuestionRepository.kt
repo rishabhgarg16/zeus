@@ -2,8 +2,11 @@ package com.hit11.zeus.repository
 
 import com.hit11.zeus.model.*
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 @Repository
 interface QuestionRepository : JpaRepository<Question, Int> {
@@ -102,6 +105,10 @@ interface QuestionRepository : JpaRepository<Question, Int> {
     fun findAllByStatus(status: QuestionStatus): List<Question>
     fun findAllByMatchIdIn(matchIds: List<Int>): List<Question>
     fun getPulseById(id: Int): Question
+    @Modifying
+    @Query("UPDATE Question q SET q.optionAWager = :optionAWager, q.optionBWager = :optionBWager WHERE q.id = :pulseId")
+    @Transactional
+    fun updateOptionWagers(pulseId: Int, optionAWager: BigDecimal, optionBWager: BigDecimal): Int
 }
 
 @Repository

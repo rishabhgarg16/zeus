@@ -99,8 +99,8 @@ class TeamRunsInMatchQuestionGenerator(
         )
     }
 
-    override fun calculateInitialWagers(param: TeamRunsInQuestionParameter, state: MatchState): Pair<Long, Long> {
-        val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return Pair(5L, 5L)
+    override fun calculateInitialWagers(param: TeamRunsInQuestionParameter, state: MatchState): Pair<BigDecimal, BigDecimal> {
+        val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return INITIAL_WAGER
         val currentRunRate = currentInnings.runRate
         val targetRunRate = param.targetRuns.toFloat() / param.targetOvers
 
@@ -111,8 +111,8 @@ class TeamRunsInMatchQuestionGenerator(
             else -> 0.8
         }
 
-        val wagerA = (10 * probability).toLong().coerceIn(1L, 9L)
-        val wagerB = 10 - wagerA
+        val wagerA = BigDecimal(10 * probability)
+        val wagerB = BigDecimal(10).minus(wagerA)
 
         return Pair(wagerA, wagerB)
     }

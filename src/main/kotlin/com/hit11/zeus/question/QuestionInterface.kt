@@ -2,6 +2,7 @@ package com.hit11.zeus.question
 
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -41,9 +42,9 @@ interface QuestionGenerator<T : QuestionParameter> {
 abstract class BaseQuestionGenerator<T : QuestionParameter>(
     protected val questionRepository: QuestionRepository
 ) : QuestionGenerator<T> {
-    open fun calculateInitialWagers(param: T, state: MatchState): Pair<Long, Long> {
+    open fun calculateInitialWagers(param: T, state: MatchState): Pair<BigDecimal, BigDecimal> {
         // Default implementation: even odds
-        return Pair(5L, 5L)
+        return Pair(BigDecimal(5), BigDecimal(5))
     }
 
     protected fun generateUserCounts(): Pair<Long, Long> {

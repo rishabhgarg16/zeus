@@ -18,7 +18,8 @@ class QuestionService(
     private val questionRepository: QuestionRepository,
     private val questionGenerators: List<QuestionGenerator<*>>,
     private val resolutionStrategies: Map<QuestionType, ResolutionStrategy>,
-    private val payoutService: PayoutService
+    private val payoutService: PayoutService,
+    private val orderExecutionService: OrderExecutionService
 ) {
     private var previousState: MatchState? = null
     private var lastProcessedBallNumber: Int = 0

@@ -2,6 +2,7 @@ package com.hit11.zeus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.hibernate.annotations.BatchSize
+import java.math.BigDecimal
 import java.time.Instant
 import javax.persistence.*
 
@@ -64,13 +65,13 @@ data class Question(
     val optionA: String = "",
 
     @Column(name = "option_a_wager")
-    val optionAWager: Long = -1L,
+    val optionAWager: BigDecimal = BigDecimal(5),
 
     @Column(name = "option_b")
     val optionB: String = "",
 
     @Column(name = "option_b_wager")
-    val optionBWager: Long = -1L,
+    val optionBWager: BigDecimal = BigDecimal(5),
 
     @Column(name = "user_a_count")
     val userACount: Long? = -1L,

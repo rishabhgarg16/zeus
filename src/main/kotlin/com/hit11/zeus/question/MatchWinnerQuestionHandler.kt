@@ -3,6 +3,7 @@ package com.hit11.zeus.question
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
+import java.math.BigDecimal
 
 data class MatchWinnerParameter(val targetTeamId: Int) : QuestionParameter()
 
@@ -67,8 +68,8 @@ class MatchWinnerQuestionGenerator(
         )
     }
 
-    override fun calculateInitialWagers(param: MatchWinnerParameter, state: MatchState): Pair<Long, Long> {
-        return Pair(5L, 5L)
+    override fun calculateInitialWagers(param: MatchWinnerParameter, state: MatchState): Pair<BigDecimal, BigDecimal> {
+        return Pair(BigDecimal(5), BigDecimal(5))
     }
 }
 

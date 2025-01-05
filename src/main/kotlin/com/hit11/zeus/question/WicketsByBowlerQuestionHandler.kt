@@ -3,6 +3,7 @@ package com.hit11.zeus.question
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
+import java.math.BigDecimal
 
 data class WicketsByBowlerParameter(
     val targetBowlerId: Int,
@@ -65,11 +66,11 @@ class WicketsByBowlerQuestionGenerator(
         )
     }
 
-    override fun calculateInitialWagers(param: WicketsByBowlerParameter, state: MatchState): Pair<Long, Long> {
-        val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return Pair(5L, 5L)
+    override fun calculateInitialWagers(param: WicketsByBowlerParameter, state: MatchState): Pair<BigDecimal, BigDecimal> {
+        val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return INITIAL_WAGER
         val matchFormat = state.liveScorecard.matchFormat
         val bowler =
-            currentInnings.bowlingPerformances.find { it.playerId == param.targetBowlerId } ?: return Pair(5L, 5L)
+            currentInnings.bowlingPerformances.find { it.playerId == param.targetBowlerId } ?: return INITIAL_WAGER
 
         val currentWickets = bowler.wickets
         val targetWickets = param.targetWickets
@@ -85,8 +86,8 @@ class WicketsByBowlerQuestionGenerator(
             else -> 0.2
         }
 
-        val wagerA = (10 * probability).toLong().coerceIn(1L, 9L)
-        val wagerB = 10 - wagerA
+        val wagerA = BigDecimal(10 * probability)
+        val wagerB = BigDecimal(10).minus(wagerA)
 
         return Pair(wagerA, wagerB)
     }

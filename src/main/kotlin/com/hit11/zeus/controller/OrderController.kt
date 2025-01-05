@@ -3,6 +3,7 @@ package com.hit11.zeus.controller
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.Order
+import com.hit11.zeus.model.OrderExecution
 import com.hit11.zeus.model.OrderRequest
 import com.hit11.zeus.model.UiOrderResponse
 import com.hit11.zeus.model.response.ApiResponse
@@ -214,6 +215,40 @@ class OrderController(
                 )
             )
         }
+    }
+
+    @GetMapping("/lastTradedPrice/{pulseId}")
+    fun getLastTradedPrice(@PathVariable pulseId: Int): ResponseEntity<ApiResponse<OrderExecution>> {
+        val orders = orderService.lastTradedPrices(mutableListOf( pulseId))
+        if (orders.isNotEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    message = "Success",
+                    internalCode = null,
+                    data = orders[0]
+                )
+            )
+        }
+        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ApiResponse(
+                status = HttpStatus.NOT_FOUND.value(),
+                message = "No orders found",
+                internalCode = null,
+                data = null
+            )
+        )
+    }
+    @PostMapping("/lastTradedPrices")
+    fun getLastTradedPrices(@Valid @RequestBody pulseIds: List<Int>): ResponseEntity<ApiResponse<List<OrderExecution>>> {
+        return ResponseEntity.status(HttpStatus.OK).body(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                message = "Success",
+                internalCode = null,
+                data = orderService.lastTradedPrices(pulseIds)
+            )
+        )
     }
 }
 

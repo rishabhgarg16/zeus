@@ -4,6 +4,9 @@ import com.hit11.zeus.model.QuestionType
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.math.BigDecimal
+
+val INITIAL_WAGER = Pair(BigDecimal(5), BigDecimal(5))
 
 @Configuration
 class QuestionConfig(private val questionRepository: QuestionRepository) {

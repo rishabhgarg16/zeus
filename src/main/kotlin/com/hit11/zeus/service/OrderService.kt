@@ -9,6 +9,9 @@ import com.hit11.zeus.repository.MatchRepository
 import com.hit11.zeus.repository.OrderRepository
 import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.UserRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.sqs.SqsClient
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
@@ -124,6 +127,17 @@ class OrderService(
             matches.forEach { match ->
                 updateOrderStatus(match.yesOrder)
                 updateOrderStatus(match.noOrder)
+            }
+
+            // Step 4: Launch async pulse question update
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    matches.groupBy { it.yesOrder.pulseId }.forEach {
+                        questionRepository.updateOptionWagers(it.key, it.value.last().matchedYesPrice, it.value.last().matchedYesPrice)
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to update pulse questions", e)
+                }
             }
 
         } catch (e: Exception) {
@@ -383,5 +397,9 @@ class OrderService(
         ) {
             throw OrderValidationException("Order time is out of acceptable range")
         }
+    }
+
+    fun lastTradedPrices(pulseIds: List<Int>): List<OrderExecution> {
+        return orderExecutionService.getLastTradedPulses(pulseIds)
     }
 }
