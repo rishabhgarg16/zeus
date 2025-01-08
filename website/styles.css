@@ -1,4 +1,8 @@
 /* General Styles */
+
+:root {
+    --bg-color: linear-gradient(45deg, #6382e0, #2c65df);
+}
 body {
     margin: 0;
     font-family: 'Roboto', sans-serif;
@@ -17,7 +21,8 @@ img {
 
 /* Top Navigation Bar */
 .top-bar {
-    background: #0056b3;
+    /* background: #608ec0; */
+    background: var(--bg-color);
     color: white;
     display: flex;
     justify-content: space-between;
@@ -48,6 +53,13 @@ img {
     font-weight: 500;
     transition: color 0.3s ease;
 }
+
+.top-bar .nav-links-download div {
+    font-weight: 100;
+    font-size: xx-small;
+    text-align: right;
+}
+
 .top-bar .nav-links a:hover {
     color: #ffdd57;
 }
@@ -55,9 +67,9 @@ img {
 /* Hero Section with Carousel */
 .hero-section {
     text-align: center;
-    background: #0056b3;
+    background: var(--bg-color);
     color: white;
-    padding: 50px 20px;
+    padding: 15px 20px;
     position: relative;
 }
 .carousel {
@@ -135,7 +147,8 @@ img {
 /* How to Play Section */
 .how-to-play {
     padding: 50px 20px;
-    background: #f1f1f1;
+    background: var(--bg-color);
+    color: white;
 }
 .how-to-play h2 {
     font-size: 2rem;
@@ -164,7 +177,37 @@ img {
 }
 .step p {
     font-size: 0.9rem;
+    color: white;
+}
+
+/* Info Columns Section */
+.info-columns {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 50px 20px;
+    background: #f9f9f9;
+}
+.info-columns .column {
+    flex: 1;
+    max-width: 200px;
+    margin: 10px;
+    text-align: left;
+}
+.info-columns h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #333;
+}
+.info-columns ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.info-columns li {
+    font-size: 1rem;
     color: #555;
+    margin: 5px 0;
 }
 
 /* Sticky Store Links */
@@ -206,7 +249,7 @@ img {
     background: #333;
     color: white;
     padding: 20px;
-    margin-top: 50px;
+    /* margin-top: 50px; */
 }
 .footer-links {
     margin-bottom: 10px;

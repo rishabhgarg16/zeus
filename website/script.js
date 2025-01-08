@@ -29,3 +29,53 @@ dots.forEach(dot => {
 
 // Initialize
 showSlide(currentIndex);
+
+
+const jsonData = [
+    {
+        title: "Company",
+        items: ["About Us", "Culture"]
+    },
+    {
+        title: "Resources",
+        items: ["Help Centre", "Contact Support", "What's New"]
+    },
+    {
+        title: "Careers",
+        items: ["Open Roles"]
+    },
+    {
+        title: "Contact Us",
+        items: ["help@hit11.ai", "communication@hit11.ai"]
+    }
+];
+
+function generateHTMLFromJSON(data) {
+    const container = document.getElementById("info-container");
+    container.className = "info-columns";
+
+    data.forEach(section => {
+        const column = document.createElement("div");
+        column.className = "column";
+
+        const heading = document.createElement("h3");
+        heading.textContent = section.title;
+        column.appendChild(heading);
+
+        const list = document.createElement("ul");
+        section.items.forEach(item => {
+            const listItem = document.createElement("li");
+            listItem.textContent = item;
+            list.appendChild(listItem);
+        });
+
+        column.appendChild(list);
+        container.appendChild(column);
+    });
+
+    document.body.appendChild(container);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    generateHTMLFromJSON(jsonData);
+});
