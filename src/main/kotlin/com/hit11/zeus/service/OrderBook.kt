@@ -157,7 +157,6 @@ class OrderBook(
                 noVolume = noVol
             )
         )
-
     }
 
     fun addOrder(order: Order): Boolean {
