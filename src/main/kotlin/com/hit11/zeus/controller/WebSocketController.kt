@@ -15,7 +15,7 @@ class WebSocketController @Autowired constructor(
     fun broadcastMessage(@RequestBody message: BroadcastRequest): ResponseEntity<String> {
         return try {
             webSocketHandler.broadcastToAllSessions(message.content)
-            ResponseEntity.ok("Message broadcasted to all sessions")
+            ResponseEntity.ok("Message broadcast to all sessions")
         } catch (e: Exception) {
             ResponseEntity.badRequest().body("Failed to broadcast message: ${e.message}")
         }

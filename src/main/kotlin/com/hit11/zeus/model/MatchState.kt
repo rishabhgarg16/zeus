@@ -31,3 +31,12 @@ enum class CricbuzzMatchPlayingState(val state: String) {
     @JsonProperty("Tea")
     TEA("Tea")
 }
+
+fun getCricbuzzMatchPlayingState(state: String): CricbuzzMatchPlayingState {
+    for (value in CricbuzzMatchPlayingState.entries) {
+        if (value.state == state) {
+            return value
+        }
+    }
+    return CricbuzzMatchPlayingState.COMPLETE
+}

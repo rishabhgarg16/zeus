@@ -1,6 +1,7 @@
 package com.hit11.zeus.controller
 
 import com.google.cloud.firestore.Firestore
+import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.response.GetMatchApiResponse
@@ -38,6 +39,19 @@ class MatchController(
     @GetMapping("/{matchId}")
     fun getMatchById(@PathVariable matchId: Int): ResponseEntity<ApiResponse<Match>> {
         val data = matchService.getMatchById(matchId)
+        return ResponseEntity.ok(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = data
+            )
+        )
+    }
+
+    @GetMapping("/livescore/{matchId}")
+    fun getLiveScore(@PathVariable matchId: Int): ResponseEntity<ApiResponse<Hit11Scorecard>> {
+        val data = matchService.getScoreByMatch(matchId)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),

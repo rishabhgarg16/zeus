@@ -1,5 +1,6 @@
 package com.hit11.zeus.service
 
+import com.hit11.zeus.livedata.Hit11Scorecard
 import com.hit11.zeus.model.Match
 import com.hit11.zeus.model.MatchStatus
 import com.hit11.zeus.repository.MatchRepository
@@ -11,6 +12,7 @@ import java.time.temporal.ChronoUnit
 @Service
 class MatchService(
     private val matchRepository: MatchRepository,
+    private val cricbuzzApiService: CricbuzzApiService
 ) {
     fun getRelevantMatches(limit: Int): List<Match> {
         val recentCompletedMatchThreshold =
@@ -45,5 +47,13 @@ class MatchService(
             println("Error fetching match by ID: $e")
             null
         }
+    }
+
+    fun getScoreByMatch(matchId: Int): Hit11Scorecard {
+        val match = getMatchById(matchId)
+        if (match?.cricbuzzMatchId != null) {
+            return cricbuzzApiService.getMatchScore(match.id,match.cricbuzzMatchId)
+        }
+        return Hit11Scorecard()
     }
 }

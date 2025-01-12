@@ -35,6 +35,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
     implementation("redis.clients:jedis")
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.7.6")
     implementation(kotlin("script-runtime"))

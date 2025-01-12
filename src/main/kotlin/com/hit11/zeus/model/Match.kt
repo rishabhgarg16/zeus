@@ -54,6 +54,9 @@ data class Match(
     @Column(name = "team2_id")
     val team2Id: Int = 0,
 
+    @Column(name = "cricbuzz_match_id")
+    val cricbuzzMatchId: Int? = 0,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
 
