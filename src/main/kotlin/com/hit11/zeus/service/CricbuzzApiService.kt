@@ -1,4 +1,345 @@
 package com.hit11.zeus.service
 
+import com.google.gson.Gson
+import com.hit11.zeus.exception.Logger
+import com.hit11.zeus.livedata.Hit11Scorecard
+import com.hit11.zeus.livedata.Innings
+import com.hit11.zeus.livedata.MatchResult
+import com.hit11.zeus.livedata.PlayerOfTheMatch
+import com.hit11.zeus.livedata.Team
+import com.hit11.zeus.livedata.TossResult
+import com.hit11.zeus.model.MatchFormat
+import com.hit11.zeus.model.getCricbuzzMatchPlayingState
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.springframework.stereotype.Service
+import java.math.BigDecimal
+
+@Service
 class CricbuzzApiService {
+    val client = OkHttpClient()
+    private val logger = Logger.getLogger(CricbuzzApiService::class.java)
+
+    fun getMatchScore(matchId: Int, cricbuzzMatchId: Int): Hit11Scorecard {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/$cricbuzzMatchId/comm")
+            .addHeader("x-rapidapi-host", "cricbuzz-cricket.p.rapidapi.com")
+            .addHeader("x-rapidapi-key", "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9")
+            .build()
+        val response = client.newCall(request).execute()
+
+        val gson = Gson()
+        try {
+
+        } catch (e: Exception) {
+            logger.error("Error parsing JSON response: ${e.message}")
+        }
+        val matchData = gson.fromJson(response.body?.string(), MatchData::class.java)
+        return transformMatchDataToHit11Scorecard(matchId, matchData)
+    }
 }
+
+fun transformMatchDataToHit11Scorecard(matchId: Int, matchData: MatchData): Hit11Scorecard {
+    val matchHeader = matchData.matchHeader
+    val matchResult = matchHeader.result.takeIf { it.winningTeam.isNotEmpty() }?.let {
+        MatchResult(
+            // TODO
+        )
+    }
+
+    val team1 = matchHeader.CBTeam1
+    val team2 = matchHeader.CBTeam2
+
+    val inningsList = matchData.miniscore.matchScoreDetails.inningsScoreList.map {
+        convertInningsScoreToInnings(it, matchData)
+    }
+
+    val playerOfTheMatch = matchHeader.playersOfTheMatch.firstOrNull()
+
+    val tossResult = matchHeader.tossResults.takeIf { it.tossWinnerId != 0 }?.let {
+        TossResult(
+            tossWinnerTeamId = it.tossWinnerId,
+            tossWinnerName = it.tossWinnerName,
+            tossDecision = it.decision
+        )
+    }
+
+    val scorecard = Hit11Scorecard(
+        matchId = matchId,
+        matchDescription = matchHeader.matchDescription,
+        matchType = matchHeader.matchType,
+        matchFormat = MatchFormat.valueOf(matchHeader.matchFormat),
+        startTimestamp = matchHeader.matchStartTimestamp,
+        endTimestamp = matchHeader.matchCompleteTimestamp,
+        status = matchHeader.status,
+        state = getCricbuzzMatchPlayingState(matchHeader.state),
+//        result = matchResult,
+//        team1 = Team(id = team1.id, name = team1.name, shortName = team1.shortName),
+//        team2 = Team(id = team2.id, name = team2.name, shortName = team2.shortName),
+        innings = inningsList,
+        playerOfTheMatch = playerOfTheMatch,
+        tossResult = tossResult
+    )
+    return scorecard
+}
+
+
+data class MatchData(
+    val commentaryList: List<Commentary>,
+    val matchHeader: MatchHeader,
+    val miniscore: Miniscore,
+    val commentarySnippetList: List<Any>,
+    val page: String,
+    val enableNoContent: Boolean,
+    val matchVideos: List<Any>,
+    val responseLastUpdated: Long,
+    val cb11: CB11
+)
+
+data class Commentary(
+    val commText: String,
+    val timestamp: Long,
+    val ballNbr: Int,
+    val overNumber: Double?,
+    val inningsId: Int,
+    val event: String,
+    val batTeamName: String,
+    val commentaryFormats: CommentaryFormats,
+    val overSeparator: OverSeparator?
+)
+
+data class CommentaryFormats(
+    val bold: Bold?
+)
+
+data class Bold(
+    val formatId: List<String>,
+    val formatValue: List<String>
+)
+
+data class OverSeparator(
+    val score: Int,
+    val wickets: Int,
+    val inningsId: Int,
+    val o_summary: String,
+    val runs: Int,
+    val batStrikerIds: List<Int>,
+    val batStrikerNames: List<String>,
+    val batStrikerRuns: Int,
+    val batStrikerBalls: Int,
+    val batNonStrikerIds: List<Int>,
+    val batNonStrikerNames: List<String>,
+    val batNonStrikerRuns: Int,
+    val batNonStrikerBalls: Int,
+    val bowlIds: List<Int>,
+    val bowlNames: List<String>,
+    val bowlOvers: Double,
+    val bowlMaidens: Int,
+    val bowlRuns: Int,
+    val bowlWickets: Int,
+    val timestamp: Long,
+    val overNum: Double,
+    val event: String
+)
+
+data class MatchHeader(
+    val matchId: Int,
+    val matchDescription: String,
+    val matchFormat: String,
+    val matchType: String,
+    val complete: Boolean,
+    val domestic: Boolean,
+    val matchStartTimestamp: Long,
+    val matchCompleteTimestamp: Long,
+    val dayNight: Boolean,
+    val year: Int,
+    val state: String,
+    val status: String,
+    val tossResults: TossResults,
+    val result: Result,
+    val revisedTarget: RevisedTarget,
+    val playersOfTheMatch: List<PlayerOfTheMatch>,
+    val playersOfTheSeries: List<PlayerOfTheMatch>,
+    val matchTeamInfo: List<MatchTeamInfo>,
+    val CBTeam1: CBTeam,
+    val CBTeam2: CBTeam,
+    val seriesDesc: String,
+    val seriesId: Int,
+    val seriesName: String,
+    val alertType: String,
+    val livestreamEnabled: Boolean
+)
+
+data class TossResults(
+    val tossWinnerId: Int,
+    val tossWinnerName: String,
+    val decision: String
+)
+
+data class Result(
+    val winningTeam: String,
+    val winByRuns: Boolean,
+    val winByInnings: Boolean
+)
+
+data class RevisedTarget(
+    val reason: String
+)
+
+data class MatchTeamInfo(
+    val battingTeamId: Int,
+    val battingTeamShortName: String,
+    val bowlingTeamId: Int,
+    val bowlingTeamShortName: String
+)
+
+data class CBTeam(
+    val id: Int,
+    val name: String,
+    val playerDetails: List<Any>,
+    val shortName: String
+)
+
+data class Miniscore(
+    val inningsId: Int,
+    val batsmanStriker: Batsman,
+    val batsmanNonStriker: Batsman,
+    val batTeam: BatTeam,
+    val bowlerStriker: Bowler,
+    val bowlerNonStriker: Bowler,
+    val overs: Double,
+    val recentOvsStats: String,
+    val target: Int,
+    val partnerShip: Partnership,
+    val currentRunRate: Double,
+    val requiredRunRate: Double,
+    val lastWicket: String,
+    val matchScoreDetails: MatchScoreDetails,
+    val latestPerformance: List<Performance>,
+    val ppData: PowerplayData,
+    val matchUdrs: MatchUdrs,
+    val overSummaryList: List<Any>,
+    val status: String,
+    val lastWicketScore: Int,
+    val remRunsToWin: Int,
+    val event: String
+)
+
+data class Batsman(
+    val batBalls: Int,
+    val batDots: Int,
+    val batFours: Int,
+    val batId: Int,
+    val batName: String,
+    val batMins: Int,
+    val batRuns: Int,
+    val batSixes: Int,
+    val batStrikeRate: Double
+)
+
+data class BatTeam(
+    val teamId: Int,
+    val teamScore: Int,
+    val teamWkts: Int
+)
+
+data class Bowler(
+    val bowlId: Int,
+    val bowlName: String,
+    val bowlMaidens: Int,
+    val bowlNoballs: Int,
+    val bowlOvs: Double,
+    val bowlRuns: Int,
+    val bowlWides: Int,
+    val bowlWkts: Int,
+    val bowlEcon: Double
+)
+
+data class Partnership(
+    val balls: Int,
+    val runs: Int
+)
+
+data class MatchScoreDetails(
+    val matchId: Int,
+    val inningsScoreList: List<InningsScore>,
+    val tossResults: TossResults,
+    val matchTeamInfo: List<MatchTeamInfo>,
+    val isMatchNotCovered: Boolean,
+    val matchFormat: String,
+    val state: String,
+    val customStatus: String,
+    val highlightedTeamId: Int
+)
+
+data class InningsScore(
+    val inningsId: Int,
+    val batTeamId: Int,
+    val batTeamName: String,
+    val score: Int,
+    val wickets: Int,
+    val overs: Double,
+    val isDeclared: Boolean,
+    val isFollowOn: Boolean,
+    val ballNbr: Int
+)
+
+fun convertInningsScoreToInnings(inningsScore: InningsScore, matchData: MatchData): Innings {
+    val battingCBTeam = Team(inningsScore.batTeamId, inningsScore.batTeamName)
+
+    // Calculating the run rate assuming overs are not zero to avoid division by zero error.
+    val runRate = if (inningsScore.overs > 0) inningsScore.score / inningsScore.overs.toFloat() else 0f
+
+    return Innings(
+        inningsId = inningsScore.inningsId,
+        battingTeam = battingCBTeam,
+        totalRuns = inningsScore.score,
+        wickets = inningsScore.wickets,
+        overs = BigDecimal.valueOf(inningsScore.overs),
+        runRate = runRate,
+        isCurrentInnings = matchData.miniscore.inningsId == inningsScore.inningsId
+        // The rest of the fields are initialized with default values or remain null
+    )
+}
+
+data class Performance(
+    val runs: Int,
+    val wkts: Int,
+    val label: String
+)
+
+data class PowerplayData(
+    val pp_1: Powerplay
+)
+
+data class Powerplay(
+    val ppId: Int,
+    val ppOversFrom: Double,
+    val ppOversTo: Double,
+    val ppType: String,
+    val runsScored: Int
+)
+
+data class MatchUdrs(
+    val matchId: Int,
+    val inningsId: Int,
+    val timestamp: String,
+    val team1Id: Int,
+    val team1Remaining: Int,
+    val team1Successful: Int,
+    val team1Unsuccessful: Int,
+    val team2Id: Int,
+    val team2Remaining: Int,
+    val team2Successful: Int,
+    val team2Unsuccessful: Int
+)
+
+data class CB11(
+    val team1Sname: String,
+    val team2Sname: String,
+    val title: String,
+    val imageId: Int,
+    val appLink: String,
+    val webLink: String
+)
