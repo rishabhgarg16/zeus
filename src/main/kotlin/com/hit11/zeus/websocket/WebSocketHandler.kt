@@ -105,22 +105,37 @@ class WebSocketHandler(
                 is Hit11Scorecard -> {
                     val matchId = topic.removePrefix("match")
                     matchSubscriptions[matchId]?.forEach { session ->
-                        val webSocketMessage = createLiveScoreMessage(topic, message)
-                        session.sendMessage(TextMessage(webSocketMessage))
-                        logger.info("WebSocketHandler Sent live score update for match $matchId")
+                        try {
+                            val webSocketMessage = createLiveScoreMessage(topic, message)
+                            session.sendMessage(TextMessage(webSocketMessage))
+                            logger.info(
+                                "WebSocketHandler Sent live score update for match $matchId to session ${session.id}"
+                            )
+                        } catch (e: Exception) {
+                            logger.error("Failed to send live score update to session ${session.id}", e)
+                            // Optionally remove failed session
+                            matchSubscriptions[matchId]?.remove(session)
+                        }
                     }
                 }
 
                 is NotificationPayload -> {
                     userNotifications[message.userId]?.let { session ->
-                        val webSocketMessage = createNotificationMessage(topic, message)
-                        session.sendMessage(TextMessage(webSocketMessage))
-                        logger.info("WebSocketHandler Sent notification to user ${message.userId}")
+                        try {
+                            val webSocketMessage = createNotificationMessage(topic, message)
+                            session.sendMessage(TextMessage(webSocketMessage))
+                            logger.info("WebSocketHandler Sent notification to user ${message.userId}")
+                        } catch (e: Exception) {
+                            logger.error("Failed to send notification to user ${message.userId}", e)
+                            // Optionally remove failed session
+                            userNotifications.remove(message.userId)
+                        }
                     }
                 }
             }
         } catch (e: Exception) {
-            logger.error("Error sending message", e)
+            // Catch any other unexpected errors
+            logger.error("Unexpected error in message sending", e)
         }
     }
 
