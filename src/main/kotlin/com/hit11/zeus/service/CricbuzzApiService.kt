@@ -2,12 +2,7 @@ package com.hit11.zeus.service
 
 import com.google.gson.Gson
 import com.hit11.zeus.exception.Logger
-import com.hit11.zeus.livedata.Hit11Scorecard
-import com.hit11.zeus.livedata.Innings
-import com.hit11.zeus.livedata.MatchResult
-import com.hit11.zeus.livedata.PlayerOfTheMatch
-import com.hit11.zeus.livedata.Team
-import com.hit11.zeus.livedata.TossResult
+import com.hit11.zeus.livedata.*
 import com.hit11.zeus.model.MatchFormat
 import com.hit11.zeus.model.getCricbuzzMatchPlayingState
 import okhttp3.OkHttpClient
@@ -20,7 +15,10 @@ class CricbuzzApiService {
     val client = OkHttpClient()
     private val logger = Logger.getLogger(CricbuzzApiService::class.java)
 
-    fun getMatchScore(matchId: Int, cricbuzzMatchId: Int): Hit11Scorecard {
+    fun getMatchScore(
+        matchId: Int,
+        cricbuzzMatchId: Int
+    ): Hit11Scorecard? {
         val client = OkHttpClient()
         val request = Request.Builder()
             .url("https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/$cricbuzzMatchId/comm")
@@ -30,29 +28,38 @@ class CricbuzzApiService {
         val response = client.newCall(request).execute()
 
         val gson = Gson()
-        try {
-
+        return try {
+            val criccbuzzMatchDataModel = gson.fromJson(response.body?.string(), CriccbuzzMatchDataModel::class.java)
+            transformMatchDataToHit11Scorecard(matchId, criccbuzzMatchDataModel)
         } catch (e: Exception) {
             logger.error("Error parsing JSON response: ${e.message}")
+            null
         }
-        val matchData = gson.fromJson(response.body?.string(), MatchData::class.java)
-        return transformMatchDataToHit11Scorecard(matchId, matchData)
     }
 }
 
-fun transformMatchDataToHit11Scorecard(matchId: Int, matchData: MatchData): Hit11Scorecard {
-    val matchHeader = matchData.matchHeader
-    val matchResult = matchHeader.result.takeIf { it.winningTeam.isNotEmpty() }?.let {
-        MatchResult(
-            // TODO
-        )
+fun transformMatchDataToHit11Scorecard(
+    matchId: Int,
+    criccbuzzMatchDataModel: CriccbuzzMatchDataModel
+): Hit11Scorecard {
+    val matchHeader = criccbuzzMatchDataModel.matchHeader
+    val team1 = matchHeader.team1
+    val team2 = matchHeader.team2
+    val winningTeam = when {
+        matchHeader.result.winningTeam.contentEquals(team1.name) || matchHeader.result.winningTeam.contentEquals
+            (team1.shortName) -> team1
+
+        matchHeader.result.winningTeam.contentEquals(team2.name) || matchHeader.result.winningTeam.contentEquals
+            (team2.shortName) -> team2
+
+        else -> null
     }
 
-    val team1 = matchHeader.CBTeam1
-    val team2 = matchHeader.CBTeam2
+    val matchResult = winningTeam?.let { getMatchResult(matchHeader, winningTeam) }
 
-    val inningsList = matchData.miniscore.matchScoreDetails.inningsScoreList.map {
-        convertInningsScoreToInnings(it, matchData)
+
+    val inningsList = criccbuzzMatchDataModel.miniscore.matchScoreDetails.inningsScoreList.map {
+        convertInningsScoreToInnings(it, criccbuzzMatchDataModel)
     }
 
     val playerOfTheMatch = matchHeader.playersOfTheMatch.firstOrNull()
@@ -65,6 +72,7 @@ fun transformMatchDataToHit11Scorecard(matchId: Int, matchData: MatchData): Hit1
         )
     }
 
+
     val scorecard = Hit11Scorecard(
         matchId = matchId,
         matchDescription = matchHeader.matchDescription,
@@ -74,9 +82,9 @@ fun transformMatchDataToHit11Scorecard(matchId: Int, matchData: MatchData): Hit1
         endTimestamp = matchHeader.matchCompleteTimestamp,
         status = matchHeader.status,
         state = getCricbuzzMatchPlayingState(matchHeader.state),
-//        result = matchResult,
-//        team1 = Team(id = team1.id, name = team1.name, shortName = team1.shortName),
-//        team2 = Team(id = team2.id, name = team2.name, shortName = team2.shortName),
+        result = matchResult,
+        team1 = Team(id = team1.id, name = team1.name, shortName = team1.shortName),
+        team2 = Team(id = team2.id, name = team2.name, shortName = team2.shortName),
         innings = inningsList,
         playerOfTheMatch = playerOfTheMatch,
         tossResult = tossResult
@@ -84,8 +92,24 @@ fun transformMatchDataToHit11Scorecard(matchId: Int, matchData: MatchData): Hit1
     return scorecard
 }
 
+fun getMatchResult(
+    matchHeader: MatchHeader,
+    winningTeam: CBTeam,
+): MatchResult? {
+    return matchHeader.result.takeIf { it.winningTeam.isNotEmpty() }?.let {
+        MatchResult(
+            resultType = it.resultType,
+            winningTeam = it.winningTeam,
+            winningTeamId = winningTeam.id,
+            winByRuns = it.winByRuns,
+            winByInnings = it.winByInnings,
+            winningMargin = it.winningMargin
+        )
+    }
+}
 
-data class MatchData(
+
+data class CriccbuzzMatchDataModel(
     val commentaryList: List<Commentary>,
     val matchHeader: MatchHeader,
     val miniscore: Miniscore,
@@ -162,8 +186,8 @@ data class MatchHeader(
     val playersOfTheMatch: List<PlayerOfTheMatch>,
     val playersOfTheSeries: List<PlayerOfTheMatch>,
     val matchTeamInfo: List<MatchTeamInfo>,
-    val CBTeam1: CBTeam,
-    val CBTeam2: CBTeam,
+    val team1: CBTeam,
+    val team2: CBTeam,
     val seriesDesc: String,
     val seriesId: Int,
     val seriesName: String,
@@ -178,9 +202,11 @@ data class TossResults(
 )
 
 data class Result(
-    val winningTeam: String,
-    val winByRuns: Boolean,
-    val winByInnings: Boolean
+    val resultType: String = "",
+    val winningTeam: String = "",
+    val winByRuns: Boolean = false,
+    val winByInnings: Boolean = false,
+    val winningMargin: Int = 0
 )
 
 data class RevisedTarget(
@@ -285,8 +311,37 @@ data class InningsScore(
     val ballNbr: Int
 )
 
-fun convertInningsScoreToInnings(inningsScore: InningsScore, matchData: MatchData): Innings {
-    val battingCBTeam = Team(inningsScore.batTeamId, inningsScore.batTeamName)
+fun convertInningsScoreToInnings(
+    inningsScore: InningsScore,
+    criccbuzzMatchDataModel: CriccbuzzMatchDataModel
+): Innings {
+    val matchHeader = criccbuzzMatchDataModel.matchHeader
+    val cbTeam1 = matchHeader.team1
+    val cbTeam2 = matchHeader.team2
+
+    val battingCBTeam = Team(
+        id = inningsScore.batTeamId,
+        name = when (inningsScore.batTeamId) {
+            cbTeam1.id -> cbTeam1.name
+            cbTeam2.id -> cbTeam2.name
+            else -> throw IllegalArgumentException("Invalid batting team ID")
+        },
+        shortName = when (inningsScore.batTeamId) {
+            cbTeam1.id -> cbTeam1.shortName
+            cbTeam2.id -> cbTeam2.shortName
+            else -> throw IllegalArgumentException("Invalid batting team ID")
+        }
+    )
+
+    val bowlingCBTeam = when {
+        inningsScore.batTeamId == cbTeam1.id -> Team(
+            name = cbTeam2.name, id = cbTeam1.id, shortName = cbTeam2.shortName
+        )
+
+        else -> Team(
+            name = cbTeam1.name, id = cbTeam2.id, shortName = cbTeam1.name
+        )
+    }
 
     // Calculating the run rate assuming overs are not zero to avoid division by zero error.
     val runRate = if (inningsScore.overs > 0) inningsScore.score / inningsScore.overs.toFloat() else 0f
@@ -298,7 +353,8 @@ fun convertInningsScoreToInnings(inningsScore: InningsScore, matchData: MatchDat
         wickets = inningsScore.wickets,
         overs = BigDecimal.valueOf(inningsScore.overs),
         runRate = runRate,
-        isCurrentInnings = matchData.miniscore.inningsId == inningsScore.inningsId
+        bowlingTeam = bowlingCBTeam,
+        isCurrentInnings = criccbuzzMatchDataModel.miniscore.inningsId == inningsScore.inningsId
         // The rest of the fields are initialized with default values or remain null
     )
 }

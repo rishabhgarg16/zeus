@@ -49,11 +49,11 @@ class MatchService(
         }
     }
 
-    fun getScoreByMatch(matchId: Int): Hit11Scorecard {
+    fun getScoreByMatch(matchId: Int): Hit11Scorecard? {
         val match = getMatchById(matchId)
         if (match?.cricbuzzMatchId != null) {
             return cricbuzzApiService.getMatchScore(match.id,match.cricbuzzMatchId)
         }
-        return Hit11Scorecard()
+        return null
     }
 }

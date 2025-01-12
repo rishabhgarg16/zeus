@@ -10,11 +10,11 @@ import java.math.BigDecimal
 data class Hit11Scorecard(
     val matchId: Int = 0,
     val matchDescription: String = "",
-    val matchType: String = "",
-    val matchFormat: MatchFormat = MatchFormat.T20,
+    val matchType: String = "",  // domestic, international, league etc
+    val matchFormat: MatchFormat = MatchFormat.T20, // ODI, TEST
     val startTimestamp: Long = 0,
     val endTimestamp: Long = 0,
-    val status: String = "",
+    val status: String = "", // string status, india need X runs to win
     val state: CricbuzzMatchPlayingState = CricbuzzMatchPlayingState.IN_PROGRESS,
     val result: MatchResult? = null,
     val team1: Team = Team(),
