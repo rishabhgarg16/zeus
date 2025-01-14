@@ -49,10 +49,10 @@ data class Match(
     val matchLink: String? = null,
 
     @Column(name = "team1_id")
-    val team1Id: Int = 0,
+    val team1Id: Long = 0,
 
     @Column(name = "team2_id")
-    val team2Id: Int = 0,
+    val team2Id: Long = 0,
 
     @Column(name = "cricbuzz_match_id")
     val cricbuzzMatchId: Int? = 0,
