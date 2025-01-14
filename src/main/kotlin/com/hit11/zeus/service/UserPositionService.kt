@@ -129,11 +129,16 @@ class UserPositionService(
                 position.settledAmount = calculateFinalPayout(position, pulseResult)
             }.also { updatedPosition ->
                 try {
+                    val isWin = pulseResult == PulseResult.Yes && position.orderSide == OrderSide.Yes ||
+                            pulseResult == PulseResult.No && position.orderSide == OrderSide.No
+
                     userService.updateUserWallet(
-                        updatedPosition.userId, updatedPosition.settledAmount ?: BigDecimal.ZERO
+                        userId = updatedPosition.userId,
+                        amount = updatedPosition.settledAmount ?: BigDecimal.ZERO,
+                        isWinning = isWin
                     )
                 } catch (e: Exception) {
-                    logger.error("Failed to updaxte wallet for user ${updatedPosition.userId}", e)
+                    logger.error("Failed to update wallet for user ${updatedPosition.userId}", e)
                     throw RuntimeException("Wallet update failed for user ${updatedPosition.userId}")
                 }
             }

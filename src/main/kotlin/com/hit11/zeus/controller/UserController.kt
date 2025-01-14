@@ -24,7 +24,7 @@ class UserController(
     }
 
     @GetMapping("/internal/{firebaseUID}")
-    fun getInternalUser(
+    fun getInternalUserByFirebaseID(
         @PathVariable("firebaseUID") @NotBlank firebaseUID: String
     ): ResponseEntity<ApiResponse<User>> {
         return try {

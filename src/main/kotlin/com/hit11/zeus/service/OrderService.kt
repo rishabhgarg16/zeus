@@ -133,7 +133,11 @@ class OrderService(
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     matches.groupBy { it.yesOrder.pulseId }.forEach {
-                        questionRepository.updateOptionWagers(it.key, it.value.last().matchedYesPrice, it.value.last().matchedYesPrice)
+                        questionRepository.updateOptionWagers(
+                            it.key,
+                            it.value.last().matchedYesPrice,
+                            it.value.last().matchedYesPrice
+                        )
                     }
                 } catch (e: Exception) {
                     logger.error("Failed to update pulse questions", e)
@@ -355,7 +359,7 @@ class OrderService(
             .orElseThrow { OrderValidationException("User not found") }
 
         val orderTotal = order.price * order.quantity
-        if (user.walletBalance.toDouble() < orderTotal) {
+        if (user.availableForTrading.toDouble() < orderTotal) {
             throw OrderValidationException("Insufficient balance")
         }
 

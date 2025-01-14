@@ -6,15 +6,18 @@ import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.UserRecord
 import com.hit11.zeus.exception.UserAlreadyExistsException
 import com.hit11.zeus.exception.UserNotFoundException
-import com.hit11.zeus.model.User
-import com.hit11.zeus.model.UserReward
+import com.hit11.zeus.model.*
+import com.hit11.zeus.repository.PromotionalCreditRepository
 import com.hit11.zeus.repository.UserRepository
+import com.hit11.zeus.repository.WalletTransactionRepository
 import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.sql.SQLIntegrityConstraintViolationException
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -22,6 +25,8 @@ import java.util.concurrent.TimeUnit
 @Service
 class UserService(
     private val userRepository: UserRepository,
+    private val walletTransactionRepository: WalletTransactionRepository,
+    private val promotionalCreditRepository: PromotionalCreditRepository,
     private val firebaseAuth: FirebaseAuth
 ) {
     private val logger = LoggerFactory.getLogger(UserService::class.java)
@@ -69,18 +74,27 @@ class UserService(
             }
         } ?: run {
             val newUser = User(
-                id = 0,
                 firebaseUID = firebaseUser.uid,
                 fcmToken = fcmToken,
                 email = firebaseUser.email,
                 name = firebaseUser.displayName,
                 phone = firebaseUser.phoneNumber,
-                walletBalance = BigDecimal(INITIAL_WALLET_BALANCE),
+                depositedBalance = BigDecimal.ZERO,
+                promotionalBalance = BigDecimal.ZERO,
+                winningsBalance = BigDecimal.ZERO,
                 reservedBalance = BigDecimal.ZERO,
                 lastLoginDate = Date()
             )
             try {
                 val savedUser = userRepository.save(newUser)
+                // Add signup bonus
+                addPromotionalCredit(
+                    userId = savedUser.id,
+                    amount = BigDecimal(SIGNUP_BONUS),
+                    type = PromotionalType.SIGNUP_BONUS,
+                    expiryDays = 7 // 7 days
+                )
+
                 logger.info("New user created: ${savedUser.id}")
                 savedUser
             } catch (e: SQLIntegrityConstraintViolationException) {
@@ -117,10 +131,19 @@ class UserService(
             val newLoginDate = Date()
             val diffInMillis = newLoginDate.time - oldLoginDate.time
             val diffInDays = TimeUnit.DAYS.convert(diffInMillis, TimeUnit.MILLISECONDS)
-            val newUserRecord = userRepository.save(userRecord.copy(lastLoginDate = newLoginDate))
             if (diffInDays > 0L) {
                 val rewardAmount = DAILY_REWARD_AMOUNT
-                if (this.updateUserWallet(userRecord.id, rewardAmount.toBigDecimal())) {
+                try {
+                    addPromotionalCredit(
+                        userId = userRecord.id,
+                        amount = rewardAmount.toBigDecimal(),
+                        type = PromotionalType.DAILY_REWARD,
+                        expiryDays = 7
+                    )
+                    // Update last login date
+                    userRecord.lastLoginDate = newLoginDate
+                    userRepository.save(userRecord)
+
                     logger.info("Added $rewardAmount to user with ID: ${userRecord.id}")
                     return UserReward(
                         "DAILY_LOGIN_REWARD",
@@ -128,36 +151,81 @@ class UserService(
                         rewardAmount,
                         Instant.now().epochSecond
                     )
+                } catch (e: Exception) {
+                    logger.error("Error adding daily reward for user ${userRecord.id}", e)
                 }
             }
         }
         return null
     }
 
+    // Order Created -> reserveBalance() -> Holds the amount
     @Transactional
     fun reserveBalance(userId: Int, amount: BigDecimal): Boolean {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found") }
 
-        if (user.availableBalance < amount) {
+        if (user.availableForTrading < amount) {
             return false
         }
 
         user.reservedBalance += amount
         userRepository.save(user)
+
+        // Record transaction
+        walletTransactionRepository.save(
+            WalletTransaction(
+                user = user,
+                amount = amount,
+                type = TransactionType.TRADE_RESERVE,
+                balanceType = BalanceType.RESERVED,
+                description = "Amount reserved for trade"
+            )
+        )
+
         return true
     }
 
+    // Order Matched -> confirmReservedBalance() -> Actually deducts the amount and releases hold
     @Transactional
     fun confirmReservedBalance(userId: Int, amount: BigDecimal) {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found") }
 
-        user.walletBalance -= amount
+        // When orders match:
+        // 1. Reduce from their actual trading balance (depositedBalance + winningsBalance + promotionalBalance)
+        // Using proportional deduction based on available balances
+        val totalAvailable = user.depositedBalance + user.winningsBalance + user.promotionalBalance
+
+        // Deduct proportionally from each balance type
+        if (totalAvailable > BigDecimal.ZERO) {
+            val fromDeposited = (user.depositedBalance * amount) / totalAvailable
+            val fromWinnings = (user.winningsBalance * amount) / totalAvailable
+            val fromPromotional = (user.promotionalBalance * amount) / totalAvailable
+
+            user.depositedBalance -= fromDeposited
+            user.winningsBalance -= fromWinnings
+            user.promotionalBalance -= fromPromotional
+        }
+
+        // 2. Release the reserved amount since it's now matched
         user.reservedBalance -= amount
+
         userRepository.save(user)
+
+        // Record the transaction
+        walletTransactionRepository.save(
+            WalletTransaction(
+                user = user,
+                amount = amount,
+                type = TransactionType.TRADE_RESERVE,
+                balanceType = BalanceType.RESERVED,
+                description = "Order matched and amount deducted"
+            )
+        )
     }
 
+    // Order Cancelled -> releaseReservedBalance() -> Just releases hold
     @Transactional
     fun releaseReservedBalance(userId: Int, amount: BigDecimal) {
         val user = userRepository.findById(userId)
@@ -168,24 +236,171 @@ class UserService(
     }
 
     @Transactional
-    fun updateUserWallet(userId: Int, amount: BigDecimal): Boolean {
+    fun addPromotionalCredit(
+        userId: Int,
+        amount: BigDecimal,
+        type: PromotionalType,
+        expiryDays: Int = 7
+    ) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { UserNotFoundException("User not found with ID: $userId") }
+
+        // Update user's promotional balance
+        user.promotionalBalance = user.promotionalBalance.plus(amount)
+        userRepository.save(user)
+
+        promotionalCreditRepository.save(
+            PromotionalCredit(
+                user = user,
+                amount = amount,
+                type = type,
+                expiryDate = Instant.now().plus(expiryDays.toLong(), ChronoUnit.DAYS),
+                status = PromotionalStatus.ACTIVE
+            )
+        )
+
+        walletTransactionRepository.save(
+            WalletTransaction(
+                user = user,
+                amount = amount,
+                type = TransactionType.PROMOTIONAL_CREDIT,
+                balanceType = BalanceType.PROMOTIONAL,
+                description = "Promotional credit added"
+            )
+        )
+        logger.info("Added promotional credit of $amount to user ${user.id}")
+
+    }
+
+    @Transactional
+    fun updateUserWallet(userId: Int, amount: BigDecimal, isWinning: Boolean = true): Boolean {
         val user = userRepository.findById(userId).orElseThrow {
             throw UserNotFoundException("User not found with ID: $userId")
         }
 
-        var newBalance = user.walletBalance.plus(amount.setScale(2))
-        if (newBalance < BigDecimal.ZERO) {
-            newBalance = BigDecimal.ZERO
+        if (isWinning) {
+            // Add to winnings balance
+            user.winningsBalance = user.winningsBalance.plus(amount.setScale(2))
+
+            walletTransactionRepository.save(
+                WalletTransaction(
+                    user = user,
+                    amount = amount,
+                    type = TransactionType.TRADE_WIN,
+                    balanceType = BalanceType.WINNINGS,
+                    description = "Trade win credited"
+                )
+            )
+        } else {
+            // Handle loss - money was already deducted when order matched
+            walletTransactionRepository.save(
+                WalletTransaction(
+                    user = user,
+                    amount = amount,
+                    type = TransactionType.TRADE_LOSS,
+                    balanceType = BalanceType.DEPOSITED,
+                    description = "Trade loss recorded"
+                )
+            )
         }
 
-        user.walletBalance = newBalance
         userRepository.save(user)
         return true
     }
 
+
+
+    @Transactional
+    fun addDeposit(userId: Int, amount: BigDecimal, referenceId: String): Boolean {
+        val user = userRepository.findById(userId)
+            .orElseThrow { IllegalArgumentException("User not found") }
+
+        user.depositedBalance += amount
+        userRepository.save(user)
+
+        walletTransactionRepository.save(
+            WalletTransaction(
+                user = user,
+                amount = amount,
+                type = TransactionType.DEPOSIT,
+                balanceType = BalanceType.DEPOSITED,
+                description = "Money added to wallet",
+                referenceId = referenceId
+            )
+        )
+        return true
+    }
+
+    @Transactional
+    fun handleWithdrawal(userId: Int, amount: BigDecimal): Boolean {
+        val user = userRepository.findById(userId)
+            .orElseThrow { IllegalArgumentException("User not found") }
+
+        if (user.winningsBalance < amount) {
+            return false
+        }
+
+        user.winningsBalance -= amount
+        userRepository.save(user)
+
+        walletTransactionRepository.save(
+            WalletTransaction(
+                user = user,
+                amount = amount,
+                type = TransactionType.WITHDRAWAL,
+                balanceType = BalanceType.WINNINGS,
+                description = "Withdrawal to bank account"
+            )
+        )
+        return true
+    }
+
+    // Function to handle promotional credit expiry
+    @Scheduled(cron = "0 0 0 * * *") // Run daily at midnight
+    fun handlePromotionalCreditExpiry() {
+        val expiredCredits = promotionalCreditRepository
+            .findByExpiryDateBeforeAndStatus(
+                Instant.now(),
+                PromotionalStatus.ACTIVE
+            )
+
+        expiredCredits.forEach { credit ->
+            val user = credit.user
+            user.promotionalBalance -= credit.amount
+            credit.status = PromotionalStatus.EXPIRED
+
+            // Save changes
+            userRepository.save(user)
+            promotionalCreditRepository.save(credit)
+
+            // Record expiry transaction
+            walletTransactionRepository.save(
+                WalletTransaction(
+                    user = user,
+                    amount = credit.amount,
+                    type = TransactionType.PROMOTIONAL_EXPIRY,
+                    balanceType = BalanceType.PROMOTIONAL,
+                    description = "Promotional credit expired",
+                    referenceId = credit.id.toString()
+                )
+            )
+        }
+    }
+
+    fun getTransactionHistory(userId: Int): List<WalletTransaction> {
+        return walletTransactionRepository.findByUserId(userId)
+    }
+
+    fun getActivePromotionalCredits(userId: Int): List<PromotionalCredit> {
+        return promotionalCreditRepository.findByUserIdAndStatus(
+            userId,
+            PromotionalStatus.ACTIVE
+        )
+    }
+
     companion object {
         private const val DAILY_REWARD_AMOUNT = 200.0
-        private const val INITIAL_WALLET_BALANCE = 500.0
+        private const val SIGNUP_BONUS = 500.0
         private const val MINIMUM_DAYS_BETWEEN_REWARDS = 1L
     }
 }

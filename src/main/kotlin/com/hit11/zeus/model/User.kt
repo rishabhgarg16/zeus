@@ -5,6 +5,7 @@ import java.time.Instant
 import java.util.*
 import javax.persistence.*
 
+// User.kt
 @Entity
 @Table(name = "users")
 data class User(
@@ -19,16 +20,20 @@ data class User(
     val name: String? = "",
     val phone: String = "",
 
-    @Column(name = "wallet_balance", precision = 19, scale = 4)
-    var walletBalance: BigDecimal = BigDecimal.ZERO,
+    // Main wallet balances
+    @Column(name = "deposited_balance", precision = 19, scale = 4)
+    var depositedBalance: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "winnings_balance", precision = 19, scale = 4)
+    var winningsBalance: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "promotional_balance", precision = 19, scale = 4)
+    var promotionalBalance: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "reserved_balance", precision = 19, scale = 4)
     var reservedBalance: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "withdrawal_balance", precision = 19, scale = 4)
-    var withdrawalBalance: BigDecimal = BigDecimal.ZERO,
-
-    @Column(name = "last_login_date", nullable = true, updatable = true)
+    @Column(name = "last_login_date")
     var lastLoginDate: Date? = null,
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -36,11 +41,16 @@ data class User(
 
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now()
-
 ) {
-    val availableBalance: BigDecimal
-        get() = walletBalance - reservedBalance
+    // Computed properties
+    val totalBalance: BigDecimal
+        get() = depositedBalance + winningsBalance + promotionalBalance
 
+    val availableForTrading: BigDecimal
+        get() = (depositedBalance + winningsBalance + promotionalBalance) - reservedBalance
+
+    val availableForWithdrawal: BigDecimal
+        get() = winningsBalance
 
     @PrePersist
     fun prePersist() {
@@ -53,4 +63,92 @@ data class User(
     fun preUpdate() {
         updatedAt = Instant.now()
     }
+}
+
+// PromotionalCredit.kt
+@Entity
+@Table(name = "promotional_credits")
+data class PromotionalCredit(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0,
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    val user: User,
+
+    @Column(precision = 19, scale = 4)
+    val amount: BigDecimal,
+
+    val expiryDate: Instant,
+
+    @Enumerated(EnumType.STRING)
+    val type: PromotionalType,
+
+    @Enumerated(EnumType.STRING)
+    var status: PromotionalStatus = PromotionalStatus.ACTIVE,
+
+    @Column(name = "created_at")
+    val createdAt: Instant = Instant.now()
+)
+
+enum class PromotionalType {
+    SIGNUP_BONUS,
+    DAILY_REWARD,
+    REFERRAL_BONUS,
+    SPECIAL_OFFER
+}
+
+enum class PromotionalStatus {
+    ACTIVE,
+    USED,
+    EXPIRED
+}
+
+// WalletTransaction.kt
+@Entity
+@Table(name = "wallet_transactions")
+data class WalletTransaction(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0,
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    val user: User,
+
+    @Column(precision = 19, scale = 4)
+    val amount: BigDecimal,
+
+    @Enumerated(EnumType.STRING)
+    val type: TransactionType,
+
+    @Enumerated(EnumType.STRING)
+    val balanceType: BalanceType,
+
+    val description: String,
+
+    @Column(name = "reference_id")
+    val referenceId: String? = null,  // For payment gateway reference etc.
+
+    @Column(name = "created_at")
+    val createdAt: Instant = Instant.now()
+)
+
+enum class TransactionType {
+    DEPOSIT,
+    WITHDRAWAL,
+    TRADE_RESERVE,
+    TRADE_RELEASE,
+    TRADE_WIN,
+    TRADE_LOSS,
+    PROMOTIONAL_CREDIT,
+    PROMOTIONAL_EXPIRY
+}
+
+enum class BalanceType {
+    DEPOSITED,
+    WINNINGS,
+    PROMOTIONAL,
+    RESERVED
 }
