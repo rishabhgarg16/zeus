@@ -4,16 +4,66 @@ import com.google.gson.Gson
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.livedata.*
 import com.hit11.zeus.model.MatchFormat
+import com.hit11.zeus.model.external.CricbuzzMatchResponse
+import com.hit11.zeus.model.external.TypeMatch
 import com.hit11.zeus.model.getCricbuzzMatchPlayingState
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.springframework.stereotype.Service
+import java.io.IOException
 import java.math.BigDecimal
+import java.time.Instant
 
 @Service
 class CricbuzzApiService {
     val client = OkHttpClient()
     private val logger = Logger.getLogger(CricbuzzApiService::class.java)
+    private val apiKey = "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9"
+
+    fun getLiveAndUpcomingMatches(): CricbuzzMatchResponse {
+        val combinedMatches = mutableListOf<TypeMatch>()
+
+        try {
+            // Fetch live matches
+            val liveMatches = fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live")
+            combinedMatches.addAll(liveMatches.typeMatches)
+
+            // Fetch upcoming matches
+            val upcomingMatches = fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/upcoming")
+            combinedMatches.addAll(upcomingMatches.typeMatches)
+
+            return CricbuzzMatchResponse(
+                typeMatches = combinedMatches.distinctBy { it.matchType },
+//                filters = Filters(emptyList()), // Add appropriate filters if needed
+//                appIndex = AppIndex("", ""),
+                responseLastUpdated = Instant.now().toString()
+            )
+        } catch (e: Exception) {
+            logger.error("Error fetching matches from Cricbuzz", e)
+            throw e
+        }
+    }
+    private fun fetchMatchesByEndpoint(endpoint: String): CricbuzzMatchResponse {
+        val request = Request.Builder()
+            .url(endpoint)
+            .addHeader("x-rapidapi-host", "cricbuzz-cricket.p.rapidapi.com")
+            .addHeader("x-rapidapi-key", apiKey)
+            .build()
+
+        return try {
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+
+            if (!response.isSuccessful || responseBody == null) {
+                throw IOException("Unexpected response $response")
+            }
+
+            Gson().fromJson(responseBody, CricbuzzMatchResponse::class.java)
+        } catch (e: Exception) {
+            logger.error("Error fetching matches from endpoint $endpoint", e)
+            throw e
+        }
+    }
 
     fun getMatchScore(
         matchId: Int,
@@ -29,7 +79,7 @@ class CricbuzzApiService {
 
         val gson = Gson()
         return try {
-            val criccbuzzMatchDataModel = gson.fromJson(response.body?.string(), CriccbuzzMatchDataModel::class.java)
+            val criccbuzzMatchDataModel = gson.fromJson(response.body?.string(), CriccbuzzLiveScoreDataModel::class.java)
             transformMatchDataToHit11Scorecard(matchId, criccbuzzMatchDataModel)
         } catch (e: Exception) {
             logger.error("Error parsing JSON response: ${e.message}")
@@ -40,7 +90,7 @@ class CricbuzzApiService {
 
 fun transformMatchDataToHit11Scorecard(
     matchId: Int,
-    criccbuzzMatchDataModel: CriccbuzzMatchDataModel
+    criccbuzzMatchDataModel: CriccbuzzLiveScoreDataModel
 ): Hit11Scorecard {
     val matchHeader = criccbuzzMatchDataModel.matchHeader
     val team1 = matchHeader.team1
@@ -109,7 +159,7 @@ fun getMatchResult(
 }
 
 
-data class CriccbuzzMatchDataModel(
+data class CriccbuzzLiveScoreDataModel(
     val commentaryList: List<Commentary>,
     val matchHeader: MatchHeader,
     val miniscore: Miniscore,
@@ -313,7 +363,7 @@ data class InningsScore(
 
 fun convertInningsScoreToInnings(
     inningsScore: InningsScore,
-    criccbuzzMatchDataModel: CriccbuzzMatchDataModel
+    criccbuzzMatchDataModel: CriccbuzzLiveScoreDataModel
 ): Innings {
     val matchHeader = criccbuzzMatchDataModel.matchHeader
     val cbTeam1 = matchHeader.team1

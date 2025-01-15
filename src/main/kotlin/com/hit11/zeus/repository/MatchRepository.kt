@@ -13,9 +13,9 @@ import java.util.*
 interface MatchRepository : JpaRepository<Match, Int> {
     @Query(
         """  
-    SELECT m FROM Match m 
-    JOIN FETCH m.team1 t1 
-    JOIN FETCH m.team2 t2 
+    SELECT DISTINCT m FROM Match m 
+    JOIN FETCH m.team1Entity t1 
+    JOIN FETCH m.team2Entity t2 
     WHERE (
         m.status IN :activeStatuses 
         OR (
@@ -44,13 +44,15 @@ interface MatchRepository : JpaRepository<Match, Int> {
         pageable: Pageable
     ): List<Match>
 
+    fun findByCricbuzzMatchId(cricbuzzMatchId: Int): Match?
+
     fun findAllByIdInAndStatusIn(ids: List<Int>, statuses: List<String>): List<Match>
 
     @Query(
         """
     SELECT m FROM Match m
-    JOIN FETCH m.team1
-    JOIN FETCH m.team2
+    JOIN FETCH m.team1Entity
+    JOIN FETCH m.team2Entity
     WHERE m.id = :matchId
     """
     )

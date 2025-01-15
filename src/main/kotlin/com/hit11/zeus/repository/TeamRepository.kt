@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository
 interface TeamRepository : JpaRepository<TeamEntity, Long> {
     fun findByTeamName(teamName: String): TeamEntity?
     fun findByTeamShortName(teamShortName: String): TeamEntity?
+    fun findByCricbuzzTeamId(cricbuzzTeamId: Int): TeamEntity?
 }

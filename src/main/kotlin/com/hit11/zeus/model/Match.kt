@@ -7,6 +7,10 @@ enum class MatchStatus(val text: String) {
     SCHEDULED("Scheduled"),
     PREVIEW("Preview"),
     COMPLETE("Complete"),
+    INNINGS_BREAK("Innings Break"),
+    TEA("Tea"),
+    TOSS("Toss"),
+    STUMPS("Stumps"),
     IN_PROGRESS("In Progress");
 
     companion object {
@@ -28,13 +32,19 @@ data class Match(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
 
+    @Column(nullable = false)
+    val team1: String = "",
+
+    @Column(nullable = false)
+    val team2: String = "",
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team1_id", insertable = false, updatable = false)
-    val team1: TeamEntity? = null,
+    val team1Entity: TeamEntity? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team2_id", insertable = false, updatable = false)
-    val team2: TeamEntity? = null,
+    val team2Entity: TeamEntity? = null,
 
     val matchGroup: String? = null,
     val startDate: Instant = Instant.now(),
@@ -76,12 +86,12 @@ data class Match(
     }
 
     // Helper properties for frequently used combinations
-    val team1ShortName: String get() = team1?.teamShortName ?: ""
-    val team2ShortName: String get() = team2?.teamShortName ?: ""
-    val team1Name: String get() = team1?.teamName ?: ""
-    val team2Name: String get() = team2?.teamName ?: ""
-    val team1ImageUrl: String? get() = team1?.teamImageUrl
-    val team2ImageUrl: String? get() = team2?.teamImageUrl
+    val team1ShortName: String get() = team1Entity?.teamShortName ?: ""
+    val team2ShortName: String get() = team2Entity?.teamShortName ?: ""
+    val team1Name: String get() = team1Entity?.teamName ?: ""
+    val team2Name: String get() = team2Entity?.teamName ?: ""
+    val team1ImageUrl: String? get() = team1Entity?.teamImageUrl
+    val team2ImageUrl: String? get() = team2Entity?.teamImageUrl
 
     // Helper for match title
     val matchTitle: String get() = "$team1ShortName vs $team2ShortName"

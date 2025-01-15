@@ -1,11 +1,12 @@
 import json
 import mysql.connector
 import os
-import requests
-import time
 import re
+import time
 import traceback
 from datetime import timezone, datetime
+
+import requests
 
 # Database connection
 db_config = {
@@ -22,6 +23,31 @@ ZEUS_API_ENDPOINT = os.getenv("ZEUS_API_ENDPOINT", "http://localhost:8080/api/ev
 
 
 # ZEUS_API_KEY = "your_api_key_here"
+
+
+def get_active_matches_from_api():
+    """Fetch active matches from our Match API"""
+    url = "http://localhost:8080/api/match/upcoming"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        matches_data = response.json()
+
+        # Extract match IDs from response
+        if matches_data.get("data"):
+            return [
+                {
+                    "internal_id": match["id"],
+                    "cricbuzz_id": match["cricbuzzMatchId"],
+                    "status": match["matchStatus"]
+                }
+                for match in matches_data["data"]
+            ]
+        return []
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching matches from API: {e}")
+        return []
+
 
 def disable_all_active_questions(match_id):
     conn = db_connection
@@ -111,8 +137,9 @@ def create_match(cursor, match_header):
 
 def get_match_status(cricbuzz_status):
     if cricbuzz_status.lower() == "innings break":
-        return  "In Progress"
+        return "In Progress"
     return cricbuzz_status
+
 
 def update_match(cursor, match_header, match_id):
     update_data = {
@@ -133,7 +160,6 @@ def update_match(cursor, match_header, match_id):
     print(f"Updated match: {match_id}")
 
 
-lastUpdatedTime = 0
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
     headers = {
@@ -160,6 +186,7 @@ def get_internal_team_id(external_id):
     # cursor.close()
     return result[0] if result else None
 
+
 def get_internal_player_by_name(player_name, team_id):
     cursor = db_connection.cursor()
     query = "SELECT id FROM players WHERE name = %s AND team_id = %s"
@@ -167,6 +194,7 @@ def get_internal_player_by_name(player_name, team_id):
     result = cursor.fetchone()
     # cursor.close()
     return result[0] if result else None
+
 
 def get_internal_player_id(external_id):
     cursor = db_connection.cursor()
@@ -333,6 +361,7 @@ def convert_player_of_the_match(match_header):
         }
     return None
 
+
 def convert_result(match_header):
     cricbuzz_result = match_header['result']
     winTeamId = cricbuzz_result.get('winningteamId', 0)
@@ -403,6 +432,7 @@ def convert_completed_innings(innings, match_header):
         'ballByBallEvents': []
     }
 
+
 def convert_current_innings(miniscore, commentary_list, matchHeader):
     if miniscore is None:
         # Return a default innings object when the match is not live
@@ -468,6 +498,7 @@ def parse_last_wicket(last_wicket):
         }
     return None
 
+
 def convert_batting_performances(miniscore, commentary_list):
     performances = []
     cricbuzz_team_id = miniscore['batTeam']['teamId']
@@ -504,7 +535,8 @@ def convert_batting_performances(miniscore, commentary_list):
             'balls': last_wicket_info['balls'],
             'fours': 0,  # We don't have this information
             'sixes': 0,  # We don't have this information
-            'strikeRate': (last_wicket_info['runs'] / last_wicket_info['balls']) * 100 if last_wicket_info['balls'] > 0 else 0,
+            'strikeRate': (last_wicket_info['runs'] / last_wicket_info['balls']) * 100 if last_wicket_info[
+                                                                                              'balls'] > 0 else 0,
             'outDescription': miniscore['lastWicket'],
             'wicketTaker': last_wicket_info['bowler'],
             'dismissed': True
@@ -530,6 +562,7 @@ def convert_batting_performances(miniscore, commentary_list):
                 })
 
     return performances
+
 
 def get_teams(miniscore, match_header):
     bat_team_id = miniscore['batTeam']['teamId']
@@ -607,24 +640,54 @@ def process_cricbuzz_data(cricbuzz_data):
         print(traceback.format_exc())
 
 
-lastUpdatedTime = 0
-while True:
-    try:
-        matchlist = [94372]
-        for match_id in matchlist:
-            cricbuzz_data = call_cricbuzz_commentry_api(match_id)
-            if cricbuzz_data['responseLastUpdated'] > lastUpdatedTime:
-                lastUpdatedTime = cricbuzz_data['responseLastUpdated']
-                process_cricbuzz_data(cricbuzz_data)
+last_updated_time = {
+    "timestamp": 0  # Using dict to make it mutable and accessible inside functions
+}
 
-    except FileNotFoundError:
-        print("Error: cricbuzz_data.json file not found.")
-    except json.JSONDecodeError:
-        print("Error: Invalid JSON data in cricbuzz_data.json.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
 
-    if os.getenv("PROD", False):
-        time.sleep(10)
-    else:
-        break
+def main():
+    while True:
+        try:
+            match_ids = set()
+            # Keep manual list
+            MANUAL_MATCH_LIST = []  # Your manual match IDs
+            match_ids.update(MANUAL_MATCH_LIST)
+
+            # Get matches from our API
+            active_matches = get_active_matches_from_api()
+            print(f"Fetched {len(active_matches)} matches from API")
+
+            # Process only matches that are in progress
+            in_progress_count = 0
+            for match in active_matches:
+                if match["status"] in ["In Progress", "Live"]:
+                    match_ids.add(match["cricbuzz_id"])
+                    in_progress_count += 1
+
+            print(f"Processing {in_progress_count} in-progress matches")
+            print(f"Total matches to process: {len(match_ids)}")
+
+            for match_id in match_ids:
+                cricbuzz_data = call_cricbuzz_commentry_api(match_id)
+                if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
+                    last_updated_time["timestamp"] = cricbuzz_data['responseLastUpdated']
+                    process_cricbuzz_data(cricbuzz_data)
+
+            if os.getenv("PROD", False):
+                time.sleep(30)
+            else:
+                break
+
+        except FileNotFoundError:
+            print("Error: cricbuzz_data.json file not found.")
+        except json.JSONDecodeError:
+            print("Error: Invalid JSON data in cricbuzz_data.json.")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            print(traceback.format_exc())
+            print("Sleeping for 30 seconds before retry")
+            time.sleep(30)
+
+
+if __name__ == "__main__":
+    main()

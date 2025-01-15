@@ -1,7 +1,6 @@
 package com.hit11.zeus.repository
 
 import com.hit11.zeus.model.Contest
-import com.hit11.zeus.model.UserTeam
 import org.springframework.stereotype.Repository
 
 
