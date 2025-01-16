@@ -1,28 +1,71 @@
 import json
+import logging
 import mysql.connector
 import os
 import re
 import time
 import traceback
+from contextlib import contextmanager
 from datetime import timezone, datetime
 
 import requests
 
-# Database connection
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# Database configuration
 db_config = {
+    "pool_name": "mypool",
+    "pool_size": 5,
     "host": "ls-a6927155ebc8223b62e0da94714b39337fdb981a.c9yg6ks8shtr.ap-south-1.rds.amazonaws.com",
     "user": "admin",
     "password": "adminpass",
     "database": "hit11"
 }
 
-db_connection = mysql.connector.connect(**db_config)
+try:
+    connection_pool = mysql.connector.pooling.MySQLConnectionPool(**db_config)
+except mysql.connector.Error as err:
+    logging.error(f"Error creating connection pool: {err}")
+    raise
+
+
+@contextmanager
+def get_db_connection():
+    connection = None
+    try:
+        connection = connection_pool.get_connection()
+        yield connection
+    except mysql.connector.Error as error:
+        logging.error(f"Error while connecting to MySQL: {error}")
+        raise
+    finally:
+        if connection:
+            connection.close()
+
+
+@contextmanager
+def get_cursor(connection):
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        yield cursor
+    finally:
+        if cursor:
+            cursor.close()
+
 
 # Zeus API configuration
 ZEUS_API_ENDPOINT = os.getenv("ZEUS_API_ENDPOINT", "http://localhost:8080/api/events/scorecardV2")
 
 
 # ZEUS_API_KEY = "your_api_key_here"
+
+def close_db_connection():
+    if db_connection and db_connection.is_connected():
+        db_connection.close()
 
 
 def get_active_matches_from_api():
@@ -45,56 +88,61 @@ def get_active_matches_from_api():
             ]
         return []
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching matches from API: {e}")
+        logging.error(f"Error fetching matches from API: {e}")
         return []
 
 
 def disable_all_active_questions(match_id):
-    conn = db_connection
-    cursor = conn.cursor()
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            try:
+                # Update all live questions to disabled
+                update_query = """
+                UPDATE pulse_questions
+                SET status = 'DISABLED'
+                WHERE match_id = %s AND status = 'LIVE'
+                """
+                cursor.execute(update_query, (match_id,))
 
-    try:
-        # Update all live questions to disabled
-        update_query = """
-        UPDATE pulse_questions
-        SET status = 'DISABLED'
-        WHERE match_id = %s AND status = 'LIVE'
-        """
-        cursor.execute(update_query, (match_id,))
+                affected_rows = cursor.rowcount
+                conn.commit()
 
-        affected_rows = cursor.rowcount
-        conn.commit()
+                logging.error(f"Successfully disabled {affected_rows} active questions for match {match_id}")
+            except mysql.connector.Error as err:
+                logging.error(f"Error disabling questions for match {match_id}: {err}")
+                conn.rollback()
+                raise
+            finally:
+                cursor.close()
 
-        print(f"Successfully disabled {affected_rows} active questions for match {match_id}")
-    except mysql.connector.Error as err:
-        print(f"Error disabling questions for match {match_id}: {err}")
-        conn.rollback()
-    finally:
-        cursor.close()
 
 def get_or_create_match(match_header):
-    conn = db_connection
-    cursor = db_connection.cursor()
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            # Try to get existing match
+            try:
+                query = "SELECT id FROM matches WHERE cricbuzz_match_id = %s"
+                cursor.execute(query, (match_header['matchId'],))
+                result = cursor.fetchall()  # Consume all results
+                # print("inserted match data")
+                # print(result)
 
-    # Try to get existing match
-    query = "SELECT id FROM matches WHERE cricbuzz_match_id = %s"
-    cursor.execute(query, (match_header['matchId'],))
-    result = cursor.fetchone()
-    # print("inserted match data")
-    # print(result)
+                if result:
+                    match_id = result[0][0]
+                    # Update existing match
+                    update_match(cursor, match_header, match_id)
+                else:
+                    # Create new match
+                    match_id = create_match(cursor, match_header)
 
-    if result:
-        match_id = result[0]
-        # Update existing match
-        update_match(cursor, match_header, match_id)
-    else:
-        # Create new match
-        match_id = create_match(cursor, match_header)
-
-    conn.commit()
-    # cursor.close()
-    # conn.close()
-    return match_id
+                conn.commit()
+                return match_id
+            except Exception as e:
+                conn.rollback()
+                logging.error(f"Error in get_or_create_match: {e}")
+                raise
+            finally:
+                cursor.close()
 
 
 def create_match(cursor, match_header):
@@ -131,7 +179,7 @@ def create_match(cursor, match_header):
     """
     cursor.execute(insert_query, new_match)
     id = cursor.lastrowid
-    print(f"Created new match: {id}")
+    logging.info(f"Created new match: {id}")
     return id
 
 
@@ -157,7 +205,8 @@ def update_match(cursor, match_header, match_id):
         WHERE id = %(id)s
     """
     cursor.execute(update_query, update_data)
-    print(f"Updated match: {match_id}")
+    cursor.fetchall()  # Consume any remaining results
+    logging.info(f"Updated match: {match_id}")
 
 
 def call_cricbuzz_commentry_api(match_id):
@@ -170,118 +219,123 @@ def call_cricbuzz_commentry_api(match_id):
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
-        print(f"Data fetched successfully from Cricbuzz {match_id}. Response: {response.text}")
+        logging.info(f"Data fetched successfully from Cricbuzz {match_id}. Response: {response.text}")
         response_json = response.json()
         return response_json
     except requests.exceptions.RequestException as e:
-        print(f"Error getting data from Cricbuzz: {e}")
+        logging.error(f"Error getting data from Cricbuzz: {e}")
         return False
 
 
 def get_internal_team_id(external_id):
-    cursor = db_connection.cursor()
-    query = "SELECT id FROM teams WHERE cricbuzz_team_id = %s"
-    cursor.execute(query, (external_id,))
-    result = cursor.fetchone()
-    # cursor.close()
-    return result[0] if result else None
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            query = "SELECT id FROM teams WHERE cricbuzz_team_id = %s"
+            cursor.execute(query, (external_id,))
+            result = cursor.fetchone()
+            # cursor.close()
+            return result[0] if result else None
 
 
 def get_internal_player_by_name(player_name, team_id):
-    cursor = db_connection.cursor()
-    query = "SELECT id FROM players WHERE name = %s AND team_id = %s"
-    cursor.execute(query, (player_name, team_id))
-    result = cursor.fetchone()
-    # cursor.close()
-    return result[0] if result else None
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            query = "SELECT id FROM players WHERE name = %s AND team_id = %s"
+            cursor.execute(query, (player_name, team_id))
+            result = cursor.fetchone()
+            # cursor.close()
+            return result[0] if result else None
 
 
 def get_internal_player_id(external_id):
-    cursor = db_connection.cursor()
-    query = "SELECT id FROM players WHERE cricbuzz_player_id = %s"
-    cursor.execute(query, (external_id,))
-    result = cursor.fetchone()
-    # cursor.close()
-    return result[0] if result else None
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            query = "SELECT id FROM players WHERE cricbuzz_player_id = %s"
+            cursor.execute(query, (external_id,))
+            result = cursor.fetchone()
+            # cursor.close()
+            return result[0] if result else None
 
 
 def get_or_create_internal_player_id(external_id, player_name, external_team_id):
-    conn = db_connection
-    cursor = db_connection.cursor()
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            # Try to get existing player
+            try:
+                query = "SELECT id FROM players WHERE cricbuzz_player_id = %s"
+                cursor.execute(query, (external_id,))
+                result = cursor.fetchone()
 
-    # Try to get existing player
-    query = "SELECT id FROM players WHERE cricbuzz_player_id = %s"
-    cursor.execute(query, (external_id,))
-    result = cursor.fetchone()
+                if result:
+                    internal_id = result[0]
+                else:
+                    # Player not found, create new entry in Zeus
+                    internal_team_id = get_internal_team_id(external_team_id)
+                    new_player = {
+                        'name': player_name,
+                        'age': None,  # We don't have this info from Cricbuzz
+                        'runsScored': 0,
+                        'runsConceded': 0,
+                        'credits': 0,  # Set a default value
+                        'iconUrl': None,
+                        'country': None,  # We don't have this info from Cricbuzz
+                        'teamId': internal_team_id,
+                        'cricbuzzPlayerId': external_id
+                    }
 
-    if result:
-        internal_id = result[0]
-    else:
-        # Player not found, create new entry in Zeus
-        internal_team_id = get_internal_team_id(external_team_id)
-        new_player = {
-            'name': player_name,
-            'age': None,  # We don't have this info from Cricbuzz
-            'runsScored': 0,
-            'runsConceded': 0,
-            'credits': 0,  # Set a default value
-            'iconUrl': None,
-            'country': None,  # We don't have this info from Cricbuzz
-            'teamId': internal_team_id,
-            'cricbuzzPlayerId': external_id
-        }
+                    # Insert new player into Zeus
+                    insert_query = """
+                    INSERT INTO players (name, age, runs_scored, runs_conceded, credits, icon_url, country, team_id, cricbuzz_player_id)
+                    VALUES (%(name)s, %(age)s, %(runsScored)s, %(runsConceded)s, %(credits)s, %(iconUrl)s, %(country)s, %(teamId)s, %(cricbuzzPlayerId)s)
+                    """
+                    cursor.execute(insert_query, new_player)
+                    internal_id = cursor.lastrowid
 
-        # Insert new player into Zeus
-        insert_query = """
-        INSERT INTO players (name, age, runs_scored, runs_conceded, credits, icon_url, country, team_id, cricbuzz_player_id)
-        VALUES (%(name)s, %(age)s, %(runsScored)s, %(runsConceded)s, %(credits)s, %(iconUrl)s, %(country)s, %(teamId)s, %(cricbuzzPlayerId)s)
-        """
-        cursor.execute(insert_query, new_player)
-        internal_id = cursor.lastrowid
+                    conn.commit()
+                    logging.info(f"Created new player: {player_name} with internal ID: {internal_id}")
 
-        conn.commit()
-        print(f"Created new player: {player_name} with internal ID: {internal_id}")
-
-    # cursor.close()
-    return internal_id
+                # cursor.close()
+                return internal_id
+            finally:
+                cursor.close()
 
 
 def get_or_create_internal_team_id(external_id, team_name, team_short_name):
-    conn = db_connection
-    cursor = db_connection.cursor()
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            # Try to get existing team
+            try:
+                query = "SELECT id as internal_id FROM teams WHERE cricbuzz_team_id = %s"
+                cursor.execute(query, (external_id,))
+                result = cursor.fetchone()
 
-    # Try to get existing team
-    query = "SELECT id as internal_id FROM teams WHERE cricbuzz_team_id = %s"
-    cursor.execute(query, (external_id,))
-    result = cursor.fetchone()
+                if result:
+                    internal_id = result[0]
+                else:
+                    # Team not found, create new entry in Zeus
+                    new_team = {
+                        'cricbuzz_team_id': external_id,
+                        'team_name': team_name,
+                        'team_short_name': team_short_name,
+                        'team_image_url': None,  # We don't have this info from Cricbuzz
+                        'created_at': datetime.now(),
+                        'updated_at': datetime.now()
+                    }
 
-    if result:
-        internal_id = result[0]
-    else:
-        # Team not found, create new entry in Zeus
-        new_team = {
-            'cricbuzz_team_id': external_id,
-            'team_name': team_name,
-            'team_short_name': team_short_name,
-            'team_image_url': None,  # We don't have this info from Cricbuzz
-            'created_at': datetime.now(),
-            'updated_at': datetime.now()
-        }
+                    # Insert new team into Zeus
+                    insert_query = """
+                    INSERT INTO teams (team_name, team_short_name, team_image_url, cricbuzz_team_id, created_at, updated_at)
+                    VALUES (%(team_name)s, %(team_short_name)s, %(team_image_url)s, %(cricbuzz_team_id)s, %(created_at)s, %(updated_at)s)
+                    """
+                    # print(new_team)
+                    cursor.execute(insert_query, new_team)
+                    internal_id = cursor.lastrowid
 
-        # Insert new team into Zeus
-        insert_query = """
-        INSERT INTO teams (team_name, team_short_name, team_image_url, cricbuzz_team_id, created_at, updated_at)
-        VALUES (%(team_name)s, %(team_short_name)s, %(team_image_url)s, %(cricbuzz_team_id)s, %(created_at)s, %(updated_at)s)
-        """
-        # print(new_team)
-        cursor.execute(insert_query, new_team)
-        internal_id = cursor.lastrowid
-
-        conn.commit()
-        print(f"Created new team: {team_name} with internal ID: {internal_id}")
-
-    # cursor.close()
-    return internal_id
+                    conn.commit()
+                    logging.info(f"Created new team: {team_name} with internal ID: {internal_id}")
+                    return internal_id
+            finally:
+                cursor.close()
 
 
 def send_to_zeus(hit11_scorecard):
@@ -293,14 +347,14 @@ def send_to_zeus(hit11_scorecard):
         json_data = json.dumps(hit11_scorecard, default=str)
 
         # Print the JSON data for debugging
-        print(f"JSON data being sent to Zeus:{json_data}")
+        logging.info(f"JSON data being sent to Zeus:{json_data}")
 
         response = requests.post(ZEUS_API_ENDPOINT, data=json_data, headers=headers)
         response.raise_for_status()
-        print(f"Data sent successfully to Zeus")
+        logging.info(f"Data sent successfully to Zeus")
         return True
     except requests.exceptions.RequestException as e:
-        print(f"Error sending data to Zeus: {e}")
+        logging.error(f"Error sending data to Zeus: {e}")
         return False
 
 
@@ -313,7 +367,7 @@ def convert_cricbuzz_to_hit11(cricbuzz_data):
 
     # Get or create match
     internal_match_id = get_or_create_match(match_header)
-    print(f"internal match id {internal_match_id}")
+    logging.info(f"internal match id {internal_match_id}")
 
     # Check if the match has ended
     if match_header['state'] in ['Complete', 'Cancelled', 'Abandoned']:
@@ -399,7 +453,7 @@ def convert_all_innings(miniscore, commentary_list, match_header):
     if miniscore and 'matchScoreDetails' in miniscore:
         innings_score_list = miniscore['matchScoreDetails'].get('inningsScoreList', [])
         current_innings_id = miniscore.get('inningsId')
-        print(current_innings_id)
+        logging.info(current_innings_id)
         for innings in innings_score_list:
             if innings['inningsId'] == current_innings_id:
                 # This is the current innings, use detailed conversion
@@ -632,12 +686,12 @@ def process_cricbuzz_data(cricbuzz_data):
     try:
         hit11_scorecard = convert_cricbuzz_to_hit11(cricbuzz_data)
         if send_to_zeus(hit11_scorecard):
-            print("Data processed and sent to Zeus successfully.")
+            logging.info("Data processed and sent to Zeus successfully.")
         else:
-            print("Failed to send data to Zeus.")
+            logging.error("Failed to send data to Zeus.")
     except Exception as e:
-        print(f"Error processing Cricbuzz data: {e}")
-        print(traceback.format_exc())
+        logging.error(f"Error processing Cricbuzz data: {e}")
+        logging.error(traceback.format_exc())
 
 
 last_updated_time = {
@@ -655,7 +709,7 @@ def main():
 
             # Get matches from our API
             active_matches = get_active_matches_from_api()
-            print(f"Fetched {len(active_matches)} matches from API")
+            logging.info(f"Fetched {len(active_matches)} matches from API")
 
             # Process only matches that are in progress
             in_progress_count = 0
@@ -664,14 +718,20 @@ def main():
                     match_ids.add(match["cricbuzz_id"])
                     in_progress_count += 1
 
-            print(f"Processing {in_progress_count} in-progress matches")
-            print(f"Total matches to process: {len(match_ids)}")
+            logging.info(f"Processing {in_progress_count} in-progress matches")
+            logging.info(f"Total matches to process: {len(match_ids)}")
 
             for match_id in match_ids:
-                cricbuzz_data = call_cricbuzz_commentry_api(match_id)
-                if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
-                    last_updated_time["timestamp"] = cricbuzz_data['responseLastUpdated']
-                    process_cricbuzz_data(cricbuzz_data)
+                try:
+                    cricbuzz_data = call_cricbuzz_commentry_api(match_id)
+                    if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
+                        last_updated_time["timestamp"] = cricbuzz_data['responseLastUpdated']
+                        process_cricbuzz_data(cricbuzz_data)
+                except mysql.connector.Error as db_error:
+                    logging.error(f"Database error processing match {match_id}: {db_error}")
+                    # Optionally implement retry logic here
+                except Exception as e:
+                    logging.error(f"Error processing match {match_id}: {e}")
 
             if os.getenv("PROD", False):
                 time.sleep(30)
@@ -679,13 +739,12 @@ def main():
                 break
 
         except FileNotFoundError:
-            print("Error: cricbuzz_data.json file not found.")
+            logging.error("Error: cricbuzz_data.json file not found.")
         except json.JSONDecodeError:
-            print("Error: Invalid JSON data in cricbuzz_data.json.")
+            logging.error("Error: Invalid JSON data in cricbuzz_data.json.")
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            print(traceback.format_exc())
-            print("Sleeping for 30 seconds before retry")
+            logging.error(f"An unexpected error occurred: {e}")
+            logging.error(traceback.format_exc())
             time.sleep(30)
 
 
