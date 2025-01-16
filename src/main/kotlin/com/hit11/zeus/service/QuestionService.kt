@@ -77,6 +77,20 @@ class QuestionService(
     }
 
     @Transactional
+    fun activateQuestionsForLiveMatches(): Int {
+        try {
+            return questionRepository.activateQuestionsForLiveMatches(
+                newStatus = QuestionStatus.LIVE,
+                matchStatus = "In Progress",
+                currentStatus = QuestionStatus.SYSTEM_GENERATED
+            )
+        } catch (e: Exception) {
+            logger.error("Error activating questions for live matches", e)
+            throw RuntimeException("Failed to activate questions: ${e.message}")
+        }
+    }
+
+    @Transactional
     private fun updateQuestions(
         matchState: MatchState
     ): UpdateQuestionsResponse {

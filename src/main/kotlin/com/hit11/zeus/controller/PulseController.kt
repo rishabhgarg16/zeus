@@ -14,13 +14,15 @@ import javax.validation.Valid
 
 @RestController
 @RequestMapping("/api/pulse/")
-class QuestionController(private val service: QuestionService) {
+class QuestionController(
+    private val questionService: QuestionService
+) {
     private val logger = Logger.getLogger(this::class.java)
 
     @GetMapping("/all-active")
     fun getAllActivePulses(): ResponseEntity<ApiResponse<List<Question>?>> {
         try {
-            val response = service.getAllActivePulses()
+            val response = questionService.getAllActivePulses()
             return ResponseEntity.ok(
                 ApiResponse(
                     status = HttpStatus.OK.value(),
@@ -42,11 +44,36 @@ class QuestionController(private val service: QuestionService) {
         }
     }
 
+    @PostMapping("/activate")
+    fun activateQuestionsForLiveMatches(): ResponseEntity<ApiResponse<ActivationResponse>> {
+        return try {
+            val activatedCount = questionService.activateQuestionsForLiveMatches()
+            ResponseEntity.ok(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    message = "Successfully activated questions for live matches",
+                    data = ActivationResponse(activatedCount),
+                    internalCode = null,
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to activate questions for live matches", e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    message = "Failed to activate questions: ${e.message}",
+                    data = null,
+                    internalCode = null,
+                )
+            )
+        }
+    }
+
     @PostMapping("/active")
     fun getAllOpinions(
         @Valid @RequestBody request: GetActivePulseRequest
     ): ResponseEntity<ApiResponse<List<Question>?>> {
-        val response = service.getAllActiveQuestionsByMatch(request.matchIdList)
+        val response = questionService.getAllActiveQuestionsByMatch(request.matchIdList)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
@@ -61,7 +88,7 @@ class QuestionController(private val service: QuestionService) {
     fun getPulseById(
         @PathVariable pulseId: Int
     ): ResponseEntity<ApiResponse<Question?>> {
-        val response = service.getQuestionById(pulseId)
+        val response = questionService.getQuestionById(pulseId)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
@@ -76,7 +103,7 @@ class QuestionController(private val service: QuestionService) {
     fun updateAnswer(
         @RequestBody req: QuestionAnswerUpdateRequest
     ): ResponseEntity<ApiResponse<QuestionAnswerUpdateResponse>> {
-        val response = service.updateQuestionAnswer(req)
+        val response = questionService.updateQuestionAnswer(req)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
@@ -87,3 +114,7 @@ class QuestionController(private val service: QuestionService) {
         )
     }
 }
+
+data class ActivationResponse(
+    val activatedCount: Int
+)

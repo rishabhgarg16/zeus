@@ -4,12 +4,31 @@ import com.hit11.zeus.model.*
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 
 @Repository
 interface QuestionRepository : JpaRepository<Question, Int> {
+    @Modifying
+    @Query("""
+        UPDATE Question q 
+        SET q.status = :newStatus 
+        WHERE q.matchId IN (
+            SELECT m.id 
+            FROM Match m 
+            WHERE m.status = :matchStatus
+        ) 
+        AND q.status = :currentStatus
+    """)
+    @Transactional
+    fun activateQuestionsForLiveMatches(
+        @Param("newStatus") newStatus: QuestionStatus,
+        @Param("matchStatus") matchStatus: String,
+        @Param("currentStatus") currentStatus: QuestionStatus
+    ): Int
+
     fun findByMatchIdInAndStatus(
         matchIdList: List<Int>,
         status: QuestionStatus
