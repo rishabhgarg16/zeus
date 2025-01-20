@@ -72,6 +72,9 @@ data class Order(
     @Column(nullable = false)
     var updatedAt: Instant = Instant.now()
 ) {
+    val isBuyOrder: Boolean
+        get() = orderType == OrderType.BUY
+
     @PrePersist
     fun prePersist() {
         val now = Instant.now()

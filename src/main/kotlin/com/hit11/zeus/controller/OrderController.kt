@@ -80,9 +80,12 @@ class OrderController(
         return try {
             val orderBook = matchingEngine.getOrderBook(pulseId)
             return synchronized(orderBook) {
+                val depth = orderBook.getOrderBookDepth(levels)
                 val result = OrderBookResponse(
-                    yesBids = orderBook.getOrderBookDepth(levels).yesBids,
-                    noBids = orderBook.getOrderBookDepth(levels).noBids,
+                    yesBids = depth.yesBids,
+                    yesAsks = depth.yesAsks,  // NEW
+                    noBids = depth.noBids,
+                    noAsks = depth.noAsks,    // NEW
                     lastTradedYesPrice = orderBook.getLastTradedPrices().first,
                     lastTradedNoPrice = orderBook.getLastTradedPrices().second,
                     yesVolume = orderBook.getVolumes().first,

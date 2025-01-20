@@ -139,7 +139,7 @@ enum class TransactionType {
     DEPOSIT,
     WITHDRAWAL,
     TRADE_RESERVE,
-    TRADE_RELEASE,
+    TRADE_EXIT_PROCEEDS,
     TRADE_WIN,
     TRADE_LOSS,
     PROMOTIONAL_CREDIT,

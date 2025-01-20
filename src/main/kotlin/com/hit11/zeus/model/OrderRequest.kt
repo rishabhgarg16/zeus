@@ -1,6 +1,7 @@
 package com.hit11.zeus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotBlank
@@ -36,7 +37,12 @@ class OrderRequest(
     val executionType: OrderExecutionType = OrderExecutionType.MARKET,
 
     val createdAt: Long = Instant.now().epochSecond,
+
+    @JsonProperty("isExitOrder")
+    val isExitOrder: Boolean = false
 ) {
+    fun isBuyOrder(): Boolean = orderType == OrderType.BUY
+
     fun getCreatedAtAsInstant(): Instant {
         return Instant.ofEpochSecond(createdAt)
     }

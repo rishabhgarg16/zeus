@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.sql.SQLIntegrityConstraintViolationException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -42,6 +43,10 @@ class UserService(
             }
         }
         return null
+    }
+
+    fun getUserByUserId(userId: Int): User? {
+        return userRepository.findById(userId).orElse(null)
     }
 
     fun getUser(firebaseUID: String): User? {
@@ -199,18 +204,17 @@ class UserService(
 
         // Deduct proportionally from each balance type
         if (totalAvailable > BigDecimal.ZERO) {
-            val fromDeposited = (user.depositedBalance * amount) / totalAvailable
-            val fromWinnings = (user.winningsBalance * amount) / totalAvailable
-            val fromPromotional = (user.promotionalBalance * amount) / totalAvailable
+            val proportionDeposited = user.depositedBalance.divide(totalAvailable, 2, RoundingMode.HALF_UP)
+            val proportionWinnings = user.winningsBalance.divide(totalAvailable, 2, RoundingMode.HALF_UP)
+            val proportionPromotional = user.promotionalBalance.divide(totalAvailable, 2, RoundingMode.HALF_UP)
 
-            user.depositedBalance -= fromDeposited
-            user.winningsBalance -= fromWinnings
-            user.promotionalBalance -= fromPromotional
+            user.depositedBalance -= amount.multiply(proportionDeposited)
+            user.winningsBalance -= amount.multiply(proportionWinnings)
+            user.promotionalBalance -= amount.multiply(proportionPromotional)
         }
 
         // 2. Release the reserved amount since it's now matched
         user.reservedBalance -= amount
-
         userRepository.save(user)
 
         // Record the transaction
@@ -308,6 +312,41 @@ class UserService(
         return true
     }
 
+    @Transactional
+    fun addBalance(userId: Int, amount: BigDecimal, isWinning: Boolean = true) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { IllegalArgumentException("User not found") }
+
+        if (isWinning) {
+            // Add to winnings balance
+            user.winningsBalance = user.winningsBalance.plus(amount.setScale(2, RoundingMode.HALF_UP))
+
+            walletTransactionRepository.save(
+                WalletTransaction(
+                    user = user,
+                    amount = amount,
+                    type = TransactionType.TRADE_EXIT_PROCEEDS,
+                    balanceType = BalanceType.WINNINGS,
+                    description = "Proceeds from trade exit"
+                )
+            )
+        } else {
+            // Add to deposited balance
+            user.depositedBalance = user.depositedBalance.plus(amount.setScale(2, RoundingMode.HALF_UP))
+
+            walletTransactionRepository.save(
+                WalletTransaction(
+                    user = user,
+                    amount = amount,
+                    type = TransactionType.TRADE_EXIT_PROCEEDS,
+                    balanceType = BalanceType.DEPOSITED,
+                    description = "Proceeds from trade exit"
+                )
+            )
+        }
+
+        userRepository.save(user)
+    }
 
 
     @Transactional

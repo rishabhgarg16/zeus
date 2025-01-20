@@ -25,7 +25,14 @@ data class Trade(
     @Column(name = "pulse_id")
     val pulseId: Int = 0,
     @Enumerated(EnumType.STRING)
-    val side: OrderSide = OrderSide.UNKNOWN,
+    @Column(name = "side")
+    val orderSide: OrderSide = OrderSide.UNKNOWN,
+    @Column(name = "is_buy_order")
+    val isBuyOrder: Boolean = true,
+    @Column(name = "average_entry_price", precision = 10, scale = 2)
+    val averageEntryPrice: BigDecimal? = null,  // Only populated for sell trades
+    @Column(name = "realized_pnl", precision = 10, scale = 2)
+    val realizedPnl: BigDecimal? = null,
     val quantity: Long = 0,
     val price: BigDecimal = BigDecimal.ZERO,
     val amount: BigDecimal = BigDecimal.ZERO,
@@ -38,11 +45,17 @@ data class Trade(
     @Column(name = "settled_at")
     var settledAt: Instant? = null
 ) {
-    fun checkIfUserWon(userAnswer: OrderSide, pulseResult: PulseResult): String {
+    fun checkIfUserWon(pulseResult: PulseResult): String {
         return when {
             pulseResult == PulseResult.UNDECIDED -> TradeResult.ACTIVE.text
-            (userAnswer == OrderSide.Yes && pulseResult == PulseResult.Yes) ||
-                    (userAnswer == OrderSide.No && pulseResult == PulseResult.No) -> TradeResult.WIN.text
+            // For buy trades
+            isBuyOrder && (
+                    (orderSide == OrderSide.Yes && pulseResult == PulseResult.Yes) ||
+                            (orderSide == OrderSide.No && pulseResult == PulseResult.No)
+                    ) -> TradeResult.WIN.text
+            // For sell/exit trades - immediate PNL realization, always "WIN"
+            // PNL is handled through realizedPnl field
+            !isBuyOrder -> TradeResult.WIN.text
 
             else -> TradeResult.LOSE.text
         }
@@ -59,13 +72,23 @@ enum class TradeResult(val text: String, val outcome: Int) {
             when (userResult) {
                 "Win" -> return WIN
                 "Lose" -> return LOSE
-                "Active" -> return ACTIVE
+                "Active", null -> ACTIVE
+                else -> throw IllegalArgumentException("Invalid trade result: $userResult")
             }
             return ACTIVE
+        }
+
+        fun fromStatus(status: TradeStatus): TradeResult = when(status) {
+            TradeStatus.WON -> WIN
+            TradeStatus.LOST -> LOSE
+            TradeStatus.ACTIVE -> ACTIVE
+            TradeStatus.CLOSED, TradeStatus.CANCELLED -> ACTIVE // Consider if this mapping makes sense
         }
     }
 }
 
 enum class TradeStatus {
-    ACTIVE, WON, LOST, CANCELLED
+    ACTIVE, WON, LOST, CLOSED, CANCELLED;
+
+    fun isTerminal(): Boolean = this in setOf(WON, LOST, CLOSED, CANCELLED)
 }

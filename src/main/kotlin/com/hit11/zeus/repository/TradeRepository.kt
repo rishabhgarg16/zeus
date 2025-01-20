@@ -1,5 +1,6 @@
 package com.hit11.zeus.repository
 
+import com.hit11.zeus.model.OrderSide
 import com.hit11.zeus.model.Trade
 import com.hit11.zeus.model.TradeStatus
 import org.springframework.data.domain.Page
@@ -24,4 +25,16 @@ interface TradeRepository : JpaRepository<Trade, Long> {
     fun findTopByPulseIdOrderByCreatedAtDesc(
         @Param("pulseId") pulseId: Int, @Param("limit") limit: Int
     ): List<Trade>?
+
+    fun findByUserIdAndPulseIdAndOrderSide(
+        userId: Int,
+        pulseId: Int,
+        orderSide: OrderSide
+    ): List<Trade>
+
+    fun findByPulseIdAndStatusAndIsBuyOrder(
+        pulseId: Int,
+        status: TradeStatus,
+        isBuyOrder: Boolean
+    ): List<Trade>
 }

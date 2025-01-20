@@ -1,9 +1,6 @@
 package com.hit11.zeus.service
 
-import com.hit11.zeus.model.OrderSide
-import com.hit11.zeus.model.PositionStatus
-import com.hit11.zeus.model.PulseResult
-import com.hit11.zeus.model.UserPosition
+import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
 import com.hit11.zeus.repository.UserPositionRepository
 import org.slf4j.LoggerFactory
@@ -28,7 +25,7 @@ class UserPositionService(
         pulseId: Int,
         matchId: Int,
         side: OrderSide,
-        newQuantity: Long,
+        quantityDelta: Long, // Will be negative for sells
         newPrice: BigDecimal
     ) {
         val existingPositions =
@@ -38,6 +35,16 @@ class UserPositionService(
                 side,
                 status = PositionStatus.OPEN
             )
+
+        // For sell orders, validate sufficient position exists
+        if (quantityDelta < 0) {
+            val totalExistingQuantity = existingPositions.sumOf { it.quantity }
+            if (totalExistingQuantity < -quantityDelta) { // newQuantity is negative for sells
+                throw IllegalArgumentException(
+                    "Insufficient position quantity. Available: $totalExistingQuantity, Required: ${-quantityDelta}"
+                )
+            }
+        }
 
         val mergedPosition = existingPositions.reduceOrNull { acc, position ->
             acc.apply {
@@ -60,14 +67,36 @@ class UserPositionService(
             averagePrice = BigDecimal.ZERO
         )
 
-        mergedPosition.quantity += newQuantity
-        mergedPosition.averagePrice = calculateNewAveragePrice(
-            mergedPosition.quantity,
-            mergedPosition.averagePrice,
-            newQuantity,
-            newPrice
-        )
-        updateUnrealizedPnl(mergedPosition)
+        mergedPosition.apply {
+            quantity += quantityDelta
+
+            // Only recalculate average price for buys
+            // For sells, keep existing average price
+            if (quantityDelta > 0) {
+                averagePrice = calculateNewAveragePrice(
+                    quantity,          // Total quantity after adding new
+                    averagePrice,      // Current average price
+                    quantityDelta,       // Buy quantity being added
+                    newPrice          // Price of new buy
+                )
+            }
+
+            // If selling, update realized PNL
+            if (quantityDelta < 0) {
+                val sellValue = newPrice.multiply(BigDecimal.valueOf(-quantityDelta))
+                val costBasis = averagePrice.multiply(BigDecimal.valueOf(-quantityDelta))
+                realizedPnl = realizedPnl.add(sellValue.subtract(costBasis))
+            }
+
+            // Update unrealized PNL for remaining position
+            updateUnrealizedPnl(this)
+        }
+
+        // If position is fully closed, mark as CLOSED
+        if (mergedPosition.quantity == 0L) {
+            mergedPosition.status = PositionStatus.CLOSED
+            mergedPosition.closeTime = Instant.now()
+        }
 
         userPositionRepository.save(mergedPosition)
     }
@@ -78,6 +107,10 @@ class UserPositionService(
         newQuantity: Long,
         newPrice: BigDecimal
     ): BigDecimal {
+        if (oldQuantity < 0 || newQuantity < 0) {
+            throw IllegalArgumentException("Quantities cannot be negative")
+        }
+
         // Handle cases where both quantities are zero
         if (oldQuantity == 0L && newQuantity == 0L) {
             throw IllegalArgumentException("Total quantity cannot be zero")

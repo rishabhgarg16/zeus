@@ -28,6 +28,7 @@ class OrderService(
     private val questionRepository: QuestionRepository,
     private val userRepository: UserRepository,
     private val userService: UserService,
+    private val userPositionService: UserPositionService,
     private val awsProperties: AwsProperties,
     private val sqsClient: SqsClient,
     private val matchingEngine: MatchingEngine,
@@ -64,9 +65,13 @@ class OrderService(
             val order = createInitialOrder(orderRequest)
             val savedOrder = orderRepository.save(order)
 
-            val reserveAmount = savedOrder.price.multiply(BigDecimal(savedOrder.quantity))
-            if (!userService.reserveBalance(savedOrder.userId, reserveAmount)) {
-                throw InsufficientBalanceException("Insufficient balance for user ${savedOrder.userId}")
+
+            // Only reserve balance for buy orders
+            if (order.isBuyOrder) {
+                val reserveAmount = savedOrder.price.multiply(BigDecimal(savedOrder.quantity))
+                if (!userService.reserveBalance(savedOrder.userId, reserveAmount)) {
+                    throw InsufficientBalanceException("Insufficient balance for user ${savedOrder.userId}")
+                }
             }
 
             // 3. Find potential matches
@@ -201,8 +206,11 @@ class OrderService(
             try {
                 matchingEngine.cancelOrder(order)
 
-                val releaseAmount = order.price.multiply(BigDecimal(order.remainingQuantity))
-                userService.releaseReservedBalance(order.userId, releaseAmount)
+                // Only return funds for buy orders
+                if (order.isBuyOrder) {
+                    val releaseAmount = order.price.multiply(BigDecimal(order.remainingQuantity))
+                    userService.releaseReservedBalance(order.userId, releaseAmount)
+                }
 
                 order.apply {
                     status = OrderStatus.CANCELLED
@@ -214,7 +222,9 @@ class OrderService(
         }
 
         val savedOrders = orderRepository.saveAll(updatedOrders)
-        savedOrders.forEach { order -> notificationService.notifyOrderCancelled(order) }
+        savedOrders.forEach { order ->
+            notificationService.notifyOrderCancelled(order)
+        }
         logger.info("Successfully cancelled ${updatedOrders.size} orders for pulseId $pulseId")
     }
 
@@ -272,7 +282,12 @@ class OrderService(
 
 
         return orders.mapNotNull { order ->
-            order.toUiOrderResponse()
+            try {
+                order.toUiOrderResponse()
+            } catch (e: Exception) {
+                logger.error("Error mapping order ${order.id} to UI response", e)
+                null
+            }
         }
     }
 
@@ -340,32 +355,49 @@ class OrderService(
         }
     }
 
-    private fun validateOrder(order: OrderRequest) {
-        val match = matchRepository.findActiveMatchById(order.matchId)
+    private fun validateOrder(orderRequest: OrderRequest) {
+        val match = matchRepository.findActiveMatchById(orderRequest.matchId)
             .orElseThrow { OrderValidationException("Match not found") }
 
         if (match.status == MatchStatus.COMPLETE.text) {
             throw OrderValidationException("Match has ended")
         }
 
-        val question = questionRepository.findById(order.pulseId)
+        val question = questionRepository.findById(orderRequest.pulseId)
             .orElseThrow { OrderValidationException("Question not found") }
 
         if (question.status != QuestionStatus.LIVE) {
             throw OrderValidationException("Question is not active")
         }
 
-        val user = userRepository.findById(order.userId)
+        val user = userRepository.findById(orderRequest.userId)
             .orElseThrow { OrderValidationException("User not found") }
 
-        val orderTotal = order.price * order.quantity
-        if (user.availableForTrading.toDouble() < orderTotal) {
-            throw OrderValidationException("Insufficient balance")
+        if (orderRequest.isExitOrder) {
+            // For sell-exit orders, validate position exists
+            val positions = userPositionService.getPositionsByUserAndPulse(
+                orderRequest.userId,
+                orderRequest.pulseId
+            ).filter { it.status == PositionStatus.OPEN }
+
+            val positionToExit = positions.firstOrNull {
+                it.orderSide.name == orderRequest.userAnswer
+            } ?: throw OrderValidationException("No open position to exit")
+
+            if (positionToExit.quantity < orderRequest.quantity) {
+                throw OrderValidationException("Exit quantity exceeds open position")
+            }
+        } else {
+            // For buy orders, validate wallet balance
+            val orderTotal = orderRequest.price * orderRequest.quantity
+            if (user.availableForTrading.toDouble() < orderTotal) {
+                throw OrderValidationException("Insufficient balance")
+            }
         }
 
-        validateWager(order, question)
-        validateQuantity(order)
-        validateOrderTime(order)
+        validateWager(orderRequest, question)
+        validateQuantity(orderRequest)
+        validateOrderTime(orderRequest)
     }
 
     private fun validateWager(order: OrderRequest, question: Question) {
@@ -405,5 +437,28 @@ class OrderService(
 
     fun lastTradedPrices(pulseIds: List<Int>): List<OrderExecution> {
         return orderExecutionService.getLastTradedPulses(pulseIds)
+    }
+
+    @Transactional
+    fun cancelOrderWithoutFundReturn(orderId: Long): Order {
+        val order = orderRepository.findById(orderId)
+            .orElseThrow { IllegalArgumentException("Order not found") }
+
+        if (order.status != OrderStatus.OPEN && order.status != OrderStatus.PARTIALLY_FILLED) {
+            throw IllegalStateException("Cannot cancel order in state ${order.status}")
+        }
+
+        // Remove from matching engine
+        matchingEngine.cancelOrder(order)
+
+        // Update status
+        order.status = OrderStatus.CANCELLED
+
+        val savedOrder = orderRepository.save(order)
+
+        // Send notification asynchronously
+        notificationService.notifyOrderCancelled(savedOrder)
+
+        return savedOrder
     }
 }

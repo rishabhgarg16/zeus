@@ -54,7 +54,7 @@ class NotificationService(
                 "tradeId" to trade.id.toString(),
                 "pulseId" to trade.pulseId.toString(),
                 "matchId" to trade.matchId.toString(),
-                "side" to trade.side.toString()
+                "side" to trade.orderSide.toString()
             ),
             deliveryType = DeliveryType.BOTH
         )

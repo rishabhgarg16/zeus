@@ -1,7 +1,8 @@
 package com.hit11.zeus.service
 
-import com.hit11.zeus.model.OrderExecution
+import com.hit11.zeus.exception.OrderValidationException
 import com.hit11.zeus.model.Order
+import com.hit11.zeus.model.OrderExecution
 import com.hit11.zeus.model.OrderSide
 import com.hit11.zeus.repository.MatchedOrderRepository
 import org.springframework.stereotype.Service
@@ -19,9 +20,18 @@ class OrderExecutionService(
     @Transactional
     fun processMatches(order: Order, matches: List<OrderMatch>) {
         matches.forEach { match ->
+            // For sells/exits, we need average entry price from position
+            val avgEntryPrice = if (!order.isBuyOrder) {
+                userPositionService.getPositionsByUserAndPulse(
+                    order.userId,
+                    order.pulseId
+                ).firstOrNull { it.orderSide == order.orderSide }?.averagePrice
+                    ?: throw OrderValidationException("No position found for exit")
+            } else null
+
             val execution = createOrderExecution(match)
             matchedOrderRepository.save(execution)
-            tradeService.createTrade(match)
+            tradeService.createTrade(match, avgEntryPrice)
             updateUserBalances(match)
             updateUserPositions(match)
         }
@@ -35,37 +45,56 @@ class OrderExecutionService(
         matchedQuantity = match.matchedQuantity,
         matchedYesPrice = match.matchedYesPrice,
         matchedNoPrice = match.matchedNoPrice
-
     )
 
     private fun updateUserBalances(orderMatch: OrderMatch) {
         val yesTradeAmount = orderMatch.matchedYesPrice.multiply(BigDecimal(orderMatch.matchedQuantity))
         val noTradeAmount = orderMatch.matchedNoPrice.multiply(BigDecimal(orderMatch.matchedQuantity))
 
-        // Deduct from the Yes buyer's wallet
-        userService.confirmReservedBalance(orderMatch.yesOrder.userId, yesTradeAmount)
+        // Only deduct from buyer's wallets
+        if (orderMatch.yesOrder.isBuyOrder) {
+            userService.confirmReservedBalance(orderMatch.yesOrder.userId, yesTradeAmount)
+        } else {
+            // For sell (exit) orders, add funds to seller’s wallet
+            userService.addBalance(orderMatch.yesOrder.userId, yesTradeAmount)
+        }
 
-        // Deduct from the No buyer's wallet
-        userService.confirmReservedBalance(orderMatch.noOrder.userId, noTradeAmount)
+        if (orderMatch.noOrder.isBuyOrder) {
+            userService.confirmReservedBalance(orderMatch.noOrder.userId, noTradeAmount)
+        } else {
+            // For sell (exit) orders, add funds to seller’s wallet
+            userService.addBalance(orderMatch.noOrder.userId, noTradeAmount)
+        }
     }
 
     private fun updateUserPositions(orderMatch: OrderMatch) {
         // Yes position
+        val yesQuantity = if (orderMatch.yesOrder.isBuyOrder)
+            orderMatch.matchedQuantity
+        else
+            -orderMatch.matchedQuantity // Reduce for sell orders
+
         userPositionService.updateOrCreateUserPosition(
             orderMatch.yesOrder.userId,
             orderMatch.yesOrder.pulseId,
             orderMatch.yesOrder.matchId,
             OrderSide.Yes,
-            orderMatch.matchedQuantity,
+            yesQuantity,  // Positive for buy, negative for sell
             orderMatch.matchedYesPrice
         )
+
         // No position
+        val noQuantity = if (orderMatch.noOrder.isBuyOrder)
+            orderMatch.matchedQuantity
+        else
+            -orderMatch.matchedQuantity
+
         userPositionService.updateOrCreateUserPosition(
             orderMatch.noOrder.userId,
             orderMatch.noOrder.pulseId,
             orderMatch.noOrder.matchId,
             OrderSide.No,
-            orderMatch.matchedQuantity, // no order is also buy order hence adding the quantity
+            noQuantity,  // Positive for buy, negative for sell
             orderMatch.matchedNoPrice
         )
     }

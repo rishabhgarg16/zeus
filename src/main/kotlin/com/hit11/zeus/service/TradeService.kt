@@ -25,29 +25,54 @@ class TradeService(
     private val logger = LoggerFactory.getLogger(TradeService::class.java)
 
     @Transactional
-    fun createTrade(orderMatch: OrderMatch) {
+    fun createTrade(orderMatch: OrderMatch, avgEntryPrice: BigDecimal?) {
         val trades = listOf(
             Trade(
                 userId = orderMatch.yesOrder.userId,
                 orderId = orderMatch.yesOrder.id,
                 pulseId = orderMatch.yesOrder.pulseId,
                 matchId = orderMatch.yesOrder.matchId,
-                side = OrderSide.Yes,
+                orderSide = OrderSide.Yes,
+                isBuyOrder = orderMatch.yesOrder.isBuyOrder,  // Track buy/sell
+                averageEntryPrice = if (!orderMatch.yesOrder.isBuyOrder) avgEntryPrice else null,
                 price = orderMatch.matchedYesPrice,
-                quantity = orderMatch.matchedQuantity,
+                quantity = if (orderMatch.yesOrder.isBuyOrder)
+                    orderMatch.matchedQuantity
+                else
+                    -orderMatch.matchedQuantity,  // Negative for sells
                 amount = orderMatch.matchedYesPrice.multiply(BigDecimal(orderMatch.matchedQuantity)),
-                status = TradeStatus.ACTIVE
+                // For exits, calculate immediate realized PNL
+                realizedPnl = if (!orderMatch.yesOrder.isBuyOrder && avgEntryPrice != null) {
+                    orderMatch.matchedYesPrice.subtract(avgEntryPrice)
+                        .multiply(BigDecimal(orderMatch.matchedQuantity))
+                } else null,
+                status = if (!orderMatch.yesOrder.isBuyOrder)
+                    TradeStatus.CLOSED  // Exit trades are closed immediately
+                else
+                    TradeStatus.ACTIVE
             ),
             Trade(
                 userId = orderMatch.noOrder.userId,
                 orderId = orderMatch.noOrder.id,
                 pulseId = orderMatch.noOrder.pulseId,
                 matchId = orderMatch.noOrder.matchId,
-                side = OrderSide.No,
-                price = BigDecimal.TEN.subtract(orderMatch.matchedYesPrice),
-                quantity = orderMatch.matchedQuantity,
+                orderSide = OrderSide.No,
+                isBuyOrder = orderMatch.noOrder.isBuyOrder, // Track buy/sell
+                price = orderMatch.matchedNoPrice,
+                quantity = if (orderMatch.noOrder.isBuyOrder)
+                    orderMatch.matchedQuantity
+                else
+                    -orderMatch.matchedQuantity,  // Negative for sells
                 amount = orderMatch.matchedNoPrice.multiply(BigDecimal(orderMatch.matchedQuantity)),
-                status = TradeStatus.ACTIVE
+                averageEntryPrice = if (!orderMatch.noOrder.isBuyOrder) avgEntryPrice else null,
+                realizedPnl = if (!orderMatch.noOrder.isBuyOrder && avgEntryPrice != null) {
+                    orderMatch.matchedNoPrice.subtract(avgEntryPrice)
+                        .multiply(BigDecimal(orderMatch.matchedQuantity))
+                } else null,
+                status = if (!orderMatch.noOrder.isBuyOrder)
+                    TradeStatus.CLOSED
+                else
+                    TradeStatus.ACTIVE
             )
         )
         // Save the trades in the database
@@ -61,7 +86,13 @@ class TradeService(
 
     @Transactional
     fun settleTradesByPulse(pulseId: Int, pulseResult: PulseResult) {
-        val trades = tradeRepository.findByPulseIdAndStatus(pulseId, TradeStatus.ACTIVE)
+        // Only get active buy trades - exit trades are already settled
+        val trades = tradeRepository.findByPulseIdAndStatusAndIsBuyOrder(
+            pulseId,
+            TradeStatus.ACTIVE,
+            isBuyOrder = true
+        )
+
         if (trades.isEmpty()) {
             logger.info("No active trades to close for Pulse $pulseId")
             return
@@ -69,7 +100,7 @@ class TradeService(
 
         val updatedTrades = trades.map { trade ->
             trade.apply {
-                status = if (checkIfUserWon(side, pulseResult) == TradeResult.WIN.text) {
+                status = if (checkIfUserWon(pulseResult) == TradeResult.WIN.text) {
                     TradeStatus.WON
                 } else {
                     TradeStatus.LOST
@@ -82,17 +113,39 @@ class TradeService(
         // Save updated trades in a batch
         tradeRepository.saveAll(updatedTrades)
         sendTradeNotification(updatedTrades)
-        logger.info("Successfully closed ${updatedTrades.size} trades for Pulse $pulseId")
+        logger.info("Successfully closed ${updatedTrades.size} buy trades for Pulse $pulseId")
     }
 
     private fun sendTradeNotification(trades: List<Trade>) {
         trades.map { trade ->
-            val deliveryType = DeliveryType.BOTH // You can customize this as needed
-            val title = if (trade.status == TradeStatus.WON) "Congratulations! You Won 🎉" else "Better Luck Next Time!"
-            val message = if (trade.status == TradeStatus.WON) {
-                "Your trade on Pulse ${trade.pulseId} was a success. You've won ₹${trade.pnl}!"
-            } else {
-                "Your trade on Pulse ${trade.pulseId} did not succeed. Trade more to win next time!"
+            val deliveryType = DeliveryType.BOTH
+
+            val (title, message) = when {
+                !trade.isBuyOrder -> {
+                    // For exit trades
+                    val profitOrLoss = trade.realizedPnl ?: BigDecimal.ZERO
+                    if (profitOrLoss > BigDecimal.ZERO) {
+                        Pair(
+                            "Position Closed - Profit! 🎯",
+                            "Successfully exited position on Pulse ${trade.pulseId}. Profit: ₹$profitOrLoss"
+                        )
+                    } else {
+                        Pair(
+                            "Position Closed",
+                            "Exited position on Pulse ${trade.pulseId}. Loss: ₹${profitOrLoss.abs()}"
+                        )
+                    }
+                }
+
+                trade.status == TradeStatus.WON -> Pair(
+                    "Congratulations! You Won 🎉",
+                    "Your trade on Pulse ${trade.pulseId} was a success. You've won ₹${trade.pnl}!"
+                )
+
+                else -> Pair(
+                    "Better Luck Next Time!",
+                    "Your trade on Pulse ${trade.pulseId} did not succeed. Trade more to win next time!"
+                )
             }
 
             val payload = NotificationPayload(
@@ -103,27 +156,34 @@ class TradeService(
                 metadata = mapOf(
                     "tradeId" to trade.id.toString(),
                     "pulseId" to trade.pulseId.toString(),
-                    "status" to trade.status.name
+                    "status" to trade.status.name,
+                    "isExit" to (!trade.isBuyOrder).toString(),
+                    "realizedPnl" to (trade.realizedPnl?.toString() ?: "0")
                 ),
                 deliveryType = deliveryType
             )
 
             notificationService.sendNotificationAsync(payload)
         }
-
     }
 
     private fun calculatePnl(trade: Trade, pulseResult: PulseResult): BigDecimal {
-        return when {
-            pulseResult == PulseResult.Yes && trade.side == OrderSide.Yes -> {
-                (BigDecimal.TEN.subtract(trade.price)).multiply(BigDecimal(trade.quantity))
-            }
+        if (trade.isBuyOrder) {
+            return when {
+                pulseResult == PulseResult.Yes && trade.orderSide == OrderSide.Yes -> {
+                    (BigDecimal.TEN.subtract(trade.price)).multiply(BigDecimal(trade.quantity))
+                }
 
-            pulseResult == PulseResult.No && trade.side == OrderSide.No -> {
-                (BigDecimal.TEN.subtract(trade.price)).multiply(BigDecimal(trade.quantity))
-            }
+                pulseResult == PulseResult.No && trade.orderSide == OrderSide.No -> {
+                    (BigDecimal.TEN.subtract(trade.price)).multiply(BigDecimal(trade.quantity))
+                }
 
-            else -> BigDecimal.ZERO
+                else -> BigDecimal.ZERO
+            }
+        } else {
+            // For exits, PNL is immediate profit/loss on the sale
+            // Note: quantity is already negative for sells
+            return trade.price.subtract(trade.averageEntryPrice).multiply(BigDecimal(-trade.quantity))
         }
     }
 

@@ -49,6 +49,10 @@ data class UserPosition(
     @Column(name = "close_time")
     var closeTime: Instant? = null,
 
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "position_type")
+//    val positionType: PositionType = PositionType.LONG_ONLY,
+
     @Column(name = "settled_amount")
     var settledAmount: BigDecimal? = null, // Store the final computed payout
 
@@ -58,3 +62,9 @@ data class UserPosition(
     @Column(name = "updated_at")
     var updatedAt: Instant = Instant.now()
 )
+
+// enum to define position types
+enum class PositionType {
+    LONG_ONLY,    // Only allow long positions
+    SHORT_ENABLED // Allow both long and short positions
+}

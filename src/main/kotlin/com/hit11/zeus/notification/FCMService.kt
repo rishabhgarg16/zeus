@@ -19,7 +19,7 @@ class FCMService(
 
     suspend fun sendNotification(payload: NotificationPayload) {
         try {
-            val user = userService.getUser(payload.userId.toString())
+            val user = userService.getUserByUserId(payload.userId)
             val fcmToken = user?.fcmToken ?: DEFAULT_FCM_TOKEN
 
             // Convert metadata values to strings

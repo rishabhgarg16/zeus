@@ -22,8 +22,17 @@ class PayoutService (
             // Close all positions for the pulse
             userPositionService.closePulsePositions(question.id, pulseResult)
 
-            // Cancel all open and partially filled orders
-            orderService.cancelAllOpenOrders(question.id)
+            // 3. Cancel all open orders and handle funds
+            val openOrders = orderService.getOpenOrdersByPulse(question.id)
+            openOrders.forEach { order ->
+                // Only return funds for buy orders
+                if (order.isBuyOrder) {
+                    orderService.cancelOrder(order.id)
+                } else {
+                    // For sell orders, just cancel without returning funds
+                    orderService.cancelOrderWithoutFundReturn(order.id)
+                }
+            }
         } catch (e: Exception) {
             throw RuntimeException("Failed to process payouts for pulse ${question.id}: ${e.message}", e)
         }
