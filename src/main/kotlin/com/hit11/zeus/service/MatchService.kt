@@ -282,12 +282,33 @@ class MatchService(
         }
     }
 
-    fun getScoreByMatch(matchId: Int): Hit11Scorecard? {
-        val match = getMatchById(matchId)
-        if (match?.cricbuzzMatchId != null) {
-            return cricbuzzApiService.getMatchScore(match.id, match.cricbuzzMatchId)
+    private val cache = HashMap<Int, Pair<Instant, Hit11Scorecard>>()
+    private fun getScore(cricbuzzMatchId: Int, matchId: Int = 0, useCache: Boolean): Hit11Scorecard? {
+        if (useCache) {
+            val cachedScoreCard = cache[cricbuzzMatchId]
+            if (cachedScoreCard != null && cachedScoreCard.first > Instant.now().minusSeconds(300)) {
+                return cachedScoreCard.second
+            }
+        }
+        val scoreCard = cricbuzzApiService.getMatchScore(matchId, cricbuzzMatchId)
+        if (scoreCard != null) {
+            cache[cricbuzzMatchId] = Pair(Instant.now(), scoreCard)
+            return scoreCard
         }
         return null
+    }
+
+    fun getScoreByMatch(matchId: Int, useCache: Boolean): Hit11Scorecard? {
+        val match = getMatchById(matchId)
+        return if (match?.cricbuzzMatchId != null) {
+            getScore(match.cricbuzzMatchId, match.id, useCache)
+        } else {
+            null
+        }
+    }
+
+    fun getScoreByCricbuzzMatch(cricBuzzMatchId: Int, useCache: Boolean): Hit11Scorecard? {
+        return getScore(cricBuzzMatchId, useCache = useCache)
     }
 }
 

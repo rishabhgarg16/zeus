@@ -50,8 +50,27 @@ class MatchController(
     }
 
     @GetMapping("/livescore/{matchId}")
-    fun getLiveScore(@PathVariable matchId: Int): ResponseEntity<ApiResponse<Hit11Scorecard>> {
-        val data = matchService.getScoreByMatch(matchId)
+    fun getLiveScore(
+        @PathVariable matchId: Int,
+        @RequestParam(name = "cache", required = false, defaultValue = "true") useCache: Boolean
+    ): ResponseEntity<ApiResponse<Hit11Scorecard>> {
+        val data = matchService.getScoreByMatch(matchId, useCache)
+        return ResponseEntity.ok(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Success",
+                data = data
+            )
+        )
+    }
+
+    @GetMapping("/livescore/cricbuzz/{cricbuzzMatchId}")
+    fun getOrCreateLiveScoreByCricbuzz(
+        @PathVariable cricbuzzMatchId: Int,
+        @RequestParam(name = "cache", required = false, defaultValue = "true") useCache: Boolean
+    ): ResponseEntity<ApiResponse<Hit11Scorecard>> {
+        val data = matchService.getScoreByCricbuzzMatch(cricbuzzMatchId, useCache)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),
