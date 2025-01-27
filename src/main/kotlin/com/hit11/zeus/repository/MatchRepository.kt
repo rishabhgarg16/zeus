@@ -17,24 +17,23 @@ interface MatchRepository : JpaRepository<Match, Int> {
     JOIN FETCH m.team1Entity t1 
     JOIN FETCH m.team2Entity t2 
     WHERE (
-        m.status IN :activeStatuses 
-        OR (
-            m.startDate <= :currentTimestamp 
-            AND m.endDate >= :currentTimestamp
-        )
+        (m.status IN :activeStatuses AND m.endDate >= :currentTimestamp) 
         OR (
             m.status = 'Complete' 
             AND m.endDate >= :recentCompletedMatchThreshold
         )
     )
     ORDER BY 
+        CASE m.status
+            WHEN 'In Progress' THEN 0 
+            WHEN 'Preview' THEN 1 
+            WHEN 'Scheduled' THEN 2
+            ELSE 3 
+        END,
         CASE 
-            WHEN m.status = 'In Progress' THEN 0 
-            WHEN m.status = 'Preview' THEN 1 
-            WHEN m.status = 'Scheduled' THEN 2
-            WHEN m.status = 'Complete' THEN 3
-        END, 
-        m.startDate ASC
+            WHEN m.status = 'Complete' THEN m.endDate 
+            ELSE m.startDate 
+        END ASC
     """
     )
     fun findMatchesWithTeams(
