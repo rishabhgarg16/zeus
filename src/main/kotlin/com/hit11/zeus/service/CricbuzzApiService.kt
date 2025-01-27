@@ -117,7 +117,7 @@ class CricbuzzApiService {
             transformMatchDataToHit11Scorecard(matchId, criccbuzzMatchDataModel)
         } catch (e: Exception) {
             logger.error("Error parsing JSON response: ${e.message}")
-            null
+            throw e
         }
     }
 }
@@ -142,9 +142,9 @@ fun transformMatchDataToHit11Scorecard(
     val matchResult = winningTeam?.let { getMatchResult(matchHeader, winningTeam) }
 
 
-    val inningsList = criccbuzzMatchDataModel.miniscore.matchScoreDetails.inningsScoreList.map {
+    val inningsList = criccbuzzMatchDataModel.miniscore?.matchScoreDetails?.inningsScoreList?.map {
         convertInningsScoreToInnings(it, criccbuzzMatchDataModel)
-    }
+    } ?: emptyList()
 
     val playerOfTheMatch = matchHeader.playersOfTheMatch.firstOrNull()
 
@@ -196,7 +196,7 @@ fun getMatchResult(
 data class CriccbuzzLiveScoreDataModel(
     val commentaryList: List<Commentary>,
     val matchHeader: MatchHeader,
-    val miniscore: Miniscore,
+    val miniscore: Miniscore? = null,
     val commentarySnippetList: List<Any>,
     val page: String,
     val enableNoContent: Boolean,
@@ -417,13 +417,17 @@ fun convertInningsScoreToInnings(
         }
     )
 
-    val bowlingCBTeam = when {
-        inningsScore.batTeamId == cbTeam1.id -> Team(
-            name = cbTeam2.name, id = cbTeam1.id, shortName = cbTeam2.shortName
+    val bowlingCBTeam = when (inningsScore.batTeamId) {
+        cbTeam1.id -> Team(
+            id = cbTeam2.id,
+            name = cbTeam2.name,
+            shortName = cbTeam2.shortName
         )
 
         else -> Team(
-            name = cbTeam1.name, id = cbTeam2.id, shortName = cbTeam1.name
+            id = cbTeam1.id,
+            name = cbTeam1.name,
+            shortName = cbTeam1.shortName
         )
     }
 
@@ -438,7 +442,7 @@ fun convertInningsScoreToInnings(
         overs = BigDecimal.valueOf(inningsScore.overs),
         runRate = runRate,
         bowlingTeam = bowlingCBTeam,
-        isCurrentInnings = criccbuzzMatchDataModel.miniscore.inningsId == inningsScore.inningsId
+        isCurrentInnings = criccbuzzMatchDataModel.miniscore?.inningsId == inningsScore.inningsId
         // The rest of the fields are initialized with default values or remain null
     )
 }

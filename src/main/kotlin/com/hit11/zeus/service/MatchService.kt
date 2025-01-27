@@ -284,16 +284,21 @@ class MatchService(
 
     private val cache = HashMap<Int, Pair<Instant, Hit11Scorecard>>()
     private fun getScore(cricbuzzMatchId: Int, matchId: Int = 0, useCache: Boolean): Hit11Scorecard? {
-        if (useCache) {
-            val cachedScoreCard = cache[cricbuzzMatchId]
-            if (cachedScoreCard != null && cachedScoreCard.first > Instant.now().minusSeconds(300)) {
-                return cachedScoreCard.second
+        try {
+            if (useCache) {
+                val cachedScoreCard = cache[cricbuzzMatchId]
+                if (cachedScoreCard != null && cachedScoreCard.first > Instant.now().minusSeconds(300)) {
+                    return cachedScoreCard.second
+                }
             }
-        }
-        val scoreCard = cricbuzzApiService.getMatchScore(matchId, cricbuzzMatchId)
-        if (scoreCard != null) {
-            cache[cricbuzzMatchId] = Pair(Instant.now(), scoreCard)
-            return scoreCard
+
+            val scoreCard = cricbuzzApiService.getMatchScore(matchId, cricbuzzMatchId)
+            if (scoreCard != null) {
+                cache[cricbuzzMatchId] = Pair(Instant.now(), scoreCard)
+                return scoreCard
+            }
+        } catch (e: Exception) {
+            throw e
         }
         return null
     }

@@ -55,14 +55,25 @@ class MatchController(
         @RequestParam(name = "cache", required = false, defaultValue = "true") useCache: Boolean
     ): ResponseEntity<ApiResponse<Hit11Scorecard>> {
         val data = matchService.getScoreByMatch(matchId, useCache)
-        return ResponseEntity.ok(
-            ApiResponse(
-                status = HttpStatus.OK.value(),
-                internalCode = null,
-                message = "Success",
-                data = data
+        if (data != null) {
+            return ResponseEntity.ok(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    internalCode = null,
+                    message = "Success",
+                    data = data
+                )
             )
-        )
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    internalCode = null,
+                    message = "Error fetching live score for match ${matchId}",
+                    data = null
+                )
+            )
+        }
     }
 
     @GetMapping("/livescore/cricbuzz/{cricbuzzMatchId}")
