@@ -178,7 +178,7 @@ class UserController(
             logger.error("Error generating otp", e)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ApiResponse(
-                    data = null,
+                    data = false,
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     message = "Error generating otp",
                     internalCode = "INTERNAL_SERVER_ERROR"

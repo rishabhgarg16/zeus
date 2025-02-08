@@ -42,6 +42,4 @@ class Fast2SmsService(
     }
 }
 
-class OtpGenerationException : Throwable() {
-
-}
+class OtpGenerationException(message: String = "Couldn't generate OTP") : Exception(message)
