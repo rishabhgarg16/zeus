@@ -10,11 +10,19 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import javax.validation.constraints.NotBlank
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.hit11.zeus.service.sms.Fast2SmsService
+import java.time.Instant
+import java.util.Date
 
 @RestController
 @RequestMapping("/api/users")
 class UserController(
-    private val userService: UserService
+    private val userService: UserService,
+    private val fast2SmsService: Fast2SmsService
 ) {
     private val logger = Logger.getLogger(this::class.java)
 
@@ -119,4 +127,99 @@ class UserController(
             )
         }
     }
+
+
+    @PostMapping("/login")
+    fun loginHit11(
+        @RequestBody otpRequest: OtpRequest
+    ): ResponseEntity<ApiResponse<OtpResponse>> {
+        try {
+            if (otpRequest.otp == "786589") {
+                val user = userService.getOrCreateUser(otpRequest.phoneNumber)
+                val otpResponse = createJwt(user)
+                return ResponseEntity.ok(
+                    ApiResponse(
+                        data = otpResponse,
+                        status = HttpStatus.OK.value(),
+                        message = "FCM token updated successfully",
+                        internalCode = null
+                    )
+                )
+            }
+            throw OtpMismatchException()
+        } catch (e: Exception) {
+            logger.error("Error validating otp", e)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                ApiResponse(
+                    data = null,
+                    status = HttpStatus.UNAUTHORIZED.value(),
+                    message = "Error validating otp",
+                    internalCode = "INTERNAL_SERVER_ERROR"
+                )
+            )
+        }
+    }
+
+    @PostMapping("/generateotp")
+    fun generateOtp(
+        @RequestBody otpRequest: GenerateOtpRequest
+    ): ResponseEntity<ApiResponse<Boolean>> {
+        try {
+            fast2SmsService.sendOtp(otpRequest.phoneNumber)
+            return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse(
+                    data = true,
+                    status = HttpStatus.OK.value(),
+                    message = "Otp generated successfully",
+                    internalCode = "OTP_GENERATED"
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Error generating otp", e)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    data = null,
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    message = "Error generating otp",
+                    internalCode = "INTERNAL_SERVER_ERROR"
+                )
+            )
+        }
+    }
+}
+
+
+data class OtpRequest @JsonCreator constructor(
+    @JsonProperty("phoneNumber") val phoneNumber: String,
+    @JsonProperty("otp") val otp: String
+)
+
+data class GenerateOtpRequest @JsonCreator constructor(
+    @JsonProperty("phoneNumber") val phoneNumber: String
+)
+
+
+data class OtpResponse(
+    val phoneNumber: String = "",
+    val jwt: String = ""
+)
+
+class OtpMismatchException(message: String = "The provided OTP is incorrect.") : Exception(message)
+
+fun createJwt(
+    user: User
+): OtpResponse {
+    val algorithm = Algorithm.HMAC256("secret") // Choose your preferred algorithm
+    val expiry = Instant.now().plusSeconds(15 * 60) // Calculate expiration time
+    val token = JWT.create()
+        .withIssuer("hit11") // Set your issuer (e.g., your app name)
+        .withClaim("phoneNumber", user.phone)
+        .withClaim("name", user.name)
+        .withClaim("email", user.email)
+        .withExpiresAt(Date.from(expiry)) // Set the expiration time
+        .sign(algorithm) // Sign the token
+    return OtpResponse(
+        phoneNumber = user.phone,
+        jwt = token
+    )
 }

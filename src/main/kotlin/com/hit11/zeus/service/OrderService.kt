@@ -136,7 +136,7 @@ class OrderService(
                         questionRepository.updateOptionWagers(
                             it.key,
                             it.value.last().matchedYesPrice,
-                            it.value.last().matchedYesPrice
+                            it.value.last().matchedNoPrice
                         )
                     }
                 } catch (e: Exception) {

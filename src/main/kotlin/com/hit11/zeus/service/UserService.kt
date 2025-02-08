@@ -52,6 +52,18 @@ class UserService(
         return hit11User
     }
 
+    fun getOrCreateUser(mobileNumber: String): User {
+        val user = userRepository.findByPhone(mobileNumber)
+        if (user != null) {
+            return user
+        }
+        val createdUser = User(
+            phone = mobileNumber
+        )
+        val savedUser = userRepository.save(createdUser)
+        return savedUser
+    }
+
     fun createUser(firebaseUID: String, fcmToken: String): User {
         val firebaseUser = try {
             firebaseAuth.getUser(firebaseUID)

@@ -13,12 +13,12 @@ class Fast2SmsService(
 ) {
     private val logger = LoggerFactory.getLogger(Fast2SmsService::class.java)
     private val FAST_2_SMS_API_ENDPOINT = ""
-    private val FAST_2_SMS_API_KEY = ""
+    private val FAST_2_SMS_API_KEY = "IGxHcL0WOJBUyhpokqYaXASNs8jrwzZ9vQdCE374gK5unT2VtfgmGsebfMpXrFZ0IqzNvwxWo7KnS64P"
 
     val otp = 786598
 
     fun sendOtp(mobileNumber: String): String {
-
+        var stripedMobile = mobileNumber.substring(3)
         userRepository.findByPhone(mobileNumber)
         val client = OkHttpClient()
         val request = Request.Builder()
@@ -27,14 +27,21 @@ class Fast2SmsService(
                     "&route=otp" +
                     "&variables_values=$otp" +
                     "&flash=1" +
-                    "&numbers=$mobileNumber")
+                    "&numbers=$stripedMobile")
             .build()
         val response = client.newCall(request).execute()
         logger.info("Response: ${response.body?.string()}")
-        return otp.toString()
+        if (response.isSuccessful) {
+            return otp.toString()    
+        }
+        throw OtpGenerationException()
     }
 
     fun verifyOtp(mobileNumber: String, otp: String): Boolean {
         return true
     }
+}
+
+class OtpGenerationException : Throwable() {
+
 }

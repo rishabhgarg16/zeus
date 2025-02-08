@@ -37,6 +37,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
     implementation("redis.clients:jedis")
+    implementation("com.auth0:java-jwt:4.4.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.7.6")
     implementation(kotlin("script-runtime"))
 //    AWS SDK v2 dependencies

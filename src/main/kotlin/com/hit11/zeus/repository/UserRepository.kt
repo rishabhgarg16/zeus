@@ -8,6 +8,8 @@ import java.time.Instant
 @Repository interface UserRepository : JpaRepository<User, Int> {
     fun findByFirebaseUID(firebaseUID: String): User?
     fun save(user: User): User
+
+    fun findByPhone(phone: String): User?
 }
 
 @Repository
