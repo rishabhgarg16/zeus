@@ -63,8 +63,11 @@ market_maker.log
 /coverage
 
 # next.js
+.next
 /.next/
 /out/
+website/node_modules
+node_modules/
 
 # production
 /build
