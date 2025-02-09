@@ -213,9 +213,14 @@ fun createJwt(
     val expiry = Instant.now().plusSeconds(15 * 60) // Calculate expiration time
     val token = JWT.create()
         .withIssuer("hit11") // Set your issuer (e.g., your app name)
-        .withClaim("phoneNumber", user.phone)
-        .withClaim("name", user.name)
+        .withClaim("id", user.id)
         .withClaim("email", user.email)
+        .withClaim("name", user.name)
+        .withClaim("phone", user.phone)
+//        .withClaim("deposited_balance", user.depositedBalance.toDouble())
+//        .withClaim("winnings_balance", user.winningsBalance.toDouble())
+//        .withClaim("promotional_balance", user.promotionalBalance.toDouble())
+//        .withClaim("reserved_balance", user.reservedBalance.toDouble())
         .withExpiresAt(Date.from(expiry)) // Set the expiration time
         .sign(algorithm) // Sign the token
     return OtpResponse(
