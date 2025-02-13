@@ -38,7 +38,7 @@ class SixesByPlayerParameterGenerator : QuestionParameterGenerator<SixesByPlayer
         return listOf(
             SixesByPlayerParameter(
                 batsmanId = batsmanWithNewSix.playerId.toLong(),
-                targetSixes = batsmanWithNewSix.sixes + 1 // Target is current sixes + 1
+                targetSixes = batsmanWithNewSix.sixes + 2 // Target is current sixes + 2
             )
         )
     }

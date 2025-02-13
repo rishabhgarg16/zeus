@@ -21,7 +21,7 @@ class RunsScoredByBatsmanTriggerCondition : TriggerCondition {
         return currentInnings?.battingPerformances?.any { currentBatsman ->
             val previousBatsman = previousInnings?.battingPerformances?.find { it.playerId == currentBatsman.playerId }
             val runsDifference = currentBatsman.runs - (previousBatsman?.runs ?: 0)
-            runsDifference > 0 && (currentBatsman.runs % 25 == 0 || runsDifference >= 10)
+            runsDifference > 0 && (currentBatsman.runs % 25 == 0 || runsDifference >= 15)
         } ?: false
     }
 }
@@ -41,9 +41,9 @@ class RunsScoredByBatsmanParameterGenerator : QuestionParameterGenerator<RunsSco
 
             val runsDifference = currentBatsman.runs - (previousBatsmanState?.runs ?: 0)
 
-            if (runsDifference > 0 && (currentBatsman.runs % 20 == 0 || runsDifference >= 10)) {
+            if (runsDifference > 0 && (currentBatsman.runs % 25 == 0 || runsDifference >= 15)) {
                 val maxPossibleRuns = calculateMaxPossibleRuns(currentInnings, previousInnings, currentBatsman)
-                val targetRuns = minOf(currentBatsman.runs + 20, maxPossibleRuns)
+                val targetRuns = minOf(currentBatsman.runs + 25, maxPossibleRuns)
 
                 if (targetRuns > currentBatsman.runs) {
                     RunsScoredByBatsmanParameter(currentBatsman.playerId, targetRuns)
@@ -67,7 +67,7 @@ class RunsScoredByBatsmanParameterGenerator : QuestionParameterGenerator<RunsSco
         val maxPossibleIndividualRuns = batsmanCurrentRuns + remainingTeamRuns
 
         // Consider a realistic upper limit, say 250 runs for a single batsman in any format
-        return minOf(maxPossibleIndividualRuns, 250)
+        return minOf(maxPossibleIndividualRuns, 200)
     }
 }
 
