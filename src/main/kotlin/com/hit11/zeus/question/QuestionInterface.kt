@@ -96,7 +96,7 @@ abstract class BaseQuestionGenerator<T : QuestionParameter>(
             userACount = userACount,
             userBCount = userBCount,
             category = category.joinToString(", "),
-            status = QuestionStatus.SYSTEM_GENERATED,
+            status = QuestionStatus.LIVE,
             questionType = questionType,
             targetTeamId = targetTeamId,
             targetRuns = targetRuns,
