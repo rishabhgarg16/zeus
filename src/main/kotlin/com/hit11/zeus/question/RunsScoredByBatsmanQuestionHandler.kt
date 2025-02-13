@@ -19,10 +19,21 @@ class RunsScoredByBatsmanTriggerCondition : TriggerCondition {
         val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
 
         return currentInnings?.battingPerformances?.any { currentBatsman ->
-            val previousBatsman = previousInnings?.battingPerformances?.find { it.playerId == currentBatsman.playerId }
-            val runsDifference = currentBatsman.runs - (previousBatsman?.runs ?: 0)
-            runsDifference > 0 && (currentBatsman.runs % 25 == 0 || runsDifference >= 15)
+            val previousRuns = previousInnings?.battingPerformances
+                ?.find { it.playerId == currentBatsman.playerId }?.runs ?: 0
+            val milestone = nextMilestone(currentBatsman.runs)
+            currentBatsman.runs >= milestone ||
+                    (currentBatsman.runs - previousRuns) >= 15
         } ?: false
+    }
+
+    private fun nextMilestone(currentRuns: Int): Int {
+        return when {
+            currentRuns < 25 -> 25
+            currentRuns < 50 -> 50
+            currentRuns < 100 -> 100
+            else -> ((currentRuns / 25) + 1) * 25
+        }
     }
 }
 
@@ -42,7 +53,7 @@ class RunsScoredByBatsmanParameterGenerator : QuestionParameterGenerator<RunsSco
             val runsDifference = currentBatsman.runs - (previousBatsmanState?.runs ?: 0)
 
             if (runsDifference > 0 && (currentBatsman.runs % 25 == 0 || runsDifference >= 15)) {
-                val maxPossibleRuns = calculateMaxPossibleRuns(currentInnings, previousInnings, currentBatsman)
+                val maxPossibleRuns = calculateMaxPossibleRuns(currentState.liveScorecard.matchFormat, currentInnings, previousInnings, currentBatsman)
                 val targetRuns = minOf(currentBatsman.runs + 25, maxPossibleRuns)
 
                 if (targetRuns > currentBatsman.runs) {
@@ -53,21 +64,28 @@ class RunsScoredByBatsmanParameterGenerator : QuestionParameterGenerator<RunsSco
     }
 
     private fun calculateMaxPossibleRuns(
+        matchFormat: MatchFormat,
         currentInnings: Innings,
         previousInnings: Innings?,
         batsman: BattingPerformance
     ): Int {
         val totalInningsRuns = currentInnings.totalRuns
         val batsmanCurrentRuns = batsman.runs
-
-        // If there's a previous innings, use its total as the target score
         val targetScore = previousInnings?.let { it.totalRuns + 1 } ?: Int.MAX_VALUE
-
         val remainingTeamRuns = targetScore - totalInningsRuns
-        val maxPossibleIndividualRuns = batsmanCurrentRuns + remainingTeamRuns
 
-        // Consider a realistic upper limit, say 250 runs for a single batsman in any format
-        return minOf(maxPossibleIndividualRuns, 200)
+        val formatMax = when (matchFormat) {
+            MatchFormat.T20 -> 150
+            MatchFormat.ODI -> 250
+            MatchFormat.TEST -> 500
+            else -> 200
+        }
+
+        return minOf(
+            batsmanCurrentRuns + remainingTeamRuns,
+            formatMax,
+            (batsmanCurrentRuns * 2.5).toInt()
+        )
     }
 }
 

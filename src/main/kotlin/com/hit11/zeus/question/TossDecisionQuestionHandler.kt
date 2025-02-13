@@ -3,8 +3,11 @@ package com.hit11.zeus.question
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
-data class TossDecisionParameter(val targetDecision: String) : QuestionParameter()
+data class TossDecisionParameter(val targetDecision: TossDecision) : QuestionParameter()
+enum class TossDecision { BAT, BOWL }
 
 class TossDecisionTriggerCondition : TriggerCondition {
     private var hasTriggered = false
@@ -28,9 +31,8 @@ class TossDecisionParameterGenerator : QuestionParameterGenerator<TossDecisionPa
         currentState: MatchState,
         previousState: MatchState?
     ): List<TossDecisionParameter> {
-        return listOf(
-            TossDecisionParameter("Bat")
-        )
+        val decisions = mutableListOf(TossDecision.BAT)
+        return decisions.map { TossDecisionParameter(it) }
     }
 }
 
@@ -46,7 +48,7 @@ class TossDecisionQuestionGenerator(
         return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTossDecision(
             state.liveScorecard.matchId,
             QuestionType.TOSS_DECISION,
-            param.targetDecision
+            param.targetDecision.toString()
         )
     }
 
@@ -58,10 +60,12 @@ class TossDecisionQuestionGenerator(
             optionB = PulseOption.No.name,
             category = listOf("Toss"),
             questionType = QuestionType.TOSS_DECISION,
-            targetTossDecision = param.targetDecision,
+            targetTossDecision = param.targetDecision.toString(),
             param = param,
-            state = state
-        )
+            state = state,
+        ).apply {
+            pulseEndDate = Instant.ofEpochMilli(state.liveScorecard.startTimestamp).plus(30, ChronoUnit.MINUTES)
+        }
     }
 }
 
@@ -87,7 +91,10 @@ class TossDecisionResolutionStrategy : ResolutionStrategy {
 
     override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
         val tossResult = matchState.liveScorecard.tossResult ?: return QuestionResolution(false, PulseResult.UNDECIDED)
-        val result = if (question.targetTossDecision.equals(tossResult.tossDecision, ignoreCase = true)) PulseResult.Yes else PulseResult.No
+        val result = if (question.targetTossDecision.equals(
+                tossResult.tossDecision, ignoreCase = true
+            )
+        ) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)
     }
 }

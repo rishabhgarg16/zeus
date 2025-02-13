@@ -67,12 +67,14 @@ class WinByRunsMarginQuestionGenerator(
     override val type = QuestionType.WIN_BY_RUNS_MARGIN
 
     override fun questionExists(param: WinByRunsMarginParameter, state: MatchState): Boolean {
-        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRuns(
-            state.liveScorecard.matchId,
-            QuestionType.WIN_BY_RUNS_MARGIN,
-            param.targetTeamId,
-            param.targetMargin
-        )
+//        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetMargin(
+//            state.liveScorecard.matchId,
+//            QuestionType.WIN_BY_RUNS_MARGIN,
+//            param.targetTeamId,
+//            param.targetMargin
+//        )
+        // question is disabled for now
+        return true
     }
 
     override fun createQuestion(param: WinByRunsMarginParameter, state: MatchState): Question? {

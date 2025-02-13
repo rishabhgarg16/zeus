@@ -27,22 +27,30 @@ class TeamRunsInMatchParameterGenerator : QuestionParameterGenerator<TeamRunsInQ
         val currentRuns = currentInnings?.totalRuns ?: 0
         val currentOver = currentInnings?.overs?.toInt() ?: 0
 
-        val baseTarget = ((currentRuns / 10) + 1) * 10
-        val maxOvers = if (currentState.liveScorecard.matchFormat == MatchFormat.ODI) 50 else 20
+        val runRate = currentRuns.toFloat() / currentOver.coerceAtLeast(1)
+        val maxOvers = when(currentState.liveScorecard.matchFormat) {
+            MatchFormat.T20 -> 20
+            MatchFormat.ODI -> 50
+            MatchFormat.TEST -> 90
+        }
+        val projectedRuns = (runRate * maxOvers).toInt()
+        val baseTarget = ((projectedRuns / 10) + 1) * 10
 
         val targetTeamId = currentInnings?.battingTeam?.id ?: 0
-
+        
+        
+        // this can be improved based on requiredRR and then generating params & probabilities
         return listOf(
             TeamRunsInQuestionParameter(
                 targetRuns = baseTarget,
                 targetOvers = (currentOver + 1).coerceAtMost(maxOvers),
                 targetTeamId = targetTeamId
             ),
-            TeamRunsInQuestionParameter(
-                targetRuns = baseTarget + 10,
-                targetOvers = (currentOver + 1).coerceAtMost(maxOvers),
-                targetTeamId = targetTeamId
-            ),
+//            TeamRunsInQuestionParameter(
+//                targetRuns = baseTarget + 10,
+//                targetOvers = (currentOver + 1).coerceAtMost(maxOvers),
+//                targetTeamId = targetTeamId
+//            ),
             TeamRunsInQuestionParameter(
                 targetRuns = baseTarget + 20,
                 targetOvers = (currentOver + 2).coerceAtMost(maxOvers),
@@ -62,10 +70,11 @@ class TeamRunsInMatchQuestionGenerator(
     override val type = QuestionType.TEAM_RUNS_IN_MATCH
 
     override fun questionExists(param: TeamRunsInQuestionParameter, state: MatchState): Boolean {
-        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRuns(
+        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRunsAndTargetOvers(
             state.liveScorecard.matchId, QuestionType.TEAM_RUNS_IN_MATCH,
             param.targetTeamId,
-            param.targetRuns
+            param.targetRuns,
+            param.targetOvers
         )
     }
 
@@ -79,6 +88,14 @@ class TeamRunsInMatchQuestionGenerator(
         }
     }
 
+    fun getOrdinal(n: Int) = when {
+        n % 100 in 11..13 -> "${n}th"
+        n % 10 == 1 -> "${n}st"
+        n % 10 == 2 -> "${n}nd"
+        n % 10 == 3 -> "${n}rd"
+        else -> "${n}th"
+    }
+
     override fun createQuestion(
         param: TeamRunsInQuestionParameter, state: MatchState
     ): Question? {
@@ -86,7 +103,8 @@ class TeamRunsInMatchQuestionGenerator(
 
         return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
-            pulseQuestion = "Will ${currentInnings.battingTeam!!.name} score ${param.targetRuns} or more runs by the ${param.targetOvers}th over?",
+            pulseQuestion = "Will ${currentInnings.battingTeam!!.name} score ${param.targetRuns} or more runs by the " +
+                    "${getOrdinal(param.targetOvers)} over?",
             optionA = PulseOption.Yes.name,
             optionB = PulseOption.No.name,
             category = listOf("Batting"),
@@ -99,7 +117,9 @@ class TeamRunsInMatchQuestionGenerator(
         )
     }
 
-    override fun calculateInitialWagers(param: TeamRunsInQuestionParameter, state: MatchState): Pair<BigDecimal, BigDecimal> {
+    override fun calculateInitialWagers(
+        param: TeamRunsInQuestionParameter, state: MatchState
+    ): Pair<BigDecimal, BigDecimal> {
         val currentInnings = state.liveScorecard.innings.find { it.isCurrentInnings } ?: return INITIAL_WAGER
         val currentRunRate = currentInnings.runRate
         val targetRunRate = param.targetRuns.toFloat() / param.targetOvers
@@ -123,7 +143,13 @@ class TeamRunsInMatchQuestionValidator : QuestionValidator {
         // Implement validation logic
         // For example, check if the match is in a valid state for this question type
         val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        return currentInnings != null && currentInnings.overs.toInt() < 20
+        val maxOvers = when (matchState.liveScorecard.matchFormat) {
+            MatchFormat.TEST -> 90
+            MatchFormat.ODI -> 50
+            MatchFormat.T20 -> 20
+            else -> 20
+        }
+        return currentInnings != null && currentInnings.overs.toInt() < maxOvers
     }
 
     override fun validateQuestion(question: Question): Boolean {

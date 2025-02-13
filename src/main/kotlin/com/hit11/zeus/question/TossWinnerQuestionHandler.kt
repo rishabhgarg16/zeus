@@ -3,6 +3,8 @@ package com.hit11.zeus.question
 import com.hit11.zeus.exception.QuestionValidationException
 import com.hit11.zeus.model.*
 import com.hit11.zeus.repository.QuestionRepository
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 data class TossWinnerParameter(val targetTeamId: Int) : QuestionParameter()
 
@@ -50,7 +52,9 @@ class TossWinnerQuestionGenerator(
             targetTeamId = param.targetTeamId,
             param = param,
             state = state
-        )
+        ).apply {
+            pulseEndDate = Instant.ofEpochMilli(state.liveScorecard.startTimestamp).plus(30, ChronoUnit.MINUTES)
+        }
     }
 }
 

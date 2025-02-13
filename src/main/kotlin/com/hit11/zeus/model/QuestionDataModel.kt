@@ -91,7 +91,7 @@ data class Question(
     var pulseResult: PulseResult = PulseResult.UNDECIDED,
 
     val pulseImageUrl: String? = "",
-    val pulseEndDate: Instant? = Instant.now(),
+    var pulseEndDate: Instant? = Instant.now(),
 
     // Target fields
     val targetRuns: Int? = 0,

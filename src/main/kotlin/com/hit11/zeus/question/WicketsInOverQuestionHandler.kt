@@ -27,7 +27,7 @@ class WicketsInOverParameterGenerator : QuestionParameterGenerator<WicketsInOver
 
         return listOf(
             WicketsInOverParameter(bowler.playerId, currentOver + 1, 1),
-            WicketsInOverParameter(bowler.playerId, currentOver + 1, 2)
+//            WicketsInOverParameter(bowler.playerId, currentOver + 1, 2)
         )
     }
 }
@@ -104,19 +104,15 @@ class WicketsInOverResolutionStrategy : ResolutionStrategy {
         val targetBowlerId = question.targetBowlerId ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
         val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
-        val wicketInTargetOver = currentInnings?.ballByBallEvents
-            ?.filter { it.overNumber == targetOver }
-            ?.any { it.isWicket } ?: false
+        val wicketsInOver = currentInnings?.ballByBallEvents
+            ?.filter { event ->
+                event.overNumber == targetOver &&
+                        event.bowlerId == targetBowlerId &&
+                        event.isWicket
+            }
+            ?.size ?: 0
 
-        return QuestionResolution(true, if (wicketInTargetOver) PulseResult.Yes else PulseResult.No)
+        val result = if (wicketsInOver >= targetWickets) PulseResult.Yes else PulseResult.No
+        return QuestionResolution(true, result)
     }
-}
-
-private fun countWicketsInOver(scorecard: Hit11Scorecard, targetBowlerId: Int, targetOver: Int): Int {
-    // Implement logic to count wickets in the specific over
-    // This would involve iterating through the ball-by-ball events of the scorecard
-    // and counting wickets for the specific bowler in the target over
-    // Return the count of wickets
-    return 0 // Placeholder return
-
 }

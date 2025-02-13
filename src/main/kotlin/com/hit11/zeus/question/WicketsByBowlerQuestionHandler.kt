@@ -76,7 +76,11 @@ class WicketsByBowlerQuestionGenerator(
         val targetWickets = param.targetWickets
         val remainingWickets = targetWickets - currentWickets
         // TODO check total overs definition from the match state
-        val remainingOvers = (if (matchFormat == MatchFormat.ODI) 50 else 20) - currentInnings.overs.toInt()
+        val remainingOvers = when(matchFormat) {
+            MatchFormat.TEST -> 90 - currentInnings.overs.toInt()
+            MatchFormat.ODI -> 50 - currentInnings.overs.toInt()
+            else -> 20 - currentInnings.overs.toInt()
+        }
 
         val probability = when {
             remainingWickets <= 0 -> 0.9

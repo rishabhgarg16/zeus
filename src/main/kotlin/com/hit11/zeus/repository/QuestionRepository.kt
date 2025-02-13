@@ -63,12 +63,21 @@ interface QuestionRepository : JpaRepository<Question, Int> {
     ): Boolean
 
     // Team Runs in Match
-    fun existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRuns(
+    fun existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetRunsAndTargetOvers(
         matchId: Int,
         questionType: QuestionType,
         targetTeamId: Int,
-        targetRuns: Int
+        targetRuns: Int,
+        targetOvers: Int
     ): Boolean
+
+//    fun existsByMatchIdAndQuestionTypeAndTargetTeamIdAndTargetMargin(
+//        matchId: Int,
+//        questionType: QuestionType,
+//        targetTeamId: Int,
+//        targetMargin: Int
+//    ): Boolean
+
 
     // Sixes by Player
     fun existsByMatchIdAndQuestionTypeAndTargetBatsmanIdAndTargetSixes(
