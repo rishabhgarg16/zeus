@@ -287,7 +287,7 @@ class MatchService(
         try {
             if (useCache) {
                 val cachedScoreCard = cache[cricbuzzMatchId]
-                if (cachedScoreCard != null && cachedScoreCard.first > Instant.now().minusSeconds(300)) {
+                if (cachedScoreCard != null && cachedScoreCard.first > Instant.now().minusSeconds(20)) {
                     return cachedScoreCard.second
                 }
             }
