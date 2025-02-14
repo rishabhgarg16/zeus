@@ -4,9 +4,11 @@ import com.google.gson.Gson
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.livedata.*
 import com.hit11.zeus.model.MatchFormat
+import com.hit11.zeus.model.TeamEntity
 import com.hit11.zeus.model.external.CricbuzzMatchResponse
 import com.hit11.zeus.model.external.TypeMatch
 import com.hit11.zeus.model.getCricbuzzMatchPlayingState
+import com.hit11.zeus.repository.TeamRepository
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.springframework.stereotype.Service
@@ -17,7 +19,9 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class CricbuzzApiService {
+class CricbuzzApiService(
+    private val teamRepository: TeamRepository
+) {
     val client = OkHttpClient()
     private val logger = Logger.getLogger(CricbuzzApiService::class.java)
     private val apiKey = "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9"
@@ -114,7 +118,10 @@ class CricbuzzApiService {
         return try {
             val criccbuzzMatchDataModel =
                 gson.fromJson(response.body?.string(), CriccbuzzLiveScoreDataModel::class.java)
-            transformMatchDataToHit11Scorecard(matchId, criccbuzzMatchDataModel)
+            val team1 = teamRepository.findByCricbuzzTeamId(criccbuzzMatchDataModel.matchHeader.team1.id)
+            val team2 = teamRepository.findByCricbuzzTeamId(criccbuzzMatchDataModel.matchHeader.team2.id)
+            var hit11ScoreCard = transformMatchDataToHit11Scorecard(matchId, criccbuzzMatchDataModel, team1, team2)
+            hit11ScoreCard
         } catch (e: Exception) {
             logger.error("Error parsing JSON response: ${e.message}")
             throw e
@@ -124,7 +131,9 @@ class CricbuzzApiService {
 
 fun transformMatchDataToHit11Scorecard(
     matchId: Int,
-    criccbuzzMatchDataModel: CriccbuzzLiveScoreDataModel
+    criccbuzzMatchDataModel: CriccbuzzLiveScoreDataModel,
+    dbteam1: TeamEntity?,
+    dbteam2: TeamEntity?
 ): Hit11Scorecard {
     val matchHeader = criccbuzzMatchDataModel.matchHeader
     val team1 = matchHeader.team1
@@ -167,8 +176,8 @@ fun transformMatchDataToHit11Scorecard(
         status = matchHeader.status,
         state = getCricbuzzMatchPlayingState(matchHeader.state),
         result = matchResult,
-        team1 = Team(id = team1.id, name = team1.name, shortName = team1.shortName),
-        team2 = Team(id = team2.id, name = team2.name, shortName = team2.shortName),
+        team1 = Team(id = team1.id, name = team1.name, shortName = team1.shortName, teamImageUrl = dbteam1?.teamImageUrl ?: ""),
+        team2 = Team(id = team2.id, name = team2.name, shortName = team2.shortName, teamImageUrl = dbteam2?.teamImageUrl ?: ""),
         innings = inningsList,
         playerOfTheMatch = playerOfTheMatch,
         tossResult = tossResult

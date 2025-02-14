@@ -1,6 +1,7 @@
 package com.hit11.zeus.repository
 
 import com.hit11.zeus.model.*
+import com.hit11.zeus.model.payment.PaymentStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.time.Instant
@@ -15,8 +16,18 @@ import java.time.Instant
 @Repository
 interface WalletTransactionRepository : JpaRepository<WalletTransaction, Int> {
     fun findByUserId(userId: Int): List<WalletTransaction>
+    fun save(transaction: WalletTransaction): WalletTransaction
     fun findByUserIdAndBalanceType(userId: Int, balanceType: BalanceType): List<WalletTransaction>
     fun findByUserIdAndTypeIn(userId: Int, types: List<TransactionType>): List<WalletTransaction>
+}
+
+@Repository
+interface PaymentTransactionRepository : JpaRepository<PaymentTransaction, Int> {
+    fun findByUserId(userId: Int): List<PaymentTransaction>
+    fun save(transaction: PaymentTransaction): PaymentTransaction
+    fun findByUserIdAndStatus(userId: Int, status: PaymentStatus): List<PaymentTransaction>
+
+    fun findByUserIdAndTransactionId(userId: Int, transactionId: String): PaymentTransaction?
 }
 
 @Repository

@@ -152,3 +152,37 @@ enum class BalanceType {
     PROMOTIONAL,
     RESERVED
 }
+
+
+enum class TransactionStatus {
+    INITIATED,
+    ACCEPTED,
+    DECLINED
+}
+
+@Entity
+@Table(name = "payment_transactions")
+data class PaymentTransaction(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0,
+
+    @Column(name = "user_id", nullable = false)
+    val userId: String,
+
+    @Column(precision = 19, scale = 4, nullable = false)
+    val amount: BigDecimal,
+
+    @Column(name = "transaction_id", nullable = false, unique = true)
+    val transactionId: String,
+
+    @Column(nullable = true)
+    val metadata: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    val status: TransactionStatus = TransactionStatus.INITIATED,
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    val createdAt: Instant = Instant.now()
+)
