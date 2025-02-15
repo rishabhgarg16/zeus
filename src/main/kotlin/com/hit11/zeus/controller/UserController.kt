@@ -135,7 +135,7 @@ class UserController(
         @RequestBody otpRequest: OtpRequest
     ): ResponseEntity<ApiResponse<OtpResponse>> {
         try {
-            if (otpRequest.otp == "786589") {
+            if (otpRequest.otp == "786598") {
                 val user = userService.getOrCreateUser(otpRequest.phoneNumber)
                 val otpResponse = createJwt(user)
                 return ResponseEntity.ok(
