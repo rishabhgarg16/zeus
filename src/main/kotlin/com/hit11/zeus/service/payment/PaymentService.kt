@@ -1,6 +1,7 @@
 package com.hit11.zeus.service.payment
 
 import com.hit11.zeus.model.PaymentTransaction
+import com.hit11.zeus.model.TransactionStatus
 import com.hit11.zeus.model.payment.Payment
 import com.hit11.zeus.model.payment.PaymentStatus
 import com.hit11.zeus.repository.PaymentTransactionRepository
@@ -16,12 +17,12 @@ class PaymentService(
     private val walletTransactionRepository: WalletTransactionRepository,
     private val paymentTransactionRepository: PaymentTransactionRepository
 ) {
-    fun createPayment(userId: String, amount: Double, metadata: String): PaymentTransaction {
-        val user = userRepository.findByPhone(userId) ?: throw IllegalArgumentException("User not found")
+    fun createPayment(phone: String, amount: Double?, metadata: String?): PaymentTransaction {
+        val user = userRepository.findByPhone(phone) ?: throw IllegalArgumentException("User not found")
         val transactionId = UUID.randomUUID().toString()
         val paymentTransaction = PaymentTransaction(
-            userId = userId,
-            amount = BigDecimal(amount),
+            userId = user.id,
+            amount = BigDecimal(amount?:0.0),
             transactionId = transactionId,
             metadata = metadata,
         )
@@ -29,8 +30,14 @@ class PaymentService(
         return savedTransaction
     }
 
-    fun updatePaymentStatus(transactionId: String, status: PaymentStatus): Payment {
-        // Logic to update the payment status in the database
-        return Payment(transactionId, 0.0, "", status)
+    fun updatePaymentStatus(transactionId: String?, status: TransactionStatus?): Int {
+        if (transactionId == null || status == null) {
+            return 0
+        }
+        var transactionRow = paymentTransactionRepository.updateStatusByTransactionId(transactionId, status)
+        return transactionRow
     }
 }
+
+
+

@@ -3,7 +3,10 @@ package com.hit11.zeus.repository
 import com.hit11.zeus.model.*
 import com.hit11.zeus.model.payment.PaymentStatus
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 @Repository interface UserRepository : JpaRepository<User, Int> {
@@ -28,6 +31,14 @@ interface PaymentTransactionRepository : JpaRepository<PaymentTransaction, Int> 
     fun findByUserIdAndStatus(userId: Int, status: PaymentStatus): List<PaymentTransaction>
 
     fun findByUserIdAndTransactionId(userId: Int, transactionId: String): PaymentTransaction?
+
+    fun findByTransactionId(transactionId: String): PaymentTransaction?
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE PaymentTransaction p SET p.status = :status WHERE p.transactionId = :transactionId")
+    fun updateStatusByTransactionId(transactionId: String, status: TransactionStatus): Int
+
 }
 
 @Repository

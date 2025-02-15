@@ -168,7 +168,7 @@ data class PaymentTransaction(
     val id: Long = 0,
 
     @Column(name = "user_id", nullable = false)
-    val userId: String,
+    val userId: Int,
 
     @Column(precision = 19, scale = 4, nullable = false)
     val amount: BigDecimal,

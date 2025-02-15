@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.hit11.zeus.service.sms.Fast2SmsService
 import java.time.Instant
 import java.util.Date
+import javax.validation.constraints.Email
 
 @RestController
 @RequestMapping("/api/users")
@@ -205,6 +206,13 @@ data class OtpResponse(
 )
 
 class OtpMismatchException(message: String = "The provided OTP is incorrect.") : Exception(message)
+
+data class TokenUserClaims(
+    val id: Int,
+    val email: String,
+    val name: String,
+    val phone: String
+)
 
 fun createJwt(
     user: User
