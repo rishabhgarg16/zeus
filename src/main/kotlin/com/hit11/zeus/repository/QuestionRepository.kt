@@ -8,11 +8,13 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.Instant
 
 @Repository
 interface QuestionRepository : JpaRepository<Question, Int> {
     @Modifying
-    @Query("""
+    @Query(
+        """
         UPDATE Question q 
         SET q.status = :newStatus 
         WHERE q.matchId IN (
@@ -21,7 +23,8 @@ interface QuestionRepository : JpaRepository<Question, Int> {
             WHERE m.status = :matchStatus
         ) 
         AND q.status = :currentStatus
-    """)
+    """
+    )
     @Transactional
     fun activateQuestionsForLiveMatches(
         @Param("newStatus") newStatus: QuestionStatus,
@@ -32,6 +35,12 @@ interface QuestionRepository : JpaRepository<Question, Int> {
     fun findByMatchIdInAndStatus(
         matchIdList: List<Int>,
         status: QuestionStatus
+    ): List<Question>?
+
+    fun findByMatchIdInAndStatusAndPulseEndDateAfter(
+        matchIdList: List<Int>,
+        status: QuestionStatus,
+        time: Instant
     ): List<Question>?
 
     fun findByMatchIdAndStatusIn(
@@ -131,8 +140,10 @@ interface QuestionRepository : JpaRepository<Question, Int> {
 
     fun findByMatchId(matchId: Int): List<Question>?
     fun findAllByStatus(status: QuestionStatus): List<Question>
+    fun findAllByStatusAndPulseEndDateAfter(status: QuestionStatus, currentDate: Instant): List<Question>
     fun findAllByMatchIdIn(matchIds: List<Int>): List<Question>
     fun getPulseById(id: Int): Question
+
     @Modifying
     @Query("UPDATE Question q SET q.optionAWager = :optionAWager, q.optionBWager = :optionBWager WHERE q.id = :pulseId")
     @Transactional

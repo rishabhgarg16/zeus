@@ -11,6 +11,7 @@ import com.hit11.zeus.question.QuestionGenerator
 import com.hit11.zeus.question.ResolutionStrategy
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
+import java.time.ZonedDateTime
 import javax.transaction.Transactional
 
 @Service
@@ -25,12 +26,16 @@ class QuestionService(
     private var lastProcessedBallNumber: Int = 0
 
     fun getAllActivePulses(): List<Question>? {
-        return questionRepository.findAllByStatus(QuestionStatus.LIVE)
+        return questionRepository.findAllByStatusAndPulseEndDateAfter(
+            QuestionStatus.LIVE, ZonedDateTime.now().toInstant()
+        )
     }
 
     private val logger = Logger.getLogger(QuestionService::class.java)
     fun getAllActiveQuestionsByMatch(matchIdList: List<Int>): List<Question>? {
-        return questionRepository.findByMatchIdInAndStatus(matchIdList, QuestionStatus.LIVE)
+        return questionRepository.findByMatchIdInAndStatusAndPulseEndDateAfter(
+            matchIdList, QuestionStatus.LIVE, ZonedDateTime.now().toInstant()
+        )
     }
 
     @Transactional
