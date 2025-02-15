@@ -16,14 +16,15 @@ class WinByRunsMarginTriggerCondition : TriggerCondition {
         val previousInnings = previousState?.liveScorecard?.innings
 
         // Trigger when the second innings starts and every 5 overs during the second innings
-        return when {
-            innings.size == 2 && previousInnings?.size == 1 -> true
-            innings.size == 2 &&
-                    innings[1].overs.toInt() % 5 == 0 &&
-                    innings[1].overs != previousInnings?.get(1)?.overs -> true
-
-            else -> false
-        }
+//        return when {
+//            innings.size == 2 && previousInnings?.size == 1 -> true
+//            innings.size == 2 &&
+//                    innings[1].overs.toInt() % 5 == 0 &&
+//                    innings[1].overs != previousInnings?.get(1)?.overs -> true
+//
+//            else -> false
+//        }
+        return false
     }
 }
 

@@ -18,13 +18,14 @@ class RunsScoredByBatsmanTriggerCondition : TriggerCondition {
         val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
         val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
 
-        return currentInnings?.battingPerformances?.any { currentBatsman ->
-            val previousRuns = previousInnings?.battingPerformances
-                ?.find { it.playerId == currentBatsman.playerId }?.runs ?: 0
-            val milestone = nextMilestone(currentBatsman.runs)
-            currentBatsman.runs >= milestone ||
-                    (currentBatsman.runs - previousRuns) >= 15
-        } ?: false
+//        return currentInnings?.battingPerformances?.any { currentBatsman ->
+//            val previousRuns = previousInnings?.battingPerformances
+//                ?.find { it.playerId == currentBatsman.playerId }?.runs ?: 0
+//            val milestone = nextMilestone(currentBatsman.runs)
+//            currentBatsman.runs >= milestone ||
+//                    (currentBatsman.runs - previousRuns) >= 15
+//        } ?: false
+        return false
     }
 
     private fun nextMilestone(currentRuns: Int): Int {

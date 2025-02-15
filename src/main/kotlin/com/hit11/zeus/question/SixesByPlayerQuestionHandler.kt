@@ -11,14 +11,15 @@ data class SixesByPlayerParameter(
 
 class SixesByPlayerTriggerCondition : TriggerCondition {
     override fun shouldTrigger(currentState: MatchState, previousState: MatchState?): Boolean {
-        val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
-        val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
-
-        // Find the batsman who hit a new six
-        return currentInnings?.battingPerformances?.any { currentBatsman ->
-            val previousBatsman = previousInnings?.battingPerformances?.find { it.playerId == currentBatsman.playerId }
-            currentBatsman.sixes > (previousBatsman?.sixes ?: 0)
-        } ?: false
+//        val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
+//        val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
+//
+//        // Find the batsman who hit a new six
+//        return currentInnings?.battingPerformances?.any { currentBatsman ->
+//            val previousBatsman = previousInnings?.battingPerformances?.find { it.playerId == currentBatsman.playerId }
+//            currentBatsman.sixes > (previousBatsman?.sixes ?: 0)
+//        } ?: false
+        return false
     }
 }
 

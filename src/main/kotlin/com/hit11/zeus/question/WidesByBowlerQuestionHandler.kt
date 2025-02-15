@@ -14,10 +14,11 @@ class WidesByBowlerTriggerCondition : TriggerCondition {
         val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
         val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
 
-        return currentInnings?.bowlingPerformances?.any { currentBowler ->
-            val previousBowler = previousInnings?.bowlingPerformances?.find { it.playerId == currentBowler.playerId }
-            currentBowler.wides > (previousBowler?.wides ?: 0)
-        } ?: false
+//        return currentInnings?.bowlingPerformances?.any { currentBowler ->
+//            val previousBowler = previousInnings?.bowlingPerformances?.find { it.playerId == currentBowler.playerId }
+//            currentBowler.wides > (previousBowler?.wides ?: 0)
+//        } ?: false
+        return false
     }
 }
 

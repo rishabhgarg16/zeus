@@ -17,7 +17,8 @@ class WicketsByBowlerTriggerCondition(triggerEveryNWickets: Int) : TriggerCondit
 
         // Trigger when a wicket falls
         // TODO check which player took the wicket and check against that bowler
-        return (currentInnings?.wickets ?: 0) > (previousInnings?.wickets ?: 0)
+//        return (currentInnings?.wickets ?: 0) > (previousInnings?.wickets ?: 0)
+        return false
     }
 }
 

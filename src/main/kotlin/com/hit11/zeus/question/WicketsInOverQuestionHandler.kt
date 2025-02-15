@@ -13,7 +13,8 @@ class WicketsInOverTriggerCondition : TriggerCondition {
         val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
         val previousInnings = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }
 
-        return currentInnings?.overs?.toInt() != previousInnings?.overs?.toInt()
+//        return currentInnings?.overs?.toInt() != previousInnings?.overs?.toInt()
+        return false
     }
 }
 
