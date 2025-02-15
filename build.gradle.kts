@@ -66,7 +66,7 @@ publishing {
             groupId = "ai.hit11"
             artifactId = "zeus"
             // if getting 409, bump the version
-            version = "0.8.3"
+            version = "0.8.4"
         }
     }
     repositories {
@@ -77,7 +77,7 @@ publishing {
                 // if getting 401, run
                 // aws codeartifact get-authorization-token --domain hitcentral --domain-owner 590183692348 --region ap-south-1 --query authorizationToken --output text
                 password =
-                    "eyJ2ZXIiOjEsImlzdSI6MTczOTY0MDI2MCwiZW5jIjoiQTEyOEdDTSIsInRhZyI6IkFJWFRnSThBQXRlX1dfRTVyUnhGZFEiLCJleHAiOjE3Mzk2ODM0NjAsImFsZyI6IkExMjhHQ01LVyIsIml2IjoiOTI5UkktOFNWbkozYkk2XyJ9.FOK-1kzs_OQKMXrmwtyfGw.4-J27TQvNCP7MXN4.bdSfEbNXUswBjWKbJufCucfXeM68Ss-o1KnCoB7CsaSrSzOnDVsDDrSzgAmzf2yzXP5Qu1_0up9W9ve0_8GWxazUka_f0b_00MTujZ6qRATJnif_OOT6ceIzzq2SVSJkI0xHCAVdpNsf31zrV4lHhY8lI1MXsl3hp-rSiKqNT1AEHhqEDd3zQ62V8Y9WlK135pa6Fnejz7GeNrK8Fph5flHor5XhMWS2E7BqsrwfTZmlzpiVMbcpBCsvZT3cCOwqZRcb-5jYduT6loiG0bq09UjoTiklDMRiaVKu9YhwWSBMzm34YkP9sf_peGrykt9HiAYxp6zoZbmL2_jvsHHwAe0-by8xeOTvjA-i2XOjWgIbLJlEwXiM3hdeMUpAPgSYpYBVLCOME4ckcptErkxtyblOThCsuSNp5JptaFNyxc8SJTk8fEE1kFwfZZ8HL1ffRfgdp8dI_LdO-0IJgNqwKXZ7fgh01l4qx9zflK3HLDxR6lRvqLJmiGDHA1h8UuIYXTZKmgF-I3NWhiW7nVulUQQxPG_vMZmXJYs39Nouz2H1J2fhrGNq93IgY86BR-b_gdSTqQad3ikzjQHrNyS3Rv-14I0OHhjKH_ouLveyWx_689FXU9DiyOivlmjBGdZEwWTnusDBidFKcFsV7zqReXBpA1eTUAZvMmsAfVc2z4GnQounrtj1aVfiyZwnSTfeAd-UlIeuiWXdAsKUl-Un0sXC_kil-KtT0XLTiMFv9SZZ5J1gqBJBU5wmKb6xy07UJjrTQA4Ze4uK3PeVYj5q3Ae-qscMiVeS2Gk_nWXq5PLSzOFTy7U_8vCrIz_MsajA1lwr_u4vq-WKSOvrblvImcQIJkuowiotrDIZfGM3ibismNq-dcFpJpilFkZq13cBzBOUAFWMXk1_drt6t0KJL7RpMTePgsPzBcTJxsb2M61AiqZAVaBON7EO2T6MnjhNbwq5LfK6iNTjP-Mj1lVpBauEBw.H730qRV-woV2DUE1MyTmeQ\n"
+                    "eyJ2ZXIiOjEsImlzdSI6MTczOTY0NDQxOCwiZW5jIjoiQTEyOEdDTSIsInRhZyI6IjJzbkdBVkI2UlNmZng5MzFCWVRUMmciLCJleHAiOjE3Mzk2ODc2MTgsImFsZyI6IkExMjhHQ01LVyIsIml2IjoiNmcycGZSM0dFUWs2eHZ3RSJ9.MQuE6o3eYVl1NyF8QTttyQ.FhJm5ub67kTEEI_F.d70cJAfWvNp3cM13HGQFt-tMijctus0y8VqUR-o-caCkFWS4QbyNsF_3_Q6py0yl9SmjzcBaDlMieKMfYZnlb47Sl8HupFoF-n8Xu_Ma7Q93eJEV0Exk6hyQ3u7TrdyPOLh8Bm_NgA-szCei5IZylaXLxPNzeGDLRt5ZJIVdqHSj9RhEifU8DTnH-SZ2b3PMwG2AaPvorq9T290225o1GJcaI7dOz9pKB3UYIxPiSpwOF2ycpIpgAKi-rBRKqUF3Z34-e96lBf7vQPlbcvK8z7sXwS-HsNGMOUXENUU3iX4PcF5sbUWw7kkgk8H9_IXzA5NE7HAEKhqV1hgEsTw-Nr9maL2eqfzBEJL9GaTXRfIF0oRfooMP3GGLKDzP3oibL30HC5edsuWvytR0-4odoXZcymXAYFDOxfhzMfrj5Kp6d2INbSXVmcraNoWp_xLRedI6ZuSzAgyHd3hdUUYk4EzR9YBEbx7ibnLnepsCGTn31FPJVLyoaAVXW97WWNp6Dp60gs0ksNaH_S8DG3vF8rlfe6f_gjYW2dsdFdHocNmaqvbDsabtqgdsVub3b1NGMrq122xE8LSSZTrUx-Aiej5OVWG1jJE4yCAPDpUa_3QSisntRRg25FzlwC4EvarvKfdg3ER9--OSjUgg2umlswOvOvYKpnBgFFVVtDRnkjPf9oJg-lw4vh3wSXVCY4a2S4uZWDVag0jEhfqBP6fZkhTTTo0Tqo46yjFmAx81MYdSbeYWNf66GPki2bcTuNx-HO5E_g_MDP1uUy7vPKqux0mLOr3xMj49v5JoM2-FyLQZjqtQQK1U2S2KAQ5N4rZ7bzvh_cpJiH7tHPIRFoFbAC6qT6YYJlqFdFWjTUC1V3V2kUJy3qK2QkOlFLRvvX4BON4n_NC-nR4bfYNNptfHCQp27uswi54TaeVfL25aNRlSt26izzN_66WMkJeCaoU-avy0a60n6LbhJjkCsvadfLk.KqRxvlpa_INzlIFs4tci-Q"
             }
         }
     }
