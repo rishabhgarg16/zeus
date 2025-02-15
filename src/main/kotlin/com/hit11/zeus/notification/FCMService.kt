@@ -2,7 +2,6 @@ package com.hit11.zeus.notification
 
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
-import com.google.firebase.messaging.Notification
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.service.UserService
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +18,7 @@ class FCMService(
 
     suspend fun sendNotification(payload: NotificationPayload) {
         try {
-            val user = userService.getUser(payload.userId.toString())
+            val user = userService.getUser(payload.userId)
             val fcmToken = user?.fcmToken ?: DEFAULT_FCM_TOKEN
 
             // Convert metadata values to strings

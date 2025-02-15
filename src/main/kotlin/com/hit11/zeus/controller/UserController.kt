@@ -17,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.hit11.zeus.service.sms.Fast2SmsService
 import java.time.Instant
 import java.util.Date
-import javax.validation.constraints.Email
 
 @RestController
 @RequestMapping("/api/users")
@@ -32,12 +31,12 @@ class UserController(
         return userService.getUserFromAuth(firebaseUID)
     }
 
-    @GetMapping("/internal/{firebaseUID}")
+    @GetMapping("/internal/{userId}")
     fun getInternalUserByFirebaseID(
-        @PathVariable("firebaseUID") @NotBlank firebaseUID: String
+        @PathVariable("userId") @NotBlank userId: Int
     ): ResponseEntity<ApiResponse<User>> {
         return try {
-            val user = userService.getUser(firebaseUID)
+            val user = userService.getUser(userId)
             user?.let {
                 ResponseEntity.ok(
                     ApiResponse(
@@ -214,7 +213,7 @@ data class TokenUserClaims(
     val phone: String
 )
 
-fun createJwt(
+private fun createJwt(
     user: User
 ): OtpResponse {
     val algorithm = Algorithm.HMAC256("secret") // Choose your preferred algorithm

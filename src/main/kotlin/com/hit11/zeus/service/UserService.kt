@@ -44,12 +44,8 @@ class UserService(
         return null
     }
 
-    fun getUser(firebaseUID: String): User? {
-        var hit11User = userRepository.findByFirebaseUID(firebaseUID)
-        if (hit11User == null) {
-            hit11User = createUser(firebaseUID, "")
-        }
-        return hit11User
+    fun getUser(userId: Int): User? {
+        return userRepository.findById(userId).orElseThrow { UserNotFoundException("user not found with id ${userId}") }
     }
 
     fun getOrCreateUser(mobileNumber: String): User {
@@ -319,7 +315,6 @@ class UserService(
         userRepository.save(user)
         return true
     }
-
 
 
     @Transactional
