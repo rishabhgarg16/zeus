@@ -1,22 +1,22 @@
 package com.hit11.zeus.controller
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.firebase.auth.UserRecord
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.model.User
 import com.hit11.zeus.model.UserReward
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.UserService
+import com.hit11.zeus.service.sms.Fast2SmsService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import javax.validation.constraints.NotBlank
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.hit11.zeus.service.sms.Fast2SmsService
 import java.time.Instant
-import java.util.Date
+import java.util.*
+import javax.validation.constraints.NotBlank
 
 @RestController
 @RequestMapping("/api/users")
@@ -60,7 +60,7 @@ class UserController(
                 ApiResponse(
                     data = null,
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    message = "Error retrieving internal user",
+                    message = e.message ?: "Error retrieving internal user",
                     internalCode = "INTERNAL_SERVER_ERROR"
                 )
             )
@@ -91,7 +91,7 @@ class UserController(
             logger.error("Error creating internal user", e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ApiResponse(
-                    message = "Error creating user",
+                    message = e.message ?: "Error creating user",
                     data = null,
                     internalCode = null,
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value()
@@ -121,7 +121,7 @@ class UserController(
                 ApiResponse(
                     data = false,
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    message = "Error updating FCM token",
+                    message = e.message ?: "Error updating FCM token",
                     internalCode = "INTERNAL_SERVER_ERROR"
                 )
             )
@@ -153,7 +153,7 @@ class UserController(
                 ApiResponse(
                     data = null,
                     status = HttpStatus.UNAUTHORIZED.value(),
-                    message = "Error validating otp",
+                    message = e.message ?: "Error validating otp",
                     internalCode = "INTERNAL_SERVER_ERROR"
                 )
             )
@@ -180,7 +180,7 @@ class UserController(
                 ApiResponse(
                     data = false,
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    message = "Error generating otp",
+                    message = e.message ?: "Error generating otp",
                     internalCode = "INTERNAL_SERVER_ERROR"
                 )
             )
