@@ -60,7 +60,11 @@ class MatchService(
         val activeStatuses = listOf(
             MatchStatus.SCHEDULED.text,
             MatchStatus.IN_PROGRESS.text,
-            MatchStatus.PREVIEW.text
+            MatchStatus.PREVIEW.text,
+            MatchStatus.TEA.text,
+            MatchStatus.INNINGS_BREAK.text,
+            MatchStatus.TOSS.text,
+            MatchStatus.STUMPS.text // if needed
         )
 
         return try {
@@ -85,6 +89,16 @@ class MatchService(
         }
     }
 
+    fun isLiveStatus(status: String): Boolean {
+        return status in setOf(
+            MatchStatus.IN_PROGRESS.text,
+            MatchStatus.INNINGS_BREAK.text,
+            MatchStatus.TEA.text,
+            MatchStatus.TOSS.text,
+            MatchStatus.STUMPS.text
+        )
+    }
+
     private fun getMatchPriority(match: Match): Int {
         val now = Instant.now()
         val isWithinNext6Hours = match.startDate?.isBefore(now.plus(6, ChronoUnit.HOURS)) ?: false
@@ -96,20 +110,23 @@ class MatchService(
         val isIPL = match.tournamentName?.contains("Indian Premier League", ignoreCase = true) == true ||
                 match.tournamentName?.contains("IPL", ignoreCase = true) == true
 
+        val isLive = isLiveStatus(match.status)
+
         return when {
             // India Matches Priority
-            isIndiaMatch && match.status == MatchStatus.IN_PROGRESS.text ->
-                MatchPriority.INDIA_LIVE.value
+            isIndiaMatch && isLive -> MatchPriority.INDIA_LIVE.value
+
+            // IPL Priority
+            isIPL && match.status == MatchStatus.IN_PROGRESS.text ->
+                MatchPriority.IPL_LIVE.value
+
+            isLive -> MatchPriority.IPL_LIVE.value  // Applies to all live phases
 
             isIndiaMatch && match.status == MatchStatus.SCHEDULED.text && isWithinNext6Hours ->
                 MatchPriority.INDIA_UPCOMING_6H.value
 
             isIndiaMatch && match.status == MatchStatus.COMPLETE.text && isWithinPast6Hours ->
                 MatchPriority.INDIA_COMPLETED_6H.value
-
-            // IPL Priority
-            isIPL && match.status == MatchStatus.IN_PROGRESS.text ->
-                MatchPriority.IPL_LIVE.value
 
             isIPL && match.status == MatchStatus.SCHEDULED.text && isWithinNext6Hours ->
                 MatchPriority.IPL_UPCOMING_6H.value
@@ -130,6 +147,7 @@ class MatchService(
             // Remaining matches with basic priority
             isIndiaMatch -> MatchPriority.INDIA_OTHER.value
             isIPL -> MatchPriority.IPL_OTHER.value
+
             else -> MatchPriority.REMAINING.value
         }
     }
@@ -318,16 +336,19 @@ class MatchService(
 }
 
 enum class MatchPriority(val value: Int) {
-    INDIA_LIVE(1),           // Live India matches (highest priority)
-    INDIA_UPCOMING_6H(2),    // India matches in next 6 hours
-    INDIA_COMPLETED_6H(3),   // India matches completed in last 6 hours
-    IPL_LIVE(4),            // Live IPL matches
-    IPL_UPCOMING_6H(5),     // IPL matches in next 6 hours
-    IPL_COMPLETED_6H(6),    // IPL completed in last 6 hours
-    OTHER_LIVE(7),          // Other live matches
-    OTHER_UPCOMING_6H(8),   // Other matches in next 6 hours
-    OTHER_COMPLETED_6H(9),  // Other completed in last 6 hours
-    INDIA_OTHER(10),        // Other India matches outside time window
-    IPL_OTHER(11),         // Other IPL matches outside time window
-    REMAINING(12)          // All other matches
+    INDIA_LIVE(10),           // Live India matches (highest priority)
+    IPL_LIVE(20),            // Live IPL matches
+
+    INDIA_UPCOMING_6H(30),    // India matches in next 6 hours
+    INDIA_COMPLETED_6H(40),   // India matches completed in last 6 hours
+
+    IPL_UPCOMING_6H(50),     // IPL matches in next 6 hours
+    IPL_COMPLETED_6H(60),    // IPL completed in last 6 hours
+
+    OTHER_LIVE(70),          // Other live matches
+    OTHER_UPCOMING_6H(80),   // Other matches in next 6 hours
+    OTHER_COMPLETED_6H(90),  // Other completed in last 6 hours
+    INDIA_OTHER(100),        // Other India matches outside time window
+    IPL_OTHER(110),         // Other IPL matches outside time window
+    REMAINING(120)          // All other matches
 }
