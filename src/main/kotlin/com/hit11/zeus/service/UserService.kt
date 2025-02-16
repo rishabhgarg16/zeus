@@ -132,9 +132,9 @@ class UserService(
         }
     }
 
-    fun checkUserReward(firebaseUID: String): UserReward? {
-        val userRecord = userRepository.findByFirebaseUID(firebaseUID) ?: return null
-        if (userRecord.lastLoginDate != null) {
+    fun checkUserReward(userId: Int): UserReward? {
+        val userRecord = userRepository.findById(userId).orElseThrow { UserNotFoundException("User not found with ID: $userId") }
+        if (userRecord != null) {
             val oldLoginDate = userRecord.lastLoginDate!!
             val newLoginDate = Date()
             val diffInMillis = newLoginDate.time - oldLoginDate.time

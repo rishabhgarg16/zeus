@@ -67,9 +67,14 @@ class UserController(
         }
     }
 
-    @PostMapping("/reward/{firebaseUID}")
-    fun checkUserReward(@PathVariable("firebaseUID") firebaseUID: String): UserReward? {
-        return userService.checkUserReward(firebaseUID)
+//    @PostMapping("/reward/{firebaseUID}")
+//    fun checkUserReward(@PathVariable("firebaseUID") firebaseUID: String): UserReward? {
+//        return userService.checkUserReward(firebaseUID)
+//    }
+
+    @PostMapping("/reward/{userId}")
+    fun checkUserRewardForHit11User(@PathVariable("userId") userId: Int): UserReward? {
+        return userService.checkUserReward(userId)
     }
 
     @PostMapping("/createnew/{firebaseUID}")
@@ -217,7 +222,7 @@ private fun createJwt(
     user: User
 ): OtpResponse {
     val algorithm = Algorithm.HMAC256("secret") // Choose your preferred algorithm
-    val expiry = Instant.now().plusSeconds(15 * 60) // Calculate expiration time
+    val expiry = Instant.now().plusSeconds(7 * 24 * 60 * 60) // Calculate expiration time
     val token = JWT.create()
         .withIssuer("hit11") // Set your issuer (e.g., your app name)
         .withClaim("id", user.id)
