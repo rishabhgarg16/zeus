@@ -1,18 +1,17 @@
 package com.hit11.zeus.controller
 
-import com.google.api.Http
 import com.hit11.zeus.config.UserClaimsContext
 import com.hit11.zeus.model.PaymentTransaction
 import com.hit11.zeus.model.TransactionStatus
-import org.springframework.web.bind.annotation.*
-import org.springframework.beans.factory.annotation.Autowired
-import com.hit11.zeus.service.payment.PaymentService
-import com.hit11.zeus.model.payment.Payment
-import com.hit11.zeus.model.payment.PaymentStatus
 import com.hit11.zeus.model.response.ApiResponse
-import com.mysql.cj.x.protobuf.Mysqlx.Ok
+import com.hit11.zeus.service.payment.PaymentService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 
 data class InitiateTransactionStatus(

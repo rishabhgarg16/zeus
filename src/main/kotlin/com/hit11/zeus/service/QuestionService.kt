@@ -68,16 +68,18 @@ class QuestionService(
         }
 
         val updatedQuestionsResponse = updateQuestions(currentState)
-        val newQuestions = generateQuestions(currentState)
+        val generatedResponse = generateQuestions(currentState)
 
         previousState = currentState
         lastProcessedBallNumber = latestBallNumber
 
+        val allErrors = updatedQuestionsResponse.errors + generatedResponse.errors
+
         return BallEventProcessResponse(
             updatedQuestions = updatedQuestionsResponse.updatedQuestions,
             notUpdatedQuestions = updatedQuestionsResponse.notUpdatedQuestions,
-            newQuestions = newQuestions,
-            errors = updatedQuestionsResponse.errors
+            newQuestions = generatedResponse.newQuestions,
+            errors = allErrors
         )
     }
 
@@ -161,17 +163,27 @@ class QuestionService(
         }
     }
 
-    private fun generateQuestions(currentState: MatchState): List<Question> {
-        return questionGenerators.flatMap { generator ->
+    private fun generateQuestions(currentState: MatchState): GeneratedQuestionsResponse {
+        val generatedQuestions = mutableListOf<Question>()
+        val generationErrors = mutableListOf<QuestionError>()
+
+        questionGenerators.forEach { generator ->
             try {
-                generator.generateQuestions(currentState, previousState)
+                val questionsFromGenerator = generator.generateQuestions(currentState, previousState)
+                generatedQuestions.addAll(questionsFromGenerator)
             } catch (e: Exception) {
-                logger.error("Error generating questions with ${generator::class.simpleName}", e)
-                emptyList<Question>()
+                val errorMsg = "Error generating questions with ${generator::class.simpleName}: ${e.message}"
+                logger.error(errorMsg, e)
+                generationErrors.add(QuestionError(questionId = -1,  errorMessage = errorMsg))
             }
-        }.also { questions ->
-            questionRepository.saveAll(questions)
         }
+        // Save generated questions;
+        questionRepository.saveAll(generatedQuestions)
+
+        return GeneratedQuestionsResponse(
+            newQuestions = generatedQuestions,
+            errors = generationErrors
+        )
     }
 
     fun getQuestionById(questionId: Int): Question? {
@@ -186,5 +198,10 @@ data class QuestionError(
 data class UpdateQuestionsResponse(
     val updatedQuestions: List<Question>,
     val notUpdatedQuestions: List<Question>,
+    val errors: List<QuestionError>
+)
+
+data class GeneratedQuestionsResponse(
+    val newQuestions: List<Question>,
     val errors: List<QuestionError>
 )

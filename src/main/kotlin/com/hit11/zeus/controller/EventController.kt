@@ -35,30 +35,25 @@ class EventController(
     ): ResponseEntity<BallEventProcessResponse> {
         // Call QuestionService to update questions based on the ball event
         try {
-            val currentInnings =
-                scoreCard.innings.find { it.isCurrentInnings == true }
-            val latestBallEvent =
-                currentInnings?.ballByBallEvents?.sortedByDescending { it.ballNumber }
-                    ?.firstOrNull()
-            logger.info(
-                "[QuestionUpdate] processing scorecard for match ${scoreCard.matchId} and ball number $latestBallEvent"
-            )
+            // Log details about the current innings and latest ball event.
+            val currentInnings = scoreCard.innings.find { it.isCurrentInnings == true }
+            val latestBallEvent = currentInnings?.ballByBallEvents?.sortedByDescending { it.ballNumber }?.firstOrNull()
+            logger.info("[QuestionUpdate] processing scorecard for match ${scoreCard.matchId} and ball number $latestBallEvent")
 
-            val updatedQuestionsResponse =
-                questionService.processNewScorecard(scoreCard)
+            // Process the scorecard, which includes both question updates and generation.
+            val updatedQuestionsResponse = questionService.processNewScorecard(scoreCard)
 
-            logger.info(
-                "[QuestionUpdate] processed scorecard for match ${scoreCard.matchId} and ball number ${latestBallEvent?.ballNumber}"
-            )
+            logger.info("[QuestionUpdate] processed scorecard for match ${scoreCard.matchId} and ball number ${latestBallEvent?.ballNumber}")
 
-            logger.info(
-                "[WSLiveScore] sending data to ws for match ${scoreCard.matchId} and ball number $latestBallEvent"
-            )
+            // Send the scorecard update via web socket.
+            logger.info("[WSLiveScore] sending data to ws for match ${scoreCard.matchId} and ball number $latestBallEvent")
             webSocketHandler.sendMessageToTopic(
-                topic = "match${scoreCard.matchId}", // match21
+                topic = "match${scoreCard.matchId}",
                 message = scoreCard
             )
             logger.info("[WSLiveScore] data sent to ws for match ${scoreCard.matchId} and ball number $latestBallEvent")
+
+            // Return the combined response, including any errors encountered during processing.
             return ResponseEntity.ok(updatedQuestionsResponse)
         } catch (e: Exception) {
             logger.error("Error processing scorecard for match ${scoreCard.matchId}", e)
@@ -66,7 +61,7 @@ class EventController(
                 BallEventProcessResponse(
                     updatedQuestions = emptyList(),
                     notUpdatedQuestions = emptyList(),
-                    newQuestions = null,
+                    newQuestions = emptyList(),
                     errors = listOf(QuestionError(-1, "Error processing scorecard: ${e.message}"))
                 )
             )

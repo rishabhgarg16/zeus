@@ -333,7 +333,8 @@ def get_or_create_internal_team_id(external_id, team_name, team_short_name):
 
                     conn.commit()
                     logging.info(f"Created new team: {team_name} with internal ID: {internal_id}")
-                    return internal_id
+
+                return internal_id
             finally:
                 cursor.close()
 
@@ -442,7 +443,9 @@ def convert_team(cricbuzz_team):
     return {
         'id': internal_id,
         'name': name,
-        'shortName': shortName
+        'shortName': shortName,
+        'cricbuzzTeamId': cricbuzz_team['id'],
+        'teamImageUrl': None,
     }
 
 
@@ -702,10 +705,10 @@ last_updated_time = {
 def main():
     while True:
         try:
-            match_ids = set()
+            criccbuzz_match_ids = set()
             # Keep manual list
             MANUAL_MATCH_LIST = []  # Your manual match IDs
-            match_ids.update(MANUAL_MATCH_LIST)
+            criccbuzz_match_ids.update(MANUAL_MATCH_LIST)
 
             # Get matches from our API
             active_matches = get_active_matches_from_api()
@@ -715,13 +718,13 @@ def main():
             in_progress_count = 0
             for match in active_matches:
                 if match["status"] in ["In Progress", "Live"]:
-                    match_ids.add(match["cricbuzz_id"])
+                    criccbuzz_match_ids.add(match["cricbuzz_id"])
                     in_progress_count += 1
 
-            logging.info(f"Processing {in_progress_count} in-progress matches")
-            logging.info(f"Total matches to process: {len(match_ids)}")
+            # logging.info(f"Processing {in_progress_count} in-progress matches")
+            logging.info(f"Total matches to process: {len(criccbuzz_match_ids)}")
 
-            for match_id in match_ids:
+            for match_id in criccbuzz_match_ids:
                 try:
                     cricbuzz_data = call_cricbuzz_commentry_api(match_id)
                     if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
