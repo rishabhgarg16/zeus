@@ -15,7 +15,10 @@ class TeamRunsInMatchTrigger(private val triggerEveryNOvers: Int) : TriggerCondi
         val previousOver = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }?.overs?.toInt() ?: 0
         return currentOver != previousOver && (
                 currentState.liveScorecard.state == CricbuzzMatchPlayingState.IN_PROGRESS ||
-                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.PREVIEW)
+                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.PREVIEW ||
+                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.INNINGS_BREAK ||
+                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.TEA ||
+                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.TOSS)
     }
 }
 
@@ -23,40 +26,45 @@ class TeamRunsInMatchParameterGenerator : QuestionParameterGenerator<TeamRunsInQ
     override fun generateParameters(
         currentState: MatchState, previousState: MatchState?
     ): List<TeamRunsInQuestionParameter> {
+        // These intervals represent how many overs ahead we want to set questions for
+        val intervals = listOf(5, 10, 15)
+
         val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
         val currentRuns = currentInnings?.totalRuns ?: 0
         val currentOver = currentInnings?.overs?.toInt() ?: 0
-
-        val runRate = currentRuns.toFloat() / currentOver.coerceAtLeast(1)
-        val maxOvers = when(currentState.liveScorecard.matchFormat) {
+        val currentRunRate = currentInnings?.runRate ?: 0F
+        val targetTeamId = currentInnings?.battingTeam?.id ?: 0
+        val maxOvers = when (currentState.liveScorecard.matchFormat) {
             MatchFormat.T20 -> 20
             MatchFormat.ODI -> 50
             MatchFormat.TEST -> 90
         }
-        val projectedRuns = (runRate * maxOvers).toInt()
-        val baseTarget = ((projectedRuns / 10) + 1) * 10
+        return intervals.mapNotNull { interval ->
+            // Calculate target overs for this interval
+            val targetOvers = (currentOver + interval).coerceAtMost(maxOvers)
+            // Project total runs by the target over (using current run rate)
+            val projectedTotalRuns = (currentRunRate * targetOvers).toInt()
+            // Use a rounded figure as a base target; ensure it's above the current score
+            val baseTarget = (((projectedTotalRuns / 10) + 1) * 10).coerceAtLeast(currentRuns + 1)
+            // Compute the run rate required for the remaining overs to hit the base target
+            val remainingOvers = (targetOvers - currentOver).coerceAtLeast(1)
+            val requiredRate = (baseTarget - currentRuns).toFloat() / remainingOvers
 
-        val targetTeamId = currentInnings?.battingTeam?.id ?: 0
-        
-        
-        // this can be improved based on requiredRR and then generating params & probabilities
-        return listOf(
+            // Adjust the target:
+            //   - If required rate is more than 130% of current run rate, make target tougher (+10)
+            //   - If it's below the current rate, relax the target (-10)
+            val adjustedTarget = when {
+                requiredRate > currentRunRate * 1.3 -> baseTarget + 10
+                requiredRate < currentRunRate -> baseTarget - 10
+                else -> baseTarget
+            }.coerceAtLeast(currentRuns + 1)
+
             TeamRunsInQuestionParameter(
-                targetRuns = baseTarget,
-                targetOvers = (currentOver + 1).coerceAtMost(maxOvers),
-                targetTeamId = targetTeamId
-            ),
-//            TeamRunsInQuestionParameter(
-//                targetRuns = baseTarget + 10,
-//                targetOvers = (currentOver + 1).coerceAtMost(maxOvers),
-//                targetTeamId = targetTeamId
-//            ),
-            TeamRunsInQuestionParameter(
-                targetRuns = baseTarget + 20,
-                targetOvers = (currentOver + 2).coerceAtMost(maxOvers),
+                targetRuns = adjustedTarget,
+                targetOvers = targetOvers,
                 targetTeamId = targetTeamId
             )
-        )
+        }
     }
 }
 
@@ -103,7 +111,7 @@ class TeamRunsInMatchQuestionGenerator(
 
         return createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
-            pulseQuestion = "Will ${currentInnings.battingTeam!!.name} score ${param.targetRuns} or more runs by the " +
+            pulseQuestion = "Will ${currentInnings.battingTeam!!.name} score ${param.targetRuns} OR OVER runs by the " +
                     "${getOrdinal(param.targetOvers)} over?",
             optionA = PulseOption.Yes.name,
             optionB = PulseOption.No.name,
@@ -124,15 +132,13 @@ class TeamRunsInMatchQuestionGenerator(
         val currentRunRate = currentInnings.runRate
         val targetRunRate = param.targetRuns.toFloat() / param.targetOvers
 
-        val probability = when {
-            targetRunRate > currentRunRate * 1.3 -> 0.3
-            targetRunRate > currentRunRate * 1.1 -> 0.5
-            targetRunRate > currentRunRate -> 0.7
-            else -> 0.8
-        }
+        // Simple odds modelling: probability is inversely proportional to how much higher the target run rate is.
+        val diffRatio = (targetRunRate - currentRunRate) / currentRunRate
+        // Here we set a base probability adjusted by diffRatio, clamped between 0.2 and 0.8
+        val probability = (1 - diffRatio).coerceIn(0.2f, 0.8f)
 
-        val wagerA = BigDecimal(10 * probability)
-        val wagerB = BigDecimal(10).minus(wagerA)
+        val wagerA = BigDecimal(10).multiply(probability.toBigDecimal())
+        val wagerB = BigDecimal(10).subtract(wagerA)
 
         return Pair(wagerA, wagerB)
     }
@@ -210,7 +216,7 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
             // Target runs achieved before target overs
             currentRuns >= targetRuns -> true
 
-            // Otherwise, can't resolve yet
+            // Otherwise, the question isn't ready to be resolved
             else -> false
         }
     }
@@ -227,33 +233,34 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
 
         val currentRuns = targetInnings.totalRuns
         val currentOvers = targetInnings.overs
-        val currentBalls =
-            (currentOvers.toInt() * 6) + (currentOvers.remainder(BigDecimal.ONE).multiply(BigDecimal(10))).toInt()
+        // Convert the overs (which might be a decimal) to total balls:
+        val currentBalls = (currentOvers.toInt() * 6) +
+                (currentOvers.remainder(BigDecimal.ONE).multiply(BigDecimal(10))).toInt()
 
-        // Case 1: Target overs have been bowled
+        // Condition 1: Target overs have been bowled
         if (currentBalls >= targetBalls) {
             val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
             return QuestionResolution(true, result)
         }
 
-        // Case 2: Innings has ended before target overs (all out or declaration)
+        // Condition 2: Innings has ended before target overs (all out or declaration)
         if (!targetInnings.isCurrentInnings && currentBalls < targetBalls) {
             val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
             return QuestionResolution(true, result)
         }
 
-        // Case 3: Match has ended
+        // Condition 3: Match has ended
         if (matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE) {
             val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
             return QuestionResolution(true, result)
         }
 
-        // Case 4: Target runs achieved before target overs
+        // Condition 4: Target runs achieved before target overs
         if (currentRuns >= targetRuns) {
             return QuestionResolution(true, PulseResult.Yes)
         }
 
-        // If none of the above conditions are met, the question can't be resolved yet
+        // Otherwise, resolution isn't possible yet
         return QuestionResolution(false, PulseResult.UNDECIDED)
     }
 }

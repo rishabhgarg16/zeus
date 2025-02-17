@@ -107,8 +107,24 @@ def normalize_team_code(team_short_name: str) -> str:
         'NZW': 'NZ',     # New Zealand Women
         'BANW': 'BAN',   # Bangladesh Women
         'WIW': 'WI',     # West Indies Women
-        'IREW': 'IRE',   # Ireland Women
-        'NEDW': 'NED',   # Netherlands Women
+        'RSAU19'	:'SA',
+        'ENGU19'	:'ENG',
+        'AUSWU19'	:'AUS',
+        'SCOWU19'	:'SCO',
+        'ENGWU19'	:'ENG',
+        'IREWU19'	:'IRE',
+        'BANWU19'	:'BAN',
+        'PAKWU19'	:'PAK',
+        'USAWU19'	:'USA',
+        'NZWU19'	:'NZ',
+        'RSAWU19'	:'SA',
+        'SLWU19'	:'SL',
+        'INDWU19'	:'IND',
+        'NEDW'	:'NED',
+        'SAEP'	:'SA',
+        'INDM'	:'IND',
+        'SLM'	:'SL',
+        'PAKA'	:'PAK',
     }
 
     return variations.get(base_name, base_name)
