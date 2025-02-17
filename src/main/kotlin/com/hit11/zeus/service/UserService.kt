@@ -394,10 +394,6 @@ class UserService(
         }
     }
 
-    fun getTransactionHistory(userId: Int): List<WalletTransaction> {
-        return walletTransactionRepository.findByUserId(userId)
-    }
-
     fun getActivePromotionalCredits(userId: Int): List<PromotionalCredit> {
         return promotionalCreditRepository.findByUserIdAndStatus(
             userId,

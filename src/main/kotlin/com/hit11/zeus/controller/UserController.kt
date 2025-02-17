@@ -5,12 +5,20 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.firebase.auth.UserRecord
+import com.hit11.zeus.config.UserClaimsContext
 import com.hit11.zeus.exception.Logger
+import com.hit11.zeus.exception.UserNotFoundException
 import com.hit11.zeus.model.User
 import com.hit11.zeus.model.UserReward
+import com.hit11.zeus.model.WalletTransaction
+import com.hit11.zeus.model.WalletTransactionRow
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.UserService
+import com.hit11.zeus.service.WalletService
 import com.hit11.zeus.service.sms.Fast2SmsService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -22,7 +30,8 @@ import javax.validation.constraints.NotBlank
 @RequestMapping("/api/users")
 class UserController(
     private val userService: UserService,
-    private val fast2SmsService: Fast2SmsService
+    private val fast2SmsService: Fast2SmsService,
+    private val walletService: WalletService
 ) {
     private val logger = Logger.getLogger(this::class.java)
 
@@ -190,6 +199,26 @@ class UserController(
                 )
             )
         }
+    }
+
+
+    @GetMapping("/transactions")
+    fun getTransactions(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int
+    ): ResponseEntity<ApiResponse<Page<WalletTransactionRow>>> {
+        val pageable: Pageable = PageRequest.of(page, size)
+        val userClaims = UserClaimsContext.getUserClaims() ?: throw UserNotFoundException("User not Found")
+
+        val transactions  = walletService.getTransactions(userClaims.id, pageable)
+        return ResponseEntity.status(HttpStatus.OK).body(
+            ApiResponse(
+                data = transactions,
+                status = HttpStatus.OK.value(),
+                message = "Otp generated successfully",
+                internalCode = "OTP_GENERATED"
+            )
+        )
     }
 }
 

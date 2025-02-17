@@ -2,13 +2,14 @@ package com.hit11.zeus.repository
 
 import com.hit11.zeus.model.*
 import com.hit11.zeus.model.payment.PaymentStatus
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.util.Optional
 
 @Repository interface UserRepository : JpaRepository<User, Int> {
     fun findByFirebaseUID(firebaseUID: String): User?
@@ -19,10 +20,16 @@ import java.util.Optional
 
 @Repository
 interface WalletTransactionRepository : JpaRepository<WalletTransaction, Int> {
-    fun findByUserId(userId: Int): List<WalletTransaction>
+    fun findByUserId(userId: Int, pageable: Pageable): Page<WalletTransaction>
     fun save(transaction: WalletTransaction): WalletTransaction
     fun findByUserIdAndBalanceType(userId: Int, balanceType: BalanceType): List<WalletTransaction>
     fun findByUserIdAndTypeIn(userId: Int, types: List<TransactionType>): List<WalletTransaction>
+}
+
+@Repository
+interface WalletTransactionRowRepository : JpaRepository<WalletTransactionRow, Int> {
+    fun findByUserIdOrderByCreatedAtDesc(userId: Int, pageable: Pageable): Page<WalletTransactionRow>
+    fun save(transactionDetail: WalletTransactionRow): WalletTransactionRow
 }
 
 @Repository

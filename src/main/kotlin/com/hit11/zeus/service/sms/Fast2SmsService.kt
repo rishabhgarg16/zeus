@@ -15,7 +15,7 @@ class Fast2SmsService(
     private val FAST_2_SMS_API_ENDPOINT = ""
     private val FAST_2_SMS_API_KEY = "IGxHcL0WOJBUyhpokqYaXASNs8jrwzZ9vQdCE374gK5unT2VtfgmGsebfMpXrFZ0IqzNvwxWo7KnS64P"
 
-    val otp = 786589
+    val otp = 786598
 
     fun sendOtp(mobileNumber: String): String {
         var stripedMobile = mobileNumber.substring(3)
