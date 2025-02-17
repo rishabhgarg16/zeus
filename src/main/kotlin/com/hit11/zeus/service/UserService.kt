@@ -11,6 +11,9 @@ import com.hit11.zeus.repository.PromotionalCreditRepository
 import com.hit11.zeus.repository.UserRepository
 import com.hit11.zeus.repository.WalletTransactionRepository
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -401,9 +404,35 @@ class UserService(
         )
     }
 
+    fun getTransactionHistory(userId: Int, page: Int, size: Int): Page<WalletTransactionDTO> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        val transactionsPage = walletTransactionRepository.findByUserId(userId, pageable)
+        return transactionsPage.map { transaction ->
+            WalletTransactionDTO(
+                id = transaction.id,
+                amount = transaction.amount,
+                type = transaction.type,
+                balanceType = transaction.balanceType,
+                description = transaction.description,
+                referenceId = transaction.referenceId,
+                createdAt = transaction.createdAt
+            )
+        }
+    }
+
     companion object {
         private const val DAILY_REWARD_AMOUNT = 200.0
         private const val SIGNUP_BONUS = 500.0
         private const val MINIMUM_DAYS_BETWEEN_REWARDS = 1L
     }
+
+    data class WalletTransactionDTO(
+        val id: Long,
+        val amount: BigDecimal,
+        val type: TransactionType,
+        val balanceType: BalanceType,
+        val description: String,
+        val referenceId: String?,
+        val createdAt: Instant
+    )
 }

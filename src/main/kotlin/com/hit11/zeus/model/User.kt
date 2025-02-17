@@ -115,18 +115,18 @@ data class WalletTransaction(
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    val user: User,
+    val user: User = User(),
 
     @Column(precision = 19, scale = 4)
-    val amount: BigDecimal,
+    val amount: BigDecimal = BigDecimal.ZERO,
 
     @Enumerated(EnumType.STRING)
-    val type: TransactionType,
+    val type: TransactionType = TransactionType.DEPOSIT,
 
     @Enumerated(EnumType.STRING)
-    val balanceType: BalanceType,
+    val balanceType: BalanceType = BalanceType.WINNINGS,
 
-    val description: String,
+    val description: String = "",
 
     @Column(name = "reference_id")
     val referenceId: String? = null,  // For payment gateway reference etc.

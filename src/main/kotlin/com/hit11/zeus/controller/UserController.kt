@@ -10,7 +10,6 @@ import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.UserNotFoundException
 import com.hit11.zeus.model.User
 import com.hit11.zeus.model.UserReward
-import com.hit11.zeus.model.WalletTransaction
 import com.hit11.zeus.model.WalletTransactionRow
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.UserService
@@ -201,7 +200,6 @@ class UserController(
         }
     }
 
-
     @GetMapping("/transactions")
     fun getTransactions(
         @RequestParam(defaultValue = "0") page: Int,
@@ -219,6 +217,35 @@ class UserController(
                 internalCode = "OTP_GENERATED"
             )
         )
+
+    @GetMapping("/{userId}/transactions")
+    fun getUserWalletTransactions(
+        @PathVariable userId: Int,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int
+    ): ResponseEntity<ApiResponse<Page<UserService.WalletTransactionDTO>>> {
+        // This method uses the getTransactionHistory() service function
+        try {
+            val transactions = userService.getTransactionHistory(userId, page, size)
+            return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse(
+                    data = transactions,
+                    status = HttpStatus.OK.value(),
+                    message = "wallet transactions fetched successfully",
+                    internalCode = "200_OK"
+                )
+            )
+        } catch (ex: Exception) {
+            logger.error("Error getting transactions for user ${userId}", ex)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    data = Page.empty(),
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    message = ex.message ?: "Error generating otp",
+                    internalCode = "INTERNAL_SERVER_ERROR"
+                )
+            )
+        }
     }
 }
 
