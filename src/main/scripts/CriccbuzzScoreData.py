@@ -715,13 +715,19 @@ def main():
             logging.info(f"Fetched {len(active_matches)} matches from API")
 
             # Process only matches that are in progress
+            active_state_ids = set()
+            scheduled_state_ids = set()
             in_progress_count = 0
             for match in active_matches:
                 if match["status"] in ["In Progress", "Live"]:
-                    criccbuzz_match_ids.add(match["cricbuzz_id"])
+                    active_state_ids.add(match["cricbuzz_id"])
                     in_progress_count += 1
+                elif match["status"].lower() == "scheduled" or match["status"].lower() == "preview":
+                    scheduled_state_ids.add(match["cricbuzz_id"])
 
             # logging.info(f"Processing {in_progress_count} in-progress matches")
+            criccbuzz_match_ids.update(active_state_ids)
+            criccbuzz_match_ids.update(scheduled_state_ids)
             logging.info(f"Total matches to process: {len(criccbuzz_match_ids)}")
 
             for match_id in criccbuzz_match_ids:
@@ -737,7 +743,11 @@ def main():
                     logging.error(f"Error processing match {match_id}: {e}")
 
             if os.getenv("PROD", False):
-                time.sleep(15)
+                # If any scheduled match is present, use a relaxed interval (e.g. 60 sec)
+                if scheduled_state_ids:
+                    time.sleep(60)
+                else:
+                    time.sleep(15)
             else:
                 break
 
