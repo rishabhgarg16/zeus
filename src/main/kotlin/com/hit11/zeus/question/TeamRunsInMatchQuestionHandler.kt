@@ -217,27 +217,22 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
             return false
         }
 
-        val currentRuns = currentInnings.totalRuns
-        val currentBalls = currentInnings.totalBalls()
+        val currentOvers = currentInnings.totalBalls() / 6.0  // Convert to decimal overs
+        if (currentOvers > targetOvers) {
+            return true
+        }
 
         return when {
             // All out
             currentInnings.wickets >= 10 -> true
 
-            // Target overs have been bowled
-            currentBalls >= targetBalls -> true
+            currentInnings.totalBalls() >= (targetOvers * 6) -> true
 
             // Innings has ended before target overs (all out or declaration)
-            !currentInnings.isCurrentInnings && currentBalls < targetBalls -> true
-
-            // Match has ended
             matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE -> true
 
             // Target runs achieved before target overs
-            currentRuns >= targetRuns -> true
-
-            // Match has ended
-            matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE -> true
+            currentInnings.totalRuns >= targetRuns -> true
 
             // Otherwise, the question isn't ready to be resolved
             else -> false
