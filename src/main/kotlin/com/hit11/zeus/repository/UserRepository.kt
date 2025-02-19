@@ -26,11 +26,6 @@ interface WalletTransactionRepository : JpaRepository<WalletTransaction, Int> {
     fun findByUserIdAndTypeIn(userId: Int, types: List<TransactionType>): List<WalletTransaction>
 }
 
-@Repository
-interface WalletTransactionRowRepository : JpaRepository<WalletTransactionRow, Int> {
-    fun findByUserIdOrderByCreatedAtDesc(userId: Int, pageable: Pageable): Page<WalletTransactionRow>
-    fun save(transactionDetail: WalletTransactionRow): WalletTransactionRow
-}
 
 @Repository
 interface PaymentTransactionRepository : JpaRepository<PaymentTransaction, Int> {

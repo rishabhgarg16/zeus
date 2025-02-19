@@ -36,7 +36,7 @@ enum class QuestionType {
 
 enum class QuestionStatus {
     SYSTEM_GENERATED,  // Newly created by the system, waiting for review
-    DISABLED,
+    DISABLED,          // No more active for trading
     MANUAL_DRAFT,      // Manually created, not yet approved
     LIVE,              // Currently active
     RESOLVED,          // Question has been answered/resolved

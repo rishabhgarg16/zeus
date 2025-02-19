@@ -9,6 +9,8 @@ import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
 import com.hit11.zeus.model.response.QuestionAnswerUpdateResponse
 import com.hit11.zeus.question.QuestionGenerator
 import com.hit11.zeus.question.ResolutionStrategy
+import com.hit11.zeus.question.RunsScoredByBatsmanQuestionGenerator
+import com.hit11.zeus.question.TeamRunsInMatchQuestionGenerator
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
 import java.time.ZonedDateTime
@@ -113,6 +115,13 @@ class QuestionService(
 
         for (question in questions) {
             try {
+                // First, check if the question is outdated.
+                if (checkAndLockOutdatedQuestion(question, previousState, matchState)) {
+                    // If outdated, we mark it as DISABLED and do not process it further.
+                    notUpdatedQuestions.add(question)
+                    continue
+                }
+
                 val resolutionStrategy = resolutionStrategies[question.questionType]
                 if (resolutionStrategy?.canResolve(question, matchState) == true) {
                     val resolution = resolutionStrategy.resolve(question, matchState)
@@ -142,6 +151,67 @@ class QuestionService(
         return UpdateQuestionsResponse(
             updatedQuestions, notUpdatedQuestions, errors
         )
+    }
+
+    private fun checkAndLockOutdatedQuestion(
+        question: Question,
+        previousState: MatchState? = null,
+        currentState: MatchState,
+    ): Boolean {
+        when (question.questionType) {
+            QuestionType.TEAM_RUNS_IN_MATCH -> {
+                val generator = questionGenerators.firstOrNull { it is TeamRunsInMatchQuestionGenerator } as? TeamRunsInMatchQuestionGenerator
+                    ?: return false
+                val newParamsList = generator.parameterGenerator.generateParameters(currentState, previousState)
+                val updatedParams = newParamsList.find { it.targetOvers == question.targetOvers }
+                    ?: newParamsList.minByOrNull { Math.abs(it.targetOvers - question.targetOvers!!) }
+
+                // First, if the targetTeamId doesn't match, lock immediately.
+                if (updatedParams != null && question.targetTeamId != updatedParams.targetTeamId) {
+                    question.status = QuestionStatus.DISABLED
+                    questionRepository.save(question)
+                    logger.info("Locked TEAM_RUNS_IN_MATCH question ${question.id} due to team change: original targetTeamId ${question.targetTeamId}, updated ${updatedParams.targetTeamId}")
+                    return true
+                }
+
+                // Then, check the run difference threshold.
+                val threshold = 5 // e.g., 5 runs difference allowed
+                if (updatedParams != null) {
+                    val runDifference = Math.abs(updatedParams.targetRuns - (question.targetRuns ?: 0))
+                    if (runDifference > threshold) {
+                        question.status = QuestionStatus.DISABLED
+                        questionRepository.save(question)
+                        logger.info("Disabled TEAM_RUNS_IN_MATCH question ${question.id}: original targetRuns ${question
+                            .targetRuns}, updated targetRuns ${updatedParams.targetRuns}")
+                        return true
+                    }
+                }
+            }
+            QuestionType.RUNS_SCORED_BY_BATSMAN -> {
+                val generator = questionGenerators.firstOrNull { it is RunsScoredByBatsmanQuestionGenerator } as? RunsScoredByBatsmanQuestionGenerator
+                    ?: return false
+                val newParamsList = generator.parameterGenerator.generateParameters(currentState, previousState)
+                // Here we try to match by targetBatsmanId; if found, compare targetRuns.
+                val updatedParams = newParamsList.find { it.targetBatsmanId == question.targetBatsmanId }
+                    ?: newParamsList.minByOrNull { Math.abs(it.targetRuns - (question.targetRuns ?: 0)) }
+                val threshold = 10
+                if (updatedParams != null && question.targetRuns != null) {
+                    val runDifference = Math.abs(updatedParams.targetRuns - question.targetRuns!!)
+                    if (runDifference > threshold) {
+                        question.status = QuestionStatus.DISABLED
+                        questionRepository.save(question)
+                        logger.info("Locked RUNS_SCORED_BY_BATSMAN question ${question.id}: original targetRuns ${question.targetRuns}, updated targetRuns ${updatedParams.targetRuns}")
+                        return true
+                    }
+                }
+            }
+            // Add more cases here for other question types (e.g., WicketsByBowler) using similar logic.
+            else -> {
+                // For other types, we may choose not to apply lock logic.
+                return false
+            }
+        }
+        return false
     }
 
     @Transactional
@@ -174,7 +244,7 @@ class QuestionService(
             } catch (e: Exception) {
                 val errorMsg = "Error generating questions with ${generator::class.simpleName}: ${e.message}"
                 logger.error(errorMsg, e)
-                generationErrors.add(QuestionError(questionId = -1,  errorMessage = errorMsg))
+                generationErrors.add(QuestionError(questionId = -1, errorMessage = errorMsg))
             }
         }
         // Save generated questions;

@@ -10,10 +10,8 @@ import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.exception.UserNotFoundException
 import com.hit11.zeus.model.User
 import com.hit11.zeus.model.UserReward
-import com.hit11.zeus.model.WalletTransactionRow
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.UserService
-import com.hit11.zeus.service.WalletService
 import com.hit11.zeus.service.sms.Fast2SmsService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -30,7 +28,6 @@ import javax.validation.constraints.NotBlank
 class UserController(
     private val userService: UserService,
     private val fast2SmsService: Fast2SmsService,
-    private val walletService: WalletService
 ) {
     private val logger = Logger.getLogger(this::class.java)
 

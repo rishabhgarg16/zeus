@@ -135,35 +135,6 @@ data class WalletTransaction(
     val createdAt: Instant = Instant.now()
 )
 
-
-@Entity
-@Table(name = "wallet_transactions")
-data class WalletTransactionRow(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
-
-    @Column(name = "user_id")
-    val userId: Int? = null,
-
-    @Column(precision = 19, scale = 4)
-    val amount: BigDecimal = BigDecimal(0),
-
-    @Enumerated(EnumType.STRING)
-    val type: TransactionType? = null,
-
-    @Enumerated(EnumType.STRING)
-    val balanceType: BalanceType? = null,
-
-    val description: String = "",
-
-    @Column(name = "reference_id")
-    val referenceId: String? = null,  // For payment gateway reference etc.
-
-    @Column(name = "created_at")
-    val createdAt: Instant = Instant.now()
-)
-
 enum class TransactionType {
     DEPOSIT,
     WITHDRAWAL,
