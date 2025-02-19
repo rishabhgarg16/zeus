@@ -737,7 +737,7 @@ def main():
                     logging.error(f"Error processing match {match_id}: {e}")
 
             if os.getenv("PROD", False):
-                time.sleep(30)
+                time.sleep(15)
             else:
                 break
 

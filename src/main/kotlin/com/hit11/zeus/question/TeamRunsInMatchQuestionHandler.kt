@@ -43,7 +43,7 @@ class TeamRunsInMatchParameterGenerator : QuestionParameterGenerator<TeamRunsInQ
             MatchFormat.ODI -> 50
             MatchFormat.TEST -> 90
         }
-        return intervals.mapNotNull { interval ->
+        return intervals.map { interval ->
             // Calculate target overs for this interval
             val targetOvers = (currentOver + interval).coerceAtMost(maxOvers)
             // Project total runs by the target over (using current run rate)
@@ -209,26 +209,35 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
         val targetOvers = question.targetOvers ?: return false
         val targetBalls = targetOvers * 6
 
-        val targetInnings = matchState.liveScorecard.innings.find { it.battingTeam?.id == targetTeamId }
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
             ?: return false
 
-        val currentRuns = targetInnings.totalRuns
-        val currentOvers = targetInnings.overs
-        val currentBalls =
-            (currentOvers.toInt() * 6) + (currentOvers.remainder(BigDecimal.ONE).multiply(BigDecimal(10))).toInt()
+        // Verify this is the right team batting
+        if (currentInnings.battingTeam?.id != targetTeamId) {
+            return false
+        }
+
+        val currentRuns = currentInnings.totalRuns
+        val currentBalls = currentInnings.totalBalls()
 
         return when {
+            // All out
+            currentInnings.wickets >= 10 -> true
+
             // Target overs have been bowled
             currentBalls >= targetBalls -> true
 
             // Innings has ended before target overs (all out or declaration)
-            !targetInnings.isCurrentInnings && currentBalls < targetBalls -> true
+            !currentInnings.isCurrentInnings && currentBalls < targetBalls -> true
 
             // Match has ended
             matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE -> true
 
             // Target runs achieved before target overs
             currentRuns >= targetRuns -> true
+
+            // Match has ended
+            matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE -> true
 
             // Otherwise, the question isn't ready to be resolved
             else -> false
@@ -241,15 +250,15 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
         val targetRuns = question.targetRuns ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetOvers = question.targetOvers ?: return QuestionResolution(false, PulseResult.UNDECIDED)
         val targetBalls = targetOvers * 6
-
-        val targetInnings = matchState.liveScorecard.innings.find { it.battingTeam?.id == targetTeamId }
+        val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
             ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
-        val currentRuns = targetInnings.totalRuns
-        val currentOvers = targetInnings.overs
-        // Convert the overs (which might be a decimal) to total balls:
-        val currentBalls = (currentOvers.toInt() * 6) +
-                (currentOvers.remainder(BigDecimal.ONE).multiply(BigDecimal(10))).toInt()
+        if (currentInnings.battingTeam?.id != targetTeamId) {
+            return QuestionResolution(false, PulseResult.UNDECIDED)
+        }
+
+        val currentRuns = currentInnings.totalRuns
+        val currentBalls = currentInnings.totalBalls()
 
         // Condition 1: Target overs have been bowled
         if (currentBalls >= targetBalls) {
@@ -257,8 +266,14 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
             return QuestionResolution(true, result)
         }
 
+        // All out
+        if(currentInnings.wickets >= 10) {
+            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
+            return QuestionResolution(true, result)
+        }
+
         // Condition 2: Innings has ended before target overs (all out or declaration)
-        if (!targetInnings.isCurrentInnings && currentBalls < targetBalls) {
+        if (!currentInnings.isCurrentInnings && currentBalls < targetBalls) {
             val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
             return QuestionResolution(true, result)
         }

@@ -398,7 +398,7 @@ data class InningsScore(
     val batTeamName: String,
     val score: Int,
     val wickets: Int,
-    val overs: Double,
+    val overs: Double = 0.0,
     val isDeclared: Boolean,
     val isFollowOn: Boolean,
     val ballNbr: Int
@@ -448,7 +448,7 @@ fun convertInningsScoreToInnings(
         battingTeam = battingCBTeam,
         totalRuns = inningsScore.score,
         wickets = inningsScore.wickets,
-        overs = BigDecimal.valueOf(inningsScore.overs),
+        _overs = inningsScore.overs,
         runRate = runRate,
         bowlingTeam = bowlingCBTeam,
         isCurrentInnings = criccbuzzMatchDataModel.miniscore?.inningsId == inningsScore.inningsId
