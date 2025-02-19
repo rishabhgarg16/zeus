@@ -16,6 +16,9 @@ enum class CricbuzzMatchPlayingState(val state: String) {
     @JsonProperty("Preview")
     PREVIEW("Preview"),
 
+    @JsonProperty("Drink")
+    DRINK("Drink"),
+
     @JsonProperty("Complete")
     COMPLETE("Complete"),
 

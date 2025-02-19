@@ -10,6 +10,7 @@ enum class MatchStatus(val text: String) {
     INNINGS_BREAK("Innings Break"),
     TEA("Tea"),
     TOSS("Toss"),
+    DRINK("Drink"),
     STUMPS("Stumps"),
     IN_PROGRESS("In Progress");
 

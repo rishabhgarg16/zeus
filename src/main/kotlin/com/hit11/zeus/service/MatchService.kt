@@ -64,6 +64,7 @@ class MatchService(
             MatchStatus.TEA.text,
             MatchStatus.INNINGS_BREAK.text,
             MatchStatus.TOSS.text,
+            MatchStatus.DRINK.text,
             MatchStatus.STUMPS.text // if needed
         )
 
@@ -95,6 +96,7 @@ class MatchService(
             MatchStatus.INNINGS_BREAK.text,
             MatchStatus.TEA.text,
             MatchStatus.TOSS.text,
+            MatchStatus.DRINK.text,
             MatchStatus.STUMPS.text
         )
     }
@@ -282,6 +284,7 @@ class MatchService(
             "upcoming" -> MatchStatus.SCHEDULED.text
             "innings break" -> MatchStatus.INNINGS_BREAK.text
             "tea" -> MatchStatus.TEA.text
+            "drink" -> MatchStatus.DRINK.text
             "toss" -> MatchStatus.TOSS.text
             "stumps" -> MatchStatus.STUMPS.text
             else -> MatchStatus.IN_PROGRESS.text

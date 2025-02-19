@@ -116,7 +116,8 @@ class QuestionService(
         for (question in questions) {
             try {
                 // First, check if the question is outdated.
-                if (checkAndLockOutdatedQuestion(question, previousState, matchState)) {
+                if (question.status == QuestionStatus.LIVE && checkAndLockOutdatedQuestion(question, previousState,
+                        matchState)) {
                     // If outdated, we mark it as DISABLED and do not process it further.
                     notUpdatedQuestions.add(question)
                     continue

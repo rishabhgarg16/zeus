@@ -17,6 +17,7 @@ class TeamRunsInMatchTrigger(private val triggerEveryNOvers: Int) : TriggerCondi
             CricbuzzMatchPlayingState.IN_PROGRESS,
             CricbuzzMatchPlayingState.INNINGS_BREAK,
             CricbuzzMatchPlayingState.TEA,
+            CricbuzzMatchPlayingState.DRINK,
             CricbuzzMatchPlayingState.TOSS,
             CricbuzzMatchPlayingState.STUMPS -> true
             else -> false
