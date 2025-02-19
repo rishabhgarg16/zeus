@@ -36,7 +36,6 @@ object UserClaimsContext {
 @Component
 class AuthInterceptor : HandlerInterceptor {
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        println("Here")
         try {
             if (request.requestURI == "/api/users/login") {
                 return true
