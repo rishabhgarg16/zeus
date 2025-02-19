@@ -201,32 +201,14 @@ class UserController(
     }
 
     @GetMapping("/transactions")
-    fun getTransactions(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "10") size: Int
-    ): ResponseEntity<ApiResponse<Page<WalletTransactionRow>>> {
-        val pageable: Pageable = PageRequest.of(page, size)
-        val userClaims = UserClaimsContext.getUserClaims() ?: throw UserNotFoundException("User not Found")
-
-        val transactions  = walletService.getTransactions(userClaims.id, pageable)
-        return ResponseEntity.status(HttpStatus.OK).body(
-            ApiResponse(
-                data = transactions,
-                status = HttpStatus.OK.value(),
-                message = "Otp generated successfully",
-                internalCode = "OTP_GENERATED"
-            )
-        )
-
-    @GetMapping("/{userId}/transactions")
     fun getUserWalletTransactions(
-        @PathVariable userId: Int,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "10") size: Int
     ): ResponseEntity<ApiResponse<Page<UserService.WalletTransactionDTO>>> {
         // This method uses the getTransactionHistory() service function
         try {
-            val transactions = userService.getTransactionHistory(userId, page, size)
+            val userClaims = UserClaimsContext.getUserClaims() ?: throw UserNotFoundException("User not Found")
+            val transactions = userService.getTransactionHistory(userClaims.id, page, size)
             return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse(
                     data = transactions,
@@ -236,7 +218,7 @@ class UserController(
                 )
             )
         } catch (ex: Exception) {
-            logger.error("Error getting transactions for user ${userId}", ex)
+            logger.error("Error getting transactions for user", ex)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ApiResponse(
                     data = Page.empty(),
