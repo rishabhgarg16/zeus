@@ -13,12 +13,15 @@ class TeamRunsInMatchTrigger(private val triggerEveryNOvers: Int) : TriggerCondi
     override fun shouldTrigger(currentState: MatchState, previousState: MatchState?): Boolean {
         val currentOver = currentState.liveScorecard.innings.find { it.isCurrentInnings }?.overs?.toInt() ?: 0
         val previousOver = previousState?.liveScorecard?.innings?.find { it.isCurrentInnings }?.overs?.toInt() ?: 0
-        return currentOver != previousOver && (
-                currentState.liveScorecard.state == CricbuzzMatchPlayingState.IN_PROGRESS ||
-                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.PREVIEW ||
-                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.INNINGS_BREAK ||
-                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.TEA ||
-                        currentState.liveScorecard.state == CricbuzzMatchPlayingState.TOSS)
+        val isActiveState = when (currentState.liveScorecard.state) {
+            CricbuzzMatchPlayingState.IN_PROGRESS,
+            CricbuzzMatchPlayingState.INNINGS_BREAK,
+            CricbuzzMatchPlayingState.TEA,
+            CricbuzzMatchPlayingState.TOSS,
+            CricbuzzMatchPlayingState.STUMPS -> true
+            else -> false
+        }
+        return currentOver != previousOver && isActiveState
     }
 }
 
@@ -27,7 +30,7 @@ class TeamRunsInMatchParameterGenerator : QuestionParameterGenerator<TeamRunsInQ
         currentState: MatchState, previousState: MatchState?
     ): List<TeamRunsInQuestionParameter> {
         // These intervals represent how many overs ahead we want to set questions for
-        val intervals = listOf(5, 10, 15)
+        val intervals = listOf(1, 3, 5)
 
         val currentInnings = currentState.liveScorecard.innings.find { it.isCurrentInnings }
         val currentRuns = currentInnings?.totalRuns ?: 0
@@ -90,9 +93,19 @@ class TeamRunsInMatchQuestionGenerator(
         if (!triggerCondition.shouldTrigger(currentState, previousState)) {
             return emptyList()
         }
+
+        // Deduplicate parameters in the same batch
         val parameters = parameterGenerator.generateParameters(currentState, previousState)
+            .distinctBy { param ->
+                Triple(param.targetTeamId, param.targetRuns, param.targetOvers)
+            }
+
         return parameters.mapNotNull { param ->
-            createQuestion(param, currentState)?.takeIf { validator.validateQuestion(it) }
+            if (!questionExists(param, currentState)) {
+                createQuestion(param, currentState)?.takeIf { validator.validateQuestion(it) }
+            } else {
+                null
+            }
         }
     }
 

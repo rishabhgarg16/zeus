@@ -117,10 +117,10 @@ class MatchService(
             isIndiaMatch && isLive -> MatchPriority.INDIA_LIVE.value
 
             // IPL Priority
-            isIPL && match.status == MatchStatus.IN_PROGRESS.text ->
-                MatchPriority.IPL_LIVE.value
+            isIPL && isLive -> MatchPriority.IPL_LIVE.value
 
-            isLive -> MatchPriority.IPL_LIVE.value  // Applies to all live phases
+            // Other Live Matches
+            isLive -> MatchPriority.OTHER_LIVE.value
 
             isIndiaMatch && match.status == MatchStatus.SCHEDULED.text && isWithinNext6Hours ->
                 MatchPriority.INDIA_UPCOMING_6H.value
@@ -135,9 +135,6 @@ class MatchService(
                 MatchPriority.IPL_COMPLETED_6H.value
 
             // Other Matches Time-based Priority
-            match.status == MatchStatus.IN_PROGRESS.text ->
-                MatchPriority.OTHER_LIVE.value
-
             match.status == MatchStatus.SCHEDULED.text && isWithinNext6Hours ->
                 MatchPriority.OTHER_UPCOMING_6H.value
 

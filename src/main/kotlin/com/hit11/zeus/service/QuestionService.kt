@@ -160,33 +160,61 @@ class QuestionService(
     ): Boolean {
         when (question.questionType) {
             QuestionType.TEAM_RUNS_IN_MATCH -> {
+                // TODO Super overs
+                //DLS method affecting targets
+                //Power play rule changes
+                //Format-specific rules (T20 vs ODI)
                 val generator = questionGenerators.firstOrNull { it is TeamRunsInMatchQuestionGenerator } as? TeamRunsInMatchQuestionGenerator
                     ?: return false
-                val newParamsList = generator.parameterGenerator.generateParameters(currentState, previousState)
-                val updatedParams = newParamsList.find { it.targetOvers == question.targetOvers }
-                    ?: newParamsList.minByOrNull { Math.abs(it.targetOvers - question.targetOvers!!) }
+                val generatedParams = generator.parameterGenerator.generateParameters(currentState, previousState)
 
-                // First, if the targetTeamId doesn't match, lock immediately.
-                if (updatedParams != null && question.targetTeamId != updatedParams.targetTeamId) {
+                // Find the candidate with the smallest difference in targetOvers from the stored question.
+                val storedOvers = question.targetOvers ?: return false
+                val candidate = generatedParams.minByOrNull { Math.abs(it.targetOvers - storedOvers) }
+
+                // If no candidate is generated, we lock the question.
+                if (candidate == null) {
                     question.status = QuestionStatus.DISABLED
                     questionRepository.save(question)
-                    logger.info("Locked TEAM_RUNS_IN_MATCH question ${question.id} due to team change: original targetTeamId ${question.targetTeamId}, updated ${updatedParams.targetTeamId}")
+                    logger.info("Locked TEAM_RUNS_IN_MATCH question ${question.id} due to no candidate parameter found.")
                     return true
                 }
 
-                // Then, check the run difference threshold.
-                val threshold = 5 // e.g., 5 runs difference allowed
-                if (updatedParams != null) {
-                    val runDifference = Math.abs(updatedParams.targetRuns - (question.targetRuns ?: 0))
-                    if (runDifference > threshold) {
-                        question.status = QuestionStatus.DISABLED
-                        questionRepository.save(question)
-                        logger.info("Disabled TEAM_RUNS_IN_MATCH question ${question.id}: original targetRuns ${question
-                            .targetRuns}, updated targetRuns ${updatedParams.targetRuns}")
-                        return true
-                    }
+                // Define tolerance thresholds.
+                val oversTolerance = 1      // Allow a ±1 over difference.
+                val runTolerance = 5       // Allow a ±5 runs difference.
+
+                // Check if the target team has changed.
+                if (candidate.targetTeamId != question.targetTeamId) {
+                    question.status = QuestionStatus.DISABLED
+                    questionRepository.save(question)
+                    logger.info("Locked TEAM_RUNS_IN_MATCH question ${question.id} due to team change: candidate targetTeamId ${candidate.targetTeamId} vs stored ${question.targetTeamId}")
+                    return true
                 }
+
+                // Check the difference in overs.
+                val oversDiff = Math.abs(candidate.targetOvers - storedOvers)
+                if (oversDiff > oversTolerance) {
+                    question.status = QuestionStatus.DISABLED
+                    questionRepository.save(question)
+                    logger.info("Locked TEAM_RUNS_IN_MATCH question ${question.id} due to overs difference: candidate ${candidate.targetOvers}, stored $storedOvers")
+                    return true
+                }
+
+                // Check the difference in runs.
+                val storedRuns = question.targetRuns ?: 0
+                val runDiff = Math.abs(candidate.targetRuns - storedRuns)
+                if (runDiff > runTolerance) {
+                    question.status = QuestionStatus.DISABLED
+                    questionRepository.save(question)
+                    logger.info("Locked TEAM_RUNS_IN_MATCH question ${question.id} due to runs difference: candidate ${candidate.targetRuns}, stored $storedRuns")
+                    return true
+                }
+
+                // If all differences are within tolerance, the question remains active.
+                return false
             }
+
             QuestionType.RUNS_SCORED_BY_BATSMAN -> {
                 val generator = questionGenerators.firstOrNull { it is RunsScoredByBatsmanQuestionGenerator } as? RunsScoredByBatsmanQuestionGenerator
                     ?: return false
