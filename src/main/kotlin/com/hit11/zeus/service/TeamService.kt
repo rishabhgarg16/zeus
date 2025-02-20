@@ -4,11 +4,10 @@ import com.hit11.zeus.model.TeamEntity
 import com.hit11.zeus.model.external.CricbuzzTeam
 import com.hit11.zeus.repository.TeamRepository
 import org.slf4j.LoggerFactory
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
-import javax.annotation.PostConstruct
 import javax.transaction.Transactional
 
 
@@ -26,48 +25,39 @@ class TeamService(
     // criccbuzz id to TeamEntity
     private val teamCache = ConcurrentHashMap<Int, CachedTeam>()
 
-    @PostConstruct
-    fun initializeCache() {
-        logger.info("Initializing team cache...")
-        try {
-            val teams = teamRepository.findAll()
-            teams.forEach { team ->
-                team.cricbuzzTeamId?.let { teamCache[team.cricbuzzTeamId] = CachedTeam(team) }
-            }
-            logger.info("Team cache initialized with ${teams.size} teams")
-        } catch (e: Exception) {
-            logger.error("Error initializing team cache", e)
-        }
-    }
-
-    @Scheduled(cron = "0 0 0 * * *") // Runs at midnight every day
-    fun refreshCache() {
-        logger.info("Starting scheduled team cache refresh")
-        try {
-            val teams = teamRepository.findAll()
-            teams.forEach { team ->
-                team.cricbuzzTeamId?.let { teamCache[team.cricbuzzTeamId] = CachedTeam(team) }
-            }
-            logger.info("Team cache refreshed with ${teams.size} teams")
-        } catch (e: Exception) {
-            logger.error("Error refreshing team cache", e)
-        }
-    }
-
     fun getOrCreateTeam(cricbuzzTeam: CricbuzzTeam): TeamEntity? {
-        return teamCache[cricbuzzTeam.teamId]?.team ?: fetchTeamFromDB(cricbuzzTeam)
-    }
+        val now = Instant.now()
 
-    fun fetchTeamFromDB(cricbuzzTeam: CricbuzzTeam): TeamEntity? {
-        val team = teamRepository.findByCricbuzzTeamId(cricbuzzTeam.teamId)
-        if (team == null) {
-            val createdTeam = createTeam(cricbuzzTeam)
-            createdTeam?.let { teamCache[cricbuzzTeam.teamId] =  CachedTeam(createdTeam) }
-            return createdTeam
-        } else {
-            teamCache[cricbuzzTeam.teamId] = CachedTeam(team)
-            return team
+        // Check if the team is already cached and valid
+        teamCache[cricbuzzTeam.teamId]?.let { cached ->
+            if (now.isBefore(cached.lastUpdated.plus(Duration.ofMinutes(10)))) {
+                return cached.team
+            } else {
+                // TTL expired, remove the cached entry
+                teamCache.remove(cricbuzzTeam.teamId)
+            }
         }
+
+        // Not in cache or expired: Try to retrieve from DB or create a new team
+        val teamFromDB = try {
+            teamRepository.findByCricbuzzTeamId(cricbuzzTeam.teamId)
+        } catch (ex: Exception) {
+            logger.error("Error fetching team from DB for teamId: ${cricbuzzTeam.teamId}", ex)
+            null
+        }
+
+        // If found in DB, use it; otherwise, attempt to create a new team.
+        val team = teamFromDB ?: createTeam(cricbuzzTeam)
+
+        // If team is still null, return null.
+        if (team == null) return null
+
+        // Create a new CachedTeam instance with current timestamp
+        val newCachedTeam = CachedTeam(team, now)
+
+        // Insert into the cache in a thread-safe manner. If another thread already inserted a value, use that one.
+        val cachedTeam = teamCache.putIfAbsent(cricbuzzTeam.teamId, newCachedTeam)
+        return (cachedTeam ?: newCachedTeam).team
     }
 
     @Transactional
@@ -78,14 +68,14 @@ class TeamService(
             teamImageUrl = generateTeamImageUrl(cricbuzzTeam.imageId),
             cricbuzzTeamId = cricbuzzTeam.teamId
         )
-
-        try {
-            return teamRepository.save(newTeam)
+        return try {
+            val savedTeam = teamRepository.save(newTeam)
+            logger.info("Created new team with ID: ${savedTeam.id} for cricbuzzTeamId: ${cricbuzzTeam.teamId}")
+            savedTeam
         } catch (ex: Exception) {
-            logger.error("Error creating team: ${ex.message}")
-
+            logger.error("Error creating team for cricbuzzTeamId: ${cricbuzzTeam.teamId}", ex)
+            null
         }
-        return null
     }
 
     fun updateTeam(teamId: Long, cricbuzzTeam: CricbuzzTeam): TeamEntity? {
@@ -95,7 +85,10 @@ class TeamService(
                 teamShortName = cricbuzzTeam.teamSName,
                 teamImageUrl = generateTeamImageUrl(cricbuzzTeam.imageId)
             )
-            teamRepository.save(updatedTeam)
+            val savedTeam = teamRepository.save(updatedTeam)
+            // Update cache entry if available
+            savedTeam.cricbuzzTeamId?.let { teamCache[it] = CachedTeam(savedTeam) }
+            savedTeam
         }.orElse(null)
     }
 

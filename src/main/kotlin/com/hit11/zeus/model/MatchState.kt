@@ -41,5 +41,5 @@ fun getCricbuzzMatchPlayingState(state: String): CricbuzzMatchPlayingState {
             return value
         }
     }
-    return CricbuzzMatchPlayingState.COMPLETE
+    return CricbuzzMatchPlayingState.IN_PROGRESS
 }

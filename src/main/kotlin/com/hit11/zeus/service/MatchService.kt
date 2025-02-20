@@ -17,6 +17,7 @@ class MatchService(
     private val cricbuzzApiService: CricbuzzApiService
 ) {
     private val logger = Logger.getLogger(this::class.java)
+
     // Data class to hold cached match list along with its expiry time
     data class MatchListCache(
         val matches: List<Match>,
@@ -48,39 +49,68 @@ class MatchService(
                 return cache.matches.take(limit)
             }
         }
+
+        val now = Instant.now()
         // Otherwise, fetch matches from DB
         val recentCompletedMatchThreshold = Instant.now().minus(24, ChronoUnit.HOURS)
-        val activeStatuses = listOf(
-            MatchStatus.SCHEDULED.text,
+
+        val liveStatuses = listOf(
             MatchStatus.IN_PROGRESS.text,
-            MatchStatus.PREVIEW.text,
-            MatchStatus.TEA.text,
             MatchStatus.INNINGS_BREAK.text,
+            MatchStatus.TEA.text,
             MatchStatus.TOSS.text,
             MatchStatus.DRINK.text,
-            MatchStatus.STUMPS.text // if needed
+            MatchStatus.STUMPS.text
+        )
+        val scheduledStatuses = listOf(
+            MatchStatus.SCHEDULED.text,
+            MatchStatus.PREVIEW.text
         )
 
-        return try {
-            val matches = matchRepository.findMatchesWithTeams(
-                activeStatuses = activeStatuses,
-                currentTimestamp = Instant.now(),
+        // Query live matches from the DB
+        val liveMatches = try {
+            matchRepository.findMatchesWithTeams(
+                activeStatuses = liveStatuses,
+                currentTimestamp = now,
                 recentCompletedMatchThreshold = recentCompletedMatchThreshold,
-                pageable = PageRequest.of(0, limit * 5) // Fetch more than needed to allow for priority sorting
+                pageable = PageRequest.of(0, limit * 2)
             ).sortedBy { match -> getMatchPriority(match) }
-                .take(limit)
-
-            // Update the cache with the fresh match list
-            matchListCache = MatchListCache(
-                matches = matches,
-                expiryTime = Instant.now().plusSeconds(CACHE_TTL_MINUTES * 60)
-            )
-            matches
         } catch (e: Exception) {
-            logger.error("Error fetching matches from DB", e)
-            emptyList()
+            logger.error("Error fetching live matches from DB", e)
+            emptyList<Match>()
         }
+
+        // If we have enough live matches, return them
+        if (liveMatches.size >= limit) {
+            return liveMatches.take(limit)
+        }
+
+        // Otherwise, fetch scheduled matches to fill the gap
+        val remainingSlots = limit - liveMatches.size
+        val scheduledMatches = try {
+            matchRepository.findMatchesWithTeams(
+                activeStatuses = scheduledStatuses,
+                currentTimestamp = now,
+                recentCompletedMatchThreshold = recentCompletedMatchThreshold,
+                pageable = PageRequest.of(0, remainingSlots * 2) // fetch extra to allow sorting
+            ).sortedBy { match -> getMatchPriority(match) }
+        } catch (e: Exception) {
+            logger.error("Error fetching scheduled matches from DB", e)
+            emptyList<Match>()
+        }
+
+        // Combine live and scheduled matches (live first)
+        val combinedMatches = liveMatches + scheduledMatches
+        val finalMatches = combinedMatches.take(limit)
+
+        // Update the cache with the fresh match list
+        matchListCache = MatchListCache(
+            matches = finalMatches,
+            expiryTime = Instant.now().plusSeconds(CACHE_TTL_MINUTES * 60)
+        )
+        return finalMatches
     }
+
 
     fun isLiveStatus(status: String): Boolean {
         return status in setOf(
