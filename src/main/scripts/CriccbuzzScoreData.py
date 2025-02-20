@@ -815,7 +815,7 @@ def main():
                             processed_complete_matches.add(match["cricbuzz_id"])
                             logging.info(f"Match {match['cricbuzz_id']} fully processed and questions resolved")
                 except mysql.connector.Error as db_error:
-                    logging.error(f"Database error processing match {match["cricbuzz_id"]}: {db_error}")
+                    logging.error(f"Database error processing match {match['cricbuzz_id']}: {db_error}")
                 except Exception as e:
                     logging.error(f"Error processing complete match {match['cricbuzz_id']}: {e}")
 
