@@ -1,5 +1,7 @@
 import logging
 import mysql.connector
+import mysql.connector
+import re
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional
@@ -26,15 +28,15 @@ IPL_BASE_URL = "https://scores.iplt20.com/ipl/teamlogos"
 # Team mappings with their respective CDNs
 TEAM_URLS = {
     # International Teams (ICC)
-    "IND": f"{ICC_BASE_URL}/4.png",   # India
-    "AUS": f"{ICC_BASE_URL}/1.png",   # Australia
-    "ENG": f"{ICC_BASE_URL}/3.png",   # England
-    "PAK": f"{ICC_BASE_URL}/6.png",   # Pakistan
-    "SA":  f"{ICC_BASE_URL}/7.png",   # South Africa
-    "NZ":  f"{ICC_BASE_URL}/5.png",   # New Zealand
-    "WI":  f"{ICC_BASE_URL}/9.png",   # West Indies
-    "SL":  f"{ICC_BASE_URL}/8.png",   # Sri Lanka
-    "BAN": f"{ICC_BASE_URL}/2.png",   # Bangladesh
+    "IND": f"{ICC_BASE_URL}/4.png",  # India
+    "AUS": f"{ICC_BASE_URL}/1.png",  # Australia
+    "ENG": f"{ICC_BASE_URL}/3.png",  # England
+    "PAK": f"{ICC_BASE_URL}/6.png",  # Pakistan
+    "SA": f"{ICC_BASE_URL}/7.png",  # South Africa
+    "NZ": f"{ICC_BASE_URL}/5.png",  # New Zealand
+    "WI": f"{ICC_BASE_URL}/9.png",  # West Indies
+    "SL": f"{ICC_BASE_URL}/8.png",  # Sri Lanka
+    "BAN": f"{ICC_BASE_URL}/2.png",  # Bangladesh
     # "AFG": f"{ICC_BASE_URL}/96.png",  # Afghanistan
     "ZIM": f"{ICC_BASE_URL}/10.png",  # Zimbabwe
     "CAN": f"{ICC_BASE_URL}/12.png",  # Canada
@@ -62,6 +64,7 @@ TEAM_URLS = {
     "GT": f"{IPL_BASE_URL}/GT.png"
 }
 
+
 @contextmanager
 def get_db_connection():
     conn = None
@@ -83,51 +86,65 @@ def get_cursor(conn):
         if cursor:
             cursor.close()
 
+
+SUFFIX_PATTERNS = [
+    r"W(U19)?$",  # Women/Women's U19 teams
+    r"U19$",  # U19 teams
+    r"M$",  # Men's teams
+    r"A$",  # A teams
+    r"\d+$"  # Numerical suffixes
+]
+
+
 def normalize_team_code(team_short_name: str) -> str:
     """
     Normalize team codes by removing suffixes like W, U19, etc.
     and handling variations in naming
     """
-    # Remove common suffixes
-    base_name = team_short_name.replace('W', '').replace('U19', '')
+    base_name = team_short_name.strip().upper()
+
+    # Remove common suffixes using regex
+    for pattern in SUFFIX_PATTERNS:
+        base_name = re.sub(pattern, '', base_name, flags=re.IGNORECASE)
 
     # Handle known variations
     variations = {
-        'RSA': 'SA',     # South Africa variations
+        'RSA': 'SA',  # South Africa variations
         'BRSAL': 'BAN',  # Barishal/Bangladesh
-        'DCW': 'DC',     # Delhi Capitals Women
-        'MIW': 'MI',     # Mumbai Indians Women
-        'RCBW': 'RCB',   # RCB Women
-        'GGTW': 'GT',    # Gujarat Giants Women
-        'UPW': 'PBKS',   # UP Warriors (Punjab connection)
-        'INDW': 'IND',   # India Women
-        'AUSW': 'AUS',   # Australia Women
-        'ENGW': 'ENG',   # England Women
-        'PAKW': 'PAK',   # Pakistan Women
-        'NZW': 'NZ',     # New Zealand Women
-        'BANW': 'BAN',   # Bangladesh Women
-        'WIW': 'WI',     # West Indies Women
-        'RSAU19'	:'SA',
-        'ENGU19'	:'ENG',
-        'AUSWU19'	:'AUS',
-        'SCOWU19'	:'SCO',
-        'ENGWU19'	:'ENG',
-        'IREWU19'	:'IRE',
-        'BANWU19'	:'BAN',
-        'PAKWU19'	:'PAK',
-        'USAWU19'	:'USA',
-        'NZWU19'	:'NZ',
-        'RSAWU19'	:'SA',
-        'SLWU19'	:'SL',
-        'INDWU19'	:'IND',
-        'NEDW'	:'NED',
-        'SAEP'	:'SA',
-        'INDM'	:'IND',
-        'SLM'	:'SL',
-        'PAKA'	:'PAK',
+        'DCW': 'DC',  # Delhi Capitals Women
+        'MIW': 'MI',  # Mumbai Indians Women
+        'RCBW': 'RCB',  # RCB Women
+        'GGTW': 'GT',  # Gujarat Giants Women
+        'UPW': 'PBKS',  # UP Warriors (Punjab connection)
+        'INDW': 'IND',  # India Women
+        'AUSW': 'AUS',  # Australia Women
+        'ENGW': 'ENG',  # England Women
+        'PAKW': 'PAK',  # Pakistan Women
+        'NZW': 'NZ',  # New Zealand Women
+        'BANW': 'BAN',  # Bangladesh Women
+        'WIW': 'WI',  # West Indies Women
+        'RSAU19': 'SA',
+        'ENGU19': 'ENG',
+        'AUSWU19': 'AUS',
+        'SCOWU19': 'SCO',
+        'ENGWU19': 'ENG',
+        'IREWU19': 'IRE',
+        'BANWU19': 'BAN',
+        'PAKWU19': 'PAK',
+        'USAWU19': 'USA',
+        'NZWU19': 'NZ',
+        'RSAWU19': 'SA',
+        'SLWU19': 'SL',
+        'INDWU19': 'IND',
+        'NEDW': 'NED',
+        'SAEP': 'SA',
+        'INDM': 'IND',
+        'SLM': 'SL',
+        'PAKA': 'PAK',
     }
 
     return variations.get(base_name, base_name)
+
 
 def verify_image_url(url: str) -> bool:
     try:

@@ -75,15 +75,15 @@ data class PromotionalCredit(
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    val user: User,
+    val user: User = User(),
 
     @Column(precision = 19, scale = 4)
-    val amount: BigDecimal,
+    val amount: BigDecimal = BigDecimal.ZERO,
 
     val expiryDate: Instant,
 
     @Enumerated(EnumType.STRING)
-    val type: PromotionalType,
+    val type: PromotionalType = PromotionalType.DAILY_REWARD,
 
     @Enumerated(EnumType.STRING)
     var status: PromotionalStatus = PromotionalStatus.ACTIVE,

@@ -24,8 +24,8 @@ class QuestionService(
     private val payoutService: PayoutService,
     private val orderExecutionService: OrderExecutionService
 ) {
-    private var previousState: MatchState? = null
-    private var lastProcessedBallNumber: Int = 0
+    private val previousStates = mutableMapOf<Int, MatchState>()
+    private val lastProcessedBallNumbers = mutableMapOf<Int, Int>()
 
     fun getAllActivePulses(): List<Question>? {
         return questionRepository.findAllByStatusAndPulseEndDateAfter(
@@ -58,22 +58,30 @@ class QuestionService(
     }
 
     fun processNewScorecard(scorecard: Hit11Scorecard): BallEventProcessResponse {
+        val matchId = scorecard.matchId
         val currentState = MatchState(scorecard)
         val currentInnings = scorecard.innings.find { it.isCurrentInnings }
-        val latestBallNumber = currentInnings?.ballByBallEvents?.maxByOrNull { it.ballNumber }?.ballNumber ?: 0
+          val latestBallNumber = currentInnings?.ballByBallEvents?.maxByOrNull { it.ballNumber }?.ballNumber ?: 0
 
-        if (scorecard.state == CricbuzzMatchPlayingState.IN_PROGRESS && latestBallNumber < lastProcessedBallNumber) {
+        // Get the last processed ball number for this match (defaulting to 0)
+        val lastProcessed = lastProcessedBallNumbers[matchId] ?: 0
+
+        if (scorecard.state == CricbuzzMatchPlayingState.IN_PROGRESS && latestBallNumber < lastProcessed) {
             return BallEventProcessResponse(
                 emptyList(), emptyList(), emptyList(),
                 listOf(QuestionError(-1, "Ball sequence not incremental"))
             )
         }
 
-        val updatedQuestionsResponse = updateQuestions(currentState)
-        val generatedResponse = generateQuestions(currentState)
+        // Retrieve the previous state for this match if it exists
+        val prevState = previousStates[matchId]
 
-        previousState = currentState
-        lastProcessedBallNumber = latestBallNumber
+        val updatedQuestionsResponse = updateQuestions(currentState, prevState)
+        val generatedResponse = generateQuestions(currentState, prevState)
+
+        // Update the tracking maps for this match
+        previousStates[matchId] = currentState
+        lastProcessedBallNumbers[matchId] = latestBallNumber
 
         val allErrors = updatedQuestionsResponse.errors + generatedResponse.errors
 
@@ -101,7 +109,8 @@ class QuestionService(
 
     @Transactional
     private fun updateQuestions(
-        matchState: MatchState
+        matchState: MatchState,
+        prevState: MatchState?
     ): UpdateQuestionsResponse {
         val matchId = matchState.liveScorecard.matchId
         val questions = questionRepository.findByMatchIdAndStatusIn(
@@ -116,7 +125,7 @@ class QuestionService(
         for (question in questions) {
             try {
                 // First, check if the question is outdated.
-                if (question.status == QuestionStatus.LIVE && checkAndLockOutdatedQuestion(question, previousState,
+                if (question.status == QuestionStatus.LIVE && checkAndLockOutdatedQuestion(question, prevState,
                         matchState)) {
                     // If outdated, we mark it as DISABLED and do not process it further.
                     notUpdatedQuestions.add(question)
@@ -262,13 +271,16 @@ class QuestionService(
         }
     }
 
-    private fun generateQuestions(currentState: MatchState): GeneratedQuestionsResponse {
+    private fun generateQuestions(
+        currentState: MatchState,
+        prevState: MatchState?
+    ): GeneratedQuestionsResponse {
         val generatedQuestions = mutableListOf<Question>()
         val generationErrors = mutableListOf<QuestionError>()
 
         questionGenerators.forEach { generator ->
             try {
-                val questionsFromGenerator = generator.generateQuestions(currentState, previousState)
+                val questionsFromGenerator = generator.generateQuestions(currentState, prevState)
                 generatedQuestions.addAll(questionsFromGenerator)
             } catch (e: Exception) {
                 val errorMsg = "Error generating questions with ${generator::class.simpleName}: ${e.message}"

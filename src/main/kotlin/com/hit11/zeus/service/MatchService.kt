@@ -66,7 +66,7 @@ class MatchService(
                 activeStatuses = activeStatuses,
                 currentTimestamp = Instant.now(),
                 recentCompletedMatchThreshold = recentCompletedMatchThreshold,
-                pageable = PageRequest.of(0, limit * 2) // Fetch more than needed to allow for priority sorting
+                pageable = PageRequest.of(0, limit * 5) // Fetch more than needed to allow for priority sorting
             ).sortedBy { match -> getMatchPriority(match) }
                 .take(limit)
 
