@@ -69,23 +69,33 @@ def close_db_connection():
 
 
 def get_active_matches_from_api():
-    """Fetch active matches from our Match API"""
-    url = "http://localhost:8080/api/match/upcoming"
+    """Fetch active matches directly from Cricbuzz via our API"""
+    url = "http://localhost:8080/api/match/criccbuzz/upcoming"
     try:
         response = requests.get(url)
         response.raise_for_status()
         matches_data = response.json()
 
-        # Extract match IDs from response
+        matches = []
         if matches_data.get("data"):
-            return [
-                {
-                    "internal_id": match["id"],
-                    "cricbuzz_id": match["cricbuzzMatchId"],
-                    "status": match["matchStatus"]
-                }
-                for match in matches_data["data"]
-            ]
+            for type_match in matches_data["data"]["typeMatches"]:
+                for series_match in type_match["seriesMatches"]:
+                    if series_match.get("seriesAdWrapper"):
+                        for match in series_match["seriesAdWrapper"]["matches"]:
+                            match_info = match["matchInfo"]
+                            matches.append({
+                                "cricbuzz_id": match_info["matchId"],
+                                "status": match_info["state"],
+                                "state_title": match_info["stateTitle"],
+                                "match_format": match_info["matchFormat"],
+                                "start_timestamp": int(match_info["startDate"]),
+                                "end_timestamp": int(match_info["endDate"]),
+                                "detailed_status": match_info["status"],
+                                "match_type": type_match["matchType"],  # Added match type
+                                "series_name": series_match["seriesAdWrapper"]["seriesName"]  # Added series name
+                            })
+            logging.info(f"Found {len(matches)} matches from API")
+            return matches
         return []
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching matches from API: {e}")
@@ -697,9 +707,44 @@ def process_cricbuzz_data(cricbuzz_data):
         logging.error(traceback.format_exc())
 
 
+def all_questions_resolved(cricbuzz_match_id):
+    """Check if all questions for a match have been resolved"""
+    with get_db_connection() as conn:
+        with get_cursor(conn) as cursor:
+            try:
+                # Get match_id from cricbuzz_match_id
+                cursor.execute("""
+                    SELECT id FROM matches 
+                    WHERE cricbuzz_match_id = %s
+                """, (cricbuzz_match_id,))
+                match_row = cursor.fetchone()
+
+                if not match_row:
+                    return False
+
+                match_id = match_row[0]
+
+                # Check if any unresolved questions exist
+                cursor.execute("""
+                    SELECT COUNT(*) FROM pulse_questions 
+                    WHERE match_id = %s 
+                    AND status IN ('LIVE', 'SYSTEM_GENERATED', 'DISABLED', 'MANUAL_DRAFT')
+                """, (match_id,))
+
+                unresolved_count = cursor.fetchone()[0]
+                return unresolved_count == 0
+
+            except Exception as e:
+                logging.error(f"Error checking question resolution status: {e}")
+                return False
+
+
 last_updated_time = {
     "timestamp": 0  # Using dict to make it mutable and accessible inside functions
 }
+
+# Keep track of processed complete matches
+processed_complete_matches = set()
 
 
 def main():
@@ -711,50 +756,80 @@ def main():
             criccbuzz_match_ids.update(MANUAL_MATCH_LIST)
 
             # Get matches from our API
-            active_matches = get_active_matches_from_api()
-            logging.info(f"Fetched {len(active_matches)} matches from API")
+            matches = get_active_matches_from_api()
+            logging.info(f"Fetched {len(matches)} matches from API")
 
             # Process only matches that are in progress
-            active_state_ids = set()
-            scheduled_state_ids = set()
-            in_progress_count = 0
-            for match in active_matches:
-                if match["status"] in ["In Progress", "Live"]:
-                    active_state_ids.add(match["cricbuzz_id"])
-                    in_progress_count += 1
-                elif match["status"].lower() == "scheduled" or match["status"].lower() == "preview":
-                    scheduled_state_ids.add(match["cricbuzz_id"])
+            live_matches = []
+            complete_matches = []
+            upcoming_matches = []
 
-            # logging.info(f"Processing {in_progress_count} in-progress matches")
-            criccbuzz_match_ids.update(active_state_ids)
-            criccbuzz_match_ids.update(scheduled_state_ids)
-            logging.info(f"Total matches to process: {len(criccbuzz_match_ids)}")
+            current_time = time.time() * 1000  # Convert to milliseconds
 
-            for match_id in criccbuzz_match_ids:
+            # active_state_ids = set()
+            for match in matches:
+                cricbuzz_id = match["cricbuzz_id"]
+                status = match["status"].lower()
+                state_title = match["state_title"].lower()
+                match_format = match["match_format"].upper()
+                if status in ["live", "in progress", "innings break",
+                              "tea", "lunch", "drink", "toss"]:
+                    live_matches.append(match)
+                elif status == "complete" or state_title.endswith("won"):
+                    # Only process complete matches from last 30 minutes
+                    time_since_completion = current_time - match["end_timestamp"]
+                    if time_since_completion <= 30 * 60 * 1000:  # 30 minutes in milliseconds
+                        complete_matches.append(match)
+                        logging.info(f"Processing complete match {cricbuzz_id}: {match['detailed_status']}")
+                    else:
+                        # If match completed more than 30 mins ago, add to processed list
+                        processed_complete_matches.add(cricbuzz_id)
+                        logging.info(f"Match {cricbuzz_id} completed more than 30 minutes ago, marking as processed")
+                elif status in ["scheduled", "preview"]:
+                    upcoming_matches.append(match)
+
+            logging.info("Match Status Breakdown:")
+            logging.info(f"Live Matches: {len(live_matches)}")
+            logging.info(f"Recent Completed Matches: {len(complete_matches)}")
+            logging.info(f"Upcoming Matches: {len(upcoming_matches)}")
+
+            # Process live matches frequently
+            for match in live_matches:
                 try:
-                    cricbuzz_data = call_cricbuzz_commentry_api(match_id)
+                    cricbuzz_data = call_cricbuzz_commentry_api(match["cricbuzz_id"])
                     if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
                         last_updated_time["timestamp"] = cricbuzz_data['responseLastUpdated']
                         process_cricbuzz_data(cricbuzz_data)
-                except mysql.connector.Error as db_error:
-                    logging.error(f"Database error processing match {match_id}: {db_error}")
-                    # Optionally implement retry logic here
                 except Exception as e:
-                    logging.error(f"Error processing match {match_id}: {e}")
+                    logging.error(f"Error processing live match {match['cricbuzz_id']}: {e}")
 
+            # Process complete matches to resolve questions
+            for match in complete_matches:
+                try:
+                    cricbuzz_data = call_cricbuzz_commentry_api(match["cricbuzz_id"])
+                    if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
+                        last_updated_time["timestamp"] = cricbuzz_data['responseLastUpdated']
+                        process_cricbuzz_data(cricbuzz_data)
+                        # If all questions are resolved, add to processed set
+                        if all_questions_resolved(match["cricbuzz_id"]):
+                            processed_complete_matches.add(match["cricbuzz_id"])
+                            logging.info(f"Match {match['cricbuzz_id']} fully processed and questions resolved")
+                except mysql.connector.Error as db_error:
+                    logging.error(f"Database error processing match {match["cricbuzz_id"]}: {db_error}")
+                except Exception as e:
+                    logging.error(f"Error processing complete match {match['cricbuzz_id']}: {e}")
+
+            # Sleep intervals based on match states
             if os.getenv("PROD", False):
-                # If any scheduled match is present, use a relaxed interval (e.g. 60 sec)
-                if scheduled_state_ids:
-                    time.sleep(60)
+                if live_matches:
+                    time.sleep(15)  # Short interval for live matches
+                elif complete_matches:
+                    time.sleep(30)  # Medium interval for unresolved complete matches
                 else:
-                    time.sleep(15)
+                    time.sleep(60)  # Long interval if only upcoming matches
             else:
                 break
 
-        except FileNotFoundError:
-            logging.error("Error: cricbuzz_data.json file not found.")
-        except json.JSONDecodeError:
-            logging.error("Error: Invalid JSON data in cricbuzz_data.json.")
         except Exception as e:
             logging.error(f"An unexpected error occurred: {e}")
             logging.error(traceback.format_exc())
