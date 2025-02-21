@@ -63,7 +63,7 @@ data class Innings(
     @JsonProperty("totalRuns") val totalRuns: Int = 0,
     @JsonProperty("wickets") val wickets: Int = 0,
     @JsonProperty("totalExtras") val totalExtras: Int = 0,
-    @JsonProperty("overs") private val _overs: Double = 0.0,  // e.g., 31.3
+    @JsonProperty("overs") val overs: BigDecimal = BigDecimal.ZERO,  // e.g., 31.3
     @JsonProperty("runRate") val runRate: Float = 0f,
     @JsonProperty("battingPerformances") val battingPerformances: List<BattingPerformance> = listOf(),
     @JsonProperty("bowlingPerformances") val bowlingPerformances: List<BowlingPerformance> = listOf(),
@@ -71,19 +71,11 @@ data class Innings(
     @JsonProperty("partnerships") val partnerships: List<Partnership> = listOf(),
     @JsonProperty("ballByBallEvents") val ballByBallEvents: List<BallEvent> = listOf()
 ) {
-
-    @get:JsonIgnore
-    val overs: BigDecimal
-        get() {
-            val completeOvers = _overs.toInt()
-            val balls = ((_overs % 1) * 10).toInt()
-            return BigDecimal("$completeOvers.$balls")
-        }
-
     // Helper method for total balls calculation
     fun totalBalls(): Int {
-        val completeOvers = _overs.toInt()
-        val balls = ((_overs % 1) * 10).toInt()
+        val oversValue = overs.toDouble()
+        val completeOvers = oversValue.toInt()
+        val balls = ((oversValue % 1) * 10).toInt()
         return (completeOvers * 6) + balls
     }
 }

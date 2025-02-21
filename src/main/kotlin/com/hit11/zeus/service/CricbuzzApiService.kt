@@ -14,6 +14,7 @@ import okhttp3.Request
 import org.springframework.stereotype.Service
 import java.io.IOException
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
@@ -440,6 +441,9 @@ fun convertInningsScoreToInnings(
         )
     }
 
+    // Convert overs to BigDecimal with proper formatting
+    val oversAsBigDecimal = convertOversToBigDecimal(overs = inningsScore.overs)
+
     // Calculating the run rate assuming overs are not zero to avoid division by zero error.
     val runRate = if (inningsScore.overs > 0) inningsScore.score / inningsScore.overs.toFloat() else 0f
 
@@ -448,13 +452,34 @@ fun convertInningsScoreToInnings(
         battingTeam = battingCBTeam,
         totalRuns = inningsScore.score,
         wickets = inningsScore.wickets,
-        _overs = inningsScore.overs,
+        overs = oversAsBigDecimal,
         runRate = runRate,
         bowlingTeam = bowlingCBTeam,
         isCurrentInnings = criccbuzzMatchDataModel.miniscore?.inningsId == inningsScore.inningsId
         // The rest of the fields are initialized with default values or remain null
     )
 }
+
+fun convertOversToBigDecimal(overs: Double): BigDecimal {
+    val completeOvers = overs.toInt() // Gets the whole overs
+    val balls = ((overs % 1) * 10).toInt() // Gets the balls
+
+    // Handle case where balls reach 6
+    val adjustedOvers = if (balls >= 6) {
+        completeOvers + 1
+    } else {
+        completeOvers
+    }
+
+    val adjustedBalls = if (balls >= 6) {
+        0
+    } else {
+        balls
+    }
+
+    return BigDecimal("$adjustedOvers.$adjustedBalls")
+}
+
 
 data class Performance(
     val runs: Int,
