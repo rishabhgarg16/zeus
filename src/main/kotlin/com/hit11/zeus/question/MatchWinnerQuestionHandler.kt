@@ -21,13 +21,14 @@ class MatchWinnerTriggerCondition : TriggerCondition {
 
         // States in which it's acceptable to trigger the question
         val canBeTriggered = when (currentState.liveScorecard.state) {
+            CricbuzzMatchPlayingState.SCHEDULED,
+            CricbuzzMatchPlayingState.PREVIEW,
             CricbuzzMatchPlayingState.IN_PROGRESS,
             CricbuzzMatchPlayingState.INNINGS_BREAK,
             CricbuzzMatchPlayingState.TEA,
             CricbuzzMatchPlayingState.DRINK,
             CricbuzzMatchPlayingState.TOSS,
             CricbuzzMatchPlayingState.STUMPS -> true
-
             else -> false
         }
 
