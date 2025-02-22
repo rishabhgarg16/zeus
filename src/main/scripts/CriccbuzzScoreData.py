@@ -803,6 +803,26 @@ def main():
                 except Exception as e:
                     logging.error(f"Error processing live match {match['cricbuzz_id']}: {e}")
 
+            # Process upcoming matches to generate pre-match questions
+            for match in upcoming_matches:
+                try:
+                    cricbuzz_data = call_cricbuzz_commentry_api(match["cricbuzz_id"])
+                    if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
+                        last_updated_time["timestamp"] = cricbuzz_data['responseLastUpdated']
+                        process_cricbuzz_data(cricbuzz_data)
+                except Exception as e:
+                    logging.error(f"Error processing upcoming match {match['cricbuzz_id']}: {e}")
+
+            # Process manual matches separately
+            for match_id in MANUAL_MATCH_LIST:
+                try:
+                    cricbuzz_data = call_cricbuzz_commentry_api(match_id)
+                    if cricbuzz_data and cricbuzz_data['responseLastUpdated'] > last_updated_time["timestamp"]:
+                        last_updated_time["timestamp"] = cricbuzz_data['responseLastUpdated']
+                        process_cricbuzz_data(cricbuzz_data)
+                except Exception as e:
+                    logging.error(f"Error processing manual match {match_id}: {e}")
+
             # Process complete matches to resolve questions
             for match in complete_matches:
                 try:
@@ -825,6 +845,8 @@ def main():
                     time.sleep(15)  # Short interval for live matches
                 elif complete_matches:
                     time.sleep(30)  # Medium interval for unresolved complete matches
+                elif upcoming_matches:
+                    time.sleep(60)  # Poll less frequently when only upcoming matches exist
                 else:
                     time.sleep(60)  # Long interval if only upcoming matches
             else:
