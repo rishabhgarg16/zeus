@@ -8,20 +8,39 @@ import java.math.BigDecimal
 data class MatchWinnerParameter(val targetTeamId: Int) : QuestionParameter()
 
 class MatchWinnerTriggerCondition : TriggerCondition {
-    private var hasTriggered = false
+    // Map to track when a question was triggered for each match
+    private val triggeredMatches = mutableMapOf<Int, Boolean>()
 
     override fun shouldTrigger(currentState: MatchState, previousState: MatchState?): Boolean {
-        // we just need match winner question only once
-        if (hasTriggered) {
+        val matchId = currentState.liveScorecard.matchId
+
+        // Only trigger if not already successfully triggered
+        if (triggeredMatches[matchId] == true) {
             return false
         }
 
-        if (currentState.liveScorecard.state == CricbuzzMatchPlayingState.IN_PROGRESS) {
-            hasTriggered = true
+        // States in which it's acceptable to trigger the question
+        val canBeTriggered = when (currentState.liveScorecard.state) {
+            CricbuzzMatchPlayingState.IN_PROGRESS,
+            CricbuzzMatchPlayingState.INNINGS_BREAK,
+            CricbuzzMatchPlayingState.TEA,
+            CricbuzzMatchPlayingState.DRINK,
+            CricbuzzMatchPlayingState.TOSS,
+            CricbuzzMatchPlayingState.STUMPS -> true
+
+            else -> false
+        }
+
+        if (canBeTriggered) {
             return true
         }
 
         return false
+    }
+
+    // Call this after question creation is successful to mark that the trigger is set
+    fun markTriggered(matchId: Int) {
+        triggeredMatches[matchId] = true
     }
 }
 
@@ -37,25 +56,32 @@ class MatchWinnerParameterGenerator : QuestionParameterGenerator<MatchWinnerPara
 
 class MatchWinnerQuestionGenerator(
     questionRepository: QuestionRepository,
-    override val triggerCondition: TriggerCondition,
+    override val triggerCondition: MatchWinnerTriggerCondition,
     override val parameterGenerator: QuestionParameterGenerator<MatchWinnerParameter>,
     override val validator: MatchWinnerQuestionValidator
 ) : BaseQuestionGenerator<MatchWinnerParameter>(questionRepository) {
     override val type = QuestionType.MATCH_WINNER
 
     override fun questionExists(param: MatchWinnerParameter, state: MatchState): Boolean {
-        return questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamId(
-            state.liveScorecard.matchId,
+        val matchId = state.liveScorecard.matchId
+        val questionsExists = questionRepository.existsByMatchIdAndQuestionTypeAndTargetTeamId(
+            matchId,
             QuestionType.MATCH_WINNER,
             param.targetTeamId
         )
+
+        if (questionsExists) {
+            triggerCondition.markTriggered(matchId)
+        }
+
+        return questionsExists
     }
 
     override fun createQuestion(param: MatchWinnerParameter, state: MatchState): Question? {
         val teams = listOf(state.liveScorecard.team1, state.liveScorecard.team2)
         val team = teams.find { it.id == param.targetTeamId } ?: return null
         val (wagerA, wagerB) = calculateInitialWagers(param, state)
-        return createDefaultQuestion(
+        val question = createDefaultQuestion(
             matchId = state.liveScorecard.matchId,
             pulseQuestion = "Will ${team.name} win the match?",
             optionA = PulseOption.Yes.name,
@@ -66,6 +92,10 @@ class MatchWinnerQuestionGenerator(
             param = param,
             state = state
         )
+
+        // If question is created successfully, mark the match as triggered.
+        triggerCondition.markTriggered(state.liveScorecard.matchId)
+        return question
     }
 
     override fun calculateInitialWagers(param: MatchWinnerParameter, state: MatchState): Pair<BigDecimal, BigDecimal> {
@@ -94,13 +124,15 @@ class MatchWinnerQuestionValidator : QuestionValidator {
 
 class MatchWinnerResolutionStrategy : ResolutionStrategy {
     override fun canResolve(question: Question, matchState: MatchState): Boolean {
-        return (matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE ||
-                matchState.liveScorecard.result != null && matchState.liveScorecard.result.winningTeamId > 0)
+        // Allow resolution if the match is complete OR if result is available
+        return matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE ||
+                (matchState.liveScorecard.result != null && matchState.liveScorecard.result.winningTeamId > 0)
     }
 
 
     override fun resolve(question: Question, matchState: MatchState): QuestionResolution {
-        val result = if (matchState.liveScorecard.result?.winningTeamId == question.targetTeamId) PulseResult.Yes else PulseResult.No
+        val winningTeamId = matchState.liveScorecard.result?.winningTeamId
+        val result = if (winningTeamId == question.targetTeamId) PulseResult.Yes else PulseResult.No
         return QuestionResolution(true, result)
     }
 }

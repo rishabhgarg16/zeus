@@ -75,7 +75,7 @@ class TeamRunsInMatchParameterGenerator : QuestionParameterGenerator<TeamRunsInQ
 
 class TeamRunsInMatchQuestionGenerator(
     questionRepository: QuestionRepository,
-    override val triggerCondition: TriggerCondition,
+    override val triggerCondition: TeamRunsInMatchTrigger,
     override val parameterGenerator: QuestionParameterGenerator<TeamRunsInQuestionParameter>,
     override val validator: TeamRunsInMatchQuestionValidator
 ) : BaseQuestionGenerator<TeamRunsInQuestionParameter>(questionRepository) {
