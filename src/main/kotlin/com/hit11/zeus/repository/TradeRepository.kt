@@ -16,6 +16,16 @@ interface TradeRepository : JpaRepository<Trade, Long> {
     fun findByMatchId(matchId: Int): List<Trade>
     fun findByPulseIdAndStatus(pulseId: Int, status: TradeStatus): List<Trade>
     fun findByPulseIdAndCreatedAtBetween(pulseId: Int, startDate: Instant, endDate: Instant): List<Trade>
+    /**
+     * Fetch live trades (active).
+     */
+    fun findByUserIdAndStatus(userId: Int, status: TradeStatus, pageable: Pageable): List<Trade>
+
+    /**
+     * Fetch completed trades with pagination.
+     */
+    fun findByUserIdAndStatusIn(userId: Int, statusList: List<TradeStatus>, pageable: Pageable): Page<Trade>
+
     fun findByUserIdAndMatchIdIn(pulseId: Int, matchIdList: List<Int>, pageable: Pageable): Page<Trade>
     @Query(
         value = "SELECT * FROM trades WHERE pulse_id = :pulseId ORDER BY created_at DESC LIMIT :limit",

@@ -156,38 +156,49 @@ class TradeService(
         return tradeRepository.findByPulseIdAndCreatedAtBetween(pulseId, startDate, endDate)
     }
 
-    fun getMyTradesResponse(
-        userId: Int,
-        matchIdList: List<Int>,
-        pageable: Pageable
-    ): List<UiMyTradesResponse>? {
-        try {
-            val allTrades = tradeRepository.findByUserIdAndMatchIdIn(
-                userId,
-                matchIdList,
-                pageable
-            )
+    /**
+     * Fetch all live trades (active) for a user.
+     */
+    fun getLiveTrades(userId: Int, pageable: Pageable): List<UiMyTradesResponse>? {
+        val trades = tradeRepository.findByUserIdAndStatus(userId, TradeStatus.ACTIVE, pageable)
+        val pulseIds = trades.map { it.pulseId }.distinct()
+        val matchIds = trades.map { it.matchId }.distinct()
 
-            val questions = questionRepository.findAllByMatchIdIn(matchIdList)
-            val activeStatuses =
-                listOf(MatchStatus.SCHEDULED.text, MatchStatus.IN_PROGRESS.text, MatchStatus.PREVIEW.text)
-            val matches = matchRepository.findAllByIdInAndStatusIn(matchIdList, activeStatuses)
+        // Fetch questions & matches in batch
+        val questions = questionRepository.findAllById(pulseIds).associateBy { it.id }
+        val matches = matchRepository.findAllById(matchIds).associateBy { it.id }
 
-            val questionMap = questions.associateBy { it.id }
-            val matchMap = matches.associateBy { it.id }
-
-            return allTrades.mapNotNull { trade ->
-                val question = questionMap[trade.pulseId] ?: return@mapNotNull null
-                val match = matchMap[trade.matchId] ?: return@mapNotNull null
-
-                trade.toUiMyTradesResponse(
-                    question = question,
-                    match = match
-                )
-            }
-        } catch (e: Exception) {
-            throw e
+        // Map trades efficiently
+        return trades.mapNotNull { trade ->
+            val question = questions[trade.pulseId] ?: return@mapNotNull null
+            val match = matches[trade.matchId] ?: return@mapNotNull null
+            trade.toUiMyTradesResponse(question, match)
         }
     }
 
+    /**
+     * Fetch paginated completed trades (for infinite scrolling).
+     */
+    fun getCompletedTrades(userId: Int, pageable: Pageable): List<UiMyTradesResponse>? {
+        val trades = tradeRepository.findByUserIdAndStatusIn(
+            userId,
+            listOf(TradeStatus.WON, TradeStatus.LOST),
+            pageable
+        )
+
+        // Get all pulseIds & matchIds in one call
+        val pulseIds = trades.map { it.pulseId }.distinct()
+        val matchIds = trades.map { it.matchId }.distinct()
+
+        // Fetch questions & matches in batch
+        val questions = questionRepository.findAllById(pulseIds).associateBy { it.id }
+        val matches = matchRepository.findAllById(matchIds).associateBy { it.id }
+
+        // Map trades efficiently
+        return trades.mapNotNull { trade ->
+            val question = questions[trade.pulseId] ?: return@mapNotNull null
+            val match = matches[trade.matchId] ?: return@mapNotNull null
+            trade.toUiMyTradesResponse(question, match)
+        }
+    }
 }

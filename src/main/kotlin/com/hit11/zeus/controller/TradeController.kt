@@ -62,26 +62,29 @@ class TradeController(
         return ResponseEntity.ok(ApiResponse(HttpStatus.OK.value(), null, "Success", trades))
     }
 
-    @GetMapping("/user/{userId}")
-    fun getMyTradesResponse(
+    /**
+     * Fetch live trades for a user.
+     */
+    @GetMapping("/user/{userId}/live")
+    fun getLiveTrades(
         @PathVariable userId: Int,
-        @RequestParam("matchIds") matchIds: List<Int>,
         @RequestParam("page", defaultValue = "0") page: Int,
         @RequestParam("size", defaultValue = "20") size: Int
     ): ResponseEntity<ApiResponse<List<UiMyTradesResponse>>> {
         return try {
             val pageable: Pageable = PageRequest.of(page, size, Sort.by("createdAt").descending())
-            val response = tradeService.getMyTradesResponse(userId, matchIds, pageable)
-            return ResponseEntity.status(HttpStatus.OK).body(
+            val response = tradeService.getLiveTrades(userId, pageable)
+
+            ResponseEntity.ok(
                 ApiResponse(
                     status = HttpStatus.OK.value(),
-                    internalCode = null,
                     message = "Success",
+                    internalCode = null,
                     data = response
                 )
             )
         } catch (e: Exception) {
-            logger.error("Error fetching trades", e)
+            logger.error("Error fetching live trades", e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ApiResponse(
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
@@ -91,6 +94,38 @@ class TradeController(
                 )
             )
         }
+    }
 
+    /**
+     * Fetch completed trades for a user (paginated for infinite scrolling).
+     */
+    @GetMapping("/user/{userId}/completed")
+    fun getCompletedTrades(
+        @PathVariable userId: Int,
+        @RequestParam("page", defaultValue = "0") page: Int,
+        @RequestParam("size", defaultValue = "20") size: Int
+    ): ResponseEntity<ApiResponse<List<UiMyTradesResponse>>> {
+        return try {
+            val pageable: Pageable = PageRequest.of(page, size, Sort.by("createdAt").descending())
+            val response = tradeService.getCompletedTrades(userId, pageable)
+            ResponseEntity.ok(
+                ApiResponse(
+                    status = HttpStatus.OK.value(),
+                    message = "Success",
+                    internalCode = null,
+                    data = response
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Error fetching completed trades", e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    internalCode = "TRADES_FETCH_ERROR",
+                    message = e.message ?: "An unexpected error occurred",
+                    data = null
+                )
+            )
+        }
     }
 }
