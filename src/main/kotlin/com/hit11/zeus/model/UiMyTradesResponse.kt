@@ -7,6 +7,7 @@ import java.time.Instant
 @JsonIgnoreProperties(ignoreUnknown = true)
 class UiMyTradesResponse(
     val matchId: Int = 0,
+    val orderId: Long = 0,
     val userId: Int = 0,
     val pulseId: Int = 0,
     val questionText: String = "",
@@ -14,7 +15,7 @@ class UiMyTradesResponse(
     val matchTitle: String,  // Added for team names
     val price: BigDecimal = BigDecimal.valueOf(0),
     val userAnswer: String = "",
-    val answerTime: Instant = Instant.now(),
+    val createdAt: Instant = Instant.now(),
     val tradeResult: String = "",
     val isPulseActive: Boolean = true,
     val pulseImageUrl: String? = "",
@@ -32,13 +33,14 @@ fun Trade.toUiMyTradesResponse(
     return UiMyTradesResponse(
         matchId = matchId,
         userId = userId,
+        orderId = orderId,
         pulseId = pulseId,
         questionText = question.pulseQuestion,
         matchFormat = match.matchFormat ?: "T20",
         matchTitle = match.matchTitle,
         price = price,
         userAnswer = side.name,
-        answerTime = createdAt,
+        createdAt = createdAt,
         tradeResult = checkIfUserWon(side, question.pulseResult),
         isPulseActive = (question.status == QuestionStatus.LIVE),
         pulseImageUrl = question.pulseImageUrl,
