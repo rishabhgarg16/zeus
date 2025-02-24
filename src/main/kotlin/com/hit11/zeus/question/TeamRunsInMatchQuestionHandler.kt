@@ -218,7 +218,7 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
         }
 
         val currentOvers = currentInnings.totalBalls() / 6.0  // Convert to decimal overs
-        if (currentOvers > targetOvers) {
+        if (currentOvers >= targetOvers) {
             return true
         }
 
@@ -248,43 +248,36 @@ class TeamRunsInMatchResolutionStrategy : ResolutionStrategy {
         val currentInnings = matchState.liveScorecard.innings.find { it.isCurrentInnings }
             ?: return QuestionResolution(false, PulseResult.UNDECIDED)
 
-        if (currentInnings.battingTeam?.id != targetTeamId) {
+        // Only enforce batting team check if the innings is still active.
+        if (currentInnings.isCurrentInnings && currentInnings.battingTeam?.id != targetTeamId) {
             return QuestionResolution(false, PulseResult.UNDECIDED)
         }
 
         val currentRuns = currentInnings.totalRuns
         val currentBalls = currentInnings.totalBalls()
 
-        // Condition 1: Target overs have been bowled
-        if (currentBalls >= targetBalls) {
-            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
-            return QuestionResolution(true, result)
+        // If the innings is finished or the match is complete, resolve based on final score.
+        if (!currentInnings.isCurrentInnings || matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE) {
+            val finalResult = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
+            return QuestionResolution(true, finalResult)
         }
 
-        // All out
-        if(currentInnings.wickets >= 10) {
-            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
-            return QuestionResolution(true, result)
-        }
-
-        // Condition 2: Innings has ended before target overs (all out or declaration)
-        if (!currentInnings.isCurrentInnings && currentBalls < targetBalls) {
-            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
-            return QuestionResolution(true, result)
-        }
-
-        // Condition 3: Match has ended
-        if (matchState.liveScorecard.state == CricbuzzMatchPlayingState.COMPLETE) {
-            val result = if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No
-            return QuestionResolution(true, result)
-        }
-
-        // Condition 4: Target runs achieved before target overs
+        // Early resolution: if target runs have been achieved even before target overs.
         if (currentRuns >= targetRuns) {
             return QuestionResolution(true, PulseResult.Yes)
         }
 
-        // Otherwise, resolution isn't possible yet
+        // If the target overs have been bowled (using the ball count), then the target is missed.
+        if (currentBalls >= targetBalls) {
+            return QuestionResolution(true, PulseResult.No)
+        }
+
+        // If the batting side is all out, resolve based on the current runs.
+        if (currentInnings.wickets >= 10) {
+            return QuestionResolution(true, if (currentRuns >= targetRuns) PulseResult.Yes else PulseResult.No)
+        }
+
+        // Otherwise, resolution is not yet possible.
         return QuestionResolution(false, PulseResult.UNDECIDED)
     }
 }

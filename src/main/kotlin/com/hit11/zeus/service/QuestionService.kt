@@ -14,6 +14,7 @@ import com.hit11.zeus.question.TeamRunsInMatchQuestionGenerator
 import com.hit11.zeus.repository.QuestionRepository
 import org.springframework.stereotype.Service
 import java.time.ZonedDateTime
+import java.util.concurrent.ConcurrentHashMap
 import javax.transaction.Transactional
 
 @Service
@@ -21,11 +22,10 @@ class QuestionService(
     private val questionRepository: QuestionRepository,
     private val questionGenerators: List<QuestionGenerator<*>>,
     private val resolutionStrategies: Map<QuestionType, ResolutionStrategy>,
-    private val payoutService: PayoutService,
-    private val orderExecutionService: OrderExecutionService
+    private val payoutService: PayoutService
 ) {
-    private val previousStates = mutableMapOf<Int, MatchState>()
-    private val lastProcessedBallNumbers = mutableMapOf<Int, Int>()
+    private val previousStates = ConcurrentHashMap<Int, MatchState>()
+    private val lastProcessedBallNumbers = ConcurrentHashMap<Int, Int>()
 
     fun getAllActivePulses(): List<Question>? {
         return questionRepository.findAllByStatusAndPulseEndDateAfter(
@@ -61,36 +61,45 @@ class QuestionService(
         val matchId = scorecard.matchId
         val currentState = MatchState(scorecard)
         val currentInnings = scorecard.innings.find { it.isCurrentInnings }
-          val latestBallNumber = currentInnings?.ballByBallEvents?.maxByOrNull { it.ballNumber }?.ballNumber ?: 0
+        val latestBallNumber = currentInnings?.ballByBallEvents?.maxByOrNull { it.ballNumber }?.ballNumber ?: 0
 
         // Get the last processed ball number for this match (defaulting to 0)
         val lastProcessed = lastProcessedBallNumbers[matchId] ?: 0
 
-        if (scorecard.state == CricbuzzMatchPlayingState.IN_PROGRESS && latestBallNumber < lastProcessed) {
-            return BallEventProcessResponse(
-                emptyList(), emptyList(), emptyList(),
-                listOf(QuestionError(-1, "Ball sequence not incremental"))
-            )
+        // If the latest ball is not greater than the last processed, it's a duplicate (or out-of-sequence); do nothing.
+        if (latestBallNumber <= lastProcessed) {
+            return BallEventProcessResponse(emptyList(), emptyList(), emptyList(), emptyList())
         }
 
         // Retrieve the previous state for this match if it exists
         val prevState = previousStates[matchId]
 
-        val updatedQuestionsResponse = updateQuestions(currentState, prevState)
-        val generatedResponse = generateQuestions(currentState, prevState)
+        return try {
+            val updatedQuestionsResponse = updateQuestions(currentState, prevState)
+            val generatedResponse = generateQuestions(currentState, prevState)
 
-        // Update the tracking maps for this match
-        previousStates[matchId] = currentState
-        lastProcessedBallNumbers[matchId] = latestBallNumber
+            // Only after successful processing, update the tracking maps.
+            previousStates[matchId] = currentState
+            lastProcessedBallNumbers[matchId] = latestBallNumber
 
-        val allErrors = updatedQuestionsResponse.errors + generatedResponse.errors
+            val allErrors = updatedQuestionsResponse.errors + generatedResponse.errors
 
-        return BallEventProcessResponse(
-            updatedQuestions = updatedQuestionsResponse.updatedQuestions,
-            notUpdatedQuestions = updatedQuestionsResponse.notUpdatedQuestions,
-            newQuestions = generatedResponse.newQuestions,
-            errors = allErrors
-        )
+            return BallEventProcessResponse(
+                updatedQuestions = updatedQuestionsResponse.updatedQuestions,
+                notUpdatedQuestions = updatedQuestionsResponse.notUpdatedQuestions,
+                newQuestions = generatedResponse.newQuestions,
+                errors = allErrors
+            )
+        } catch (e: Exception) {
+            logger.error("Error processing ball event for match $matchId: ${e.message}", e)
+            // Do not update the lastProcessedBallNumbers so the event can be retried.
+            BallEventProcessResponse(
+                updatedQuestions = emptyList(),
+                notUpdatedQuestions = emptyList(),
+                newQuestions = emptyList(),
+                errors = listOf(QuestionError(-1, "Error processing ball event: ${e.message}"))
+            )
+        }
     }
 
     @Transactional
@@ -125,8 +134,11 @@ class QuestionService(
         for (question in questions) {
             try {
                 // First, check if the question is outdated.
-                if (question.status == QuestionStatus.LIVE && checkAndLockOutdatedQuestion(question, prevState,
-                        matchState)) {
+                if (question.status == QuestionStatus.LIVE && checkAndLockOutdatedQuestion(
+                        question, prevState,
+                        matchState
+                    )
+                ) {
                     // If outdated, we mark it as DISABLED and do not process it further.
                     notUpdatedQuestions.add(question)
                     continue
@@ -137,6 +149,7 @@ class QuestionService(
                     val resolution = resolutionStrategy.resolve(question, matchState)
                     if (resolution.isResolved) {
                         val updatedQuestion = updateQuestion(question, resolution.result)
+                        // Process payouts only if the outcome is decisive.
                         if (resolution.result != PulseResult.UNDECIDED) {
                             payoutService.processPayouts(updatedQuestion, resolution.result)
                         }
@@ -163,6 +176,11 @@ class QuestionService(
         )
     }
 
+    /**
+     * Checks whether the stored question parameters differ significantly from those generated
+     * using the current (and optionally previous) match state. If the difference is too large,
+     * the question is locked (status set to DISABLED) and true is returned.
+     */
     private fun checkAndLockOutdatedQuestion(
         question: Question,
         previousState: MatchState? = null,
