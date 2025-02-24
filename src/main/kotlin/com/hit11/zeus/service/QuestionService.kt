@@ -318,6 +318,24 @@ class QuestionService(
     fun getQuestionById(questionId: Int): Question? {
         return questionRepository.findById(questionId).orElse(null)
     }
+
+    var pulseCache: Map<Int, Pair<Long, Question>> = emptyMap()
+    fun getLastTradedPrice(pulseIds: List<Int>): List<LastTradedPriceQuestionDTO> {
+        var response = emptyList<Question>()
+        for (pulseId in pulseIds) {
+            val pulse = pulseCache[pulseId]
+            if (pulse != null && pulse.first > System.currentTimeMillis() - 1000 * 10) {
+                response = response.plus(pulse.second)
+            } else {
+                val question = questionRepository.findById(pulseId).orElse(null)
+                if (question != null) {
+                    pulseCache = pulseCache.plus(pulseId to Pair(System.currentTimeMillis(), question))
+                    response = response.plus(question)
+                }
+            }
+        }
+        return response.map { it.toLastTradedPriceQuestionDTO() }
+    }
 }
 
 data class QuestionError(

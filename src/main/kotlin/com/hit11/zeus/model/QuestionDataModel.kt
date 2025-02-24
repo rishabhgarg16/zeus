@@ -134,3 +134,24 @@ data class Question(
     fun getCategory(): List<String> = category?.split(",")?.map { it.trim() } ?: emptyList()
     val categoryList: List<String> get() = getCategory()
 }
+
+
+data class LastTradedPriceQuestionDTO(
+    val id: Int,
+    val optionA: String,
+    val optionB: String,
+    val optionAWager: BigDecimal,
+    val optionBWager: BigDecimal,
+    val pulseQuestion: String
+)
+
+fun Question.toLastTradedPriceQuestionDTO(): LastTradedPriceQuestionDTO {
+    return LastTradedPriceQuestionDTO(
+        id = this.id,
+        optionA = this.optionA,
+        optionB = this.optionB,
+        pulseQuestion = this.pulseQuestion,
+        optionAWager = this.optionAWager,
+        optionBWager = this.optionBWager
+    )
+}

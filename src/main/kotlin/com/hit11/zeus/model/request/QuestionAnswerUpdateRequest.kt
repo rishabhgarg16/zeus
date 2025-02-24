@@ -6,3 +6,7 @@ class QuestionAnswerUpdateRequest(
     var pulseId: Int = 0,
     var pulseResult: PulseResult = PulseResult.UNDECIDED,
 )
+
+class LastTradedPriceRequest(
+    val pulseIds: List<Int> = emptyList()
+)

@@ -1,8 +1,10 @@
 package com.hit11.zeus.controller
 
 import com.hit11.zeus.exception.Logger
+import com.hit11.zeus.model.LastTradedPriceQuestionDTO
 import com.hit11.zeus.model.Question
 import com.hit11.zeus.model.request.GetActivePulseRequest
+import com.hit11.zeus.model.request.LastTradedPriceRequest
 import com.hit11.zeus.model.request.QuestionAnswerUpdateRequest
 import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.model.response.QuestionAnswerUpdateResponse
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.*
 import javax.validation.Valid
 
 @RestController
-@RequestMapping("/api/pulse/")
+@RequestMapping("/api/pulse")
 class QuestionController(
     private val questionService: QuestionService
 ) {
@@ -104,6 +106,22 @@ class QuestionController(
         @RequestBody req: QuestionAnswerUpdateRequest
     ): ResponseEntity<ApiResponse<QuestionAnswerUpdateResponse>> {
         val response = questionService.updateQuestionAnswer(req)
+        return ResponseEntity.ok(
+            ApiResponse(
+                status = HttpStatus.OK.value(),
+                internalCode = null,
+                message = "Answer updated successfully",
+                data = response
+            )
+        )
+    }
+
+
+    @PostMapping("/lastTradedPrice")
+    fun lastTradedPrice(
+        @RequestBody req: LastTradedPriceRequest
+    ): ResponseEntity<ApiResponse<List<LastTradedPriceQuestionDTO>>> {
+        val response = questionService.getLastTradedPrice(req.pulseIds)
         return ResponseEntity.ok(
             ApiResponse(
                 status = HttpStatus.OK.value(),

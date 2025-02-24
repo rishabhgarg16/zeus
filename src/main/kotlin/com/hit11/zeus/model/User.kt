@@ -136,14 +136,14 @@ data class WalletTransaction(
 )
 
 enum class TransactionType {
-    DEPOSIT,
-    WITHDRAWAL,
-    TRADE_RESERVE,
-    TRADE_RELEASE,
-    TRADE_WIN,
-    TRADE_LOSS,
-    PROMOTIONAL_CREDIT,
-    PROMOTIONAL_EXPIRY
+    DEPOSIT, // +ve
+    WITHDRAWAL, // -
+    TRADE_RESERVE, // -
+    TRADE_RELEASE, // +
+    TRADE_WIN, // +
+    TRADE_LOSS, // -
+    PROMOTIONAL_CREDIT, // +
+    PROMOTIONAL_EXPIRY // -
 }
 
 enum class BalanceType {
