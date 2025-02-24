@@ -64,6 +64,19 @@ class OrderBook(
             val yesBuyOrder = tempYesOrders.peek() // 4
             val noBuyOrder = tempNoOrders.peek() // 6.1
 
+            // Prevent self-matching: if both orders come from the same user, skip this match.
+            if (yesBuyOrder.userId == noBuyOrder.userId) {
+                // Log the self-match prevention event.
+                logger.info("Skipping self-match for user ${yesBuyOrder.userId}")
+                // Remove one of them to prevent an infinite loop; here, remove the older order.
+                if (yesBuyOrder.createdAt < noBuyOrder.createdAt) {
+                    tempYesOrders.poll()
+                } else {
+                    tempNoOrders.poll()
+                }
+                continue
+            }
+
             // Determine match prices based on time priority
             val (matchYesPrice, matchNoPrice) = if (yesBuyOrder.createdAt < noBuyOrder.createdAt) {
                 // YES order came first, gets price improvement
@@ -75,7 +88,6 @@ class OrderBook(
 
             if (yesBuyOrder.price >= matchYesPrice &&
                 noBuyOrder.price >= matchNoPrice
-//                && yesBuyOrder.userId != noBuyOrder.userId // not match against the same user
             ) {
                 val matchedQuantity = minOf(
                     yesBuyOrder.remainingQuantity,

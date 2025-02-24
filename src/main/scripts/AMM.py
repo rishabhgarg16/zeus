@@ -1,12 +1,14 @@
-import requests
-import random
+import logging
+import threading
 import time
 from concurrent import futures
-import logging
-from decimal import Decimal
 from dataclasses import dataclass
-from typing import List, Tuple, Optional, Dict
 from datetime import datetime, timezone
+from decimal import Decimal
+from typing import List, Tuple, Optional, Dict
+import json as json
+import requests
+import sys
 
 @dataclass
 class Pulse:
@@ -14,6 +16,7 @@ class Pulse:
     match_id: int
     question_details: str
     status: str
+
 
 @dataclass
 class OrderBookState:
@@ -23,6 +26,7 @@ class OrderBookState:
     last_traded_no_price: Optional[Decimal]
     yes_volume: int
     no_volume: int
+
 
 class MarketMaker:
     def __init__(self, base_url: str, headers: dict):
@@ -38,16 +42,21 @@ class MarketMaker:
         self.min_price = Decimal('0.5')
         self.max_price = Decimal('9.5')
         self.max_position_per_pulse = 1000  # Maximum position size per pulse
-        self.min_order_size = 5             # Minimum order size
-        self.max_order_size = 50            # Maximum order size
-        self.last_order_time = {}           # {pulse_id: timestamp}
+        self.min_order_size = 5  # Minimum order size
+        self.max_order_size = 50  # Maximum order size
+        self.last_order_time = {}  # {pulse_id: timestamp}
+
+        # Minimum time between orders for a pulse (in seconds) to prevent order spam
+        self.MIN_ORDER_INTERVAL = 2
 
         # Layered order parameters
         self.LAYER_SPREADS = [Decimal('0.0'), Decimal('0.1'), Decimal('0.2')]  # Spreads for each layer
         self.LAYER_SIZES = [0.3, 0.3, 0.4]  # Size distribution for each layer
 
         # Position tracking
-        self.positions: Dict[int, Dict[str, int]] = {}  # {pulse_id: {'Yes': qty, 'No': qty}}
+        # Each pulse_id maps to a dict with keys "Yes" and "No".
+        # Each of those maps to another dict with "quantity" (int) and "amount" (Decimal).
+        self.positions: Dict[int, Dict[str, Dict[str, Union[int, Decimal]]]] = {}
 
         # Active pulses tracking
         self.active_pulses: List[Pulse] = []
@@ -59,6 +68,34 @@ class MarketMaker:
             filename='market_maker.log'
         )
         self.logger = logging.getLogger('MarketMaker')
+
+        # Add a console (stream) handler so logs also appear in the terminal
+
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
+
+    def log_with_context(self, level, message, **context):
+        # Helper to output structured log messages in JSON format
+        context.update({"timestamp": datetime.now(timezone.utc).isoformat()})
+        log_message = f"{message} | Context: {json.dumps(context)}"
+        if level == "info":
+            self.logger.info(log_message)
+        elif level == "error":
+            self.logger.error(log_message)
+        else:
+            self.logger.debug(log_message)
+
+    def log_positions(self, pulse_id: int):
+        pos = self.positions.get(pulse_id, {
+            'Yes': {'quantity': 0, 'amount': Decimal('0.0')},
+            'No': {'quantity': 0, 'amount': Decimal('0.0')}
+        })
+        self.log_with_context("info", "Current positions", pulse_id=pulse_id,
+                          yes_quantity=pos['Yes']['quantity'], yes_amount=str(pos['Yes']['amount']),
+                          no_quantity=pos['No']['quantity'], no_amount=str(pos['No']['amount']))
 
     def get_active_pulses(self) -> List[Pulse]:
         """Fetch all active pulses from the system"""
@@ -82,16 +119,18 @@ class MarketMaker:
                     )
                     pulses.append(pulse)
 
-            self.logger.info(f"Fetched {len(pulses)} active pulses")
+            self.log_with_context("info", "Fetched active pulses", count=len(pulses))
             return pulses
 
         except Exception as e:
-            self.logger.error(f"Error fetching active pulses: {e}")
+            self.log_with_context("error", "Error fetching active pulses", error=str(e))
             return []
 
     def calculate_layer_quantities(self, total_size: int) -> List[int]:
         """Calculate order sizes for each layer"""
-        return [max(self.min_order_size, int(total_size * pct)) for pct in self.LAYER_SIZES]
+        quantities = [max(self.min_order_size, int(total_size * pct)) for pct in self.LAYER_SIZES]
+        self.log_with_context("info", "Calculated layer quantities", quantities=quantities)
+        return quantities
 
     def get_layer_prices(self, base_price: Decimal) -> List[Decimal]:
         """Calculate prices for each layer"""
@@ -99,6 +138,7 @@ class MarketMaker:
         for spread in self.LAYER_SPREADS:
             price = (base_price - spread).quantize(Decimal('0.1'))
             prices.append(price)
+        self.log_with_context("info", "Calculated layer prices", base_price=str(base_price), prices=[str(p) for p in prices])
         return prices
 
     def get_order_book(self, pulse_id: int) -> Optional[OrderBookState]:
@@ -125,37 +165,50 @@ class MarketMaker:
                 yes_volume=int(data['yesVolume']),
                 no_volume=int(data['noVolume'])
             )
-            self.logger.info(f"OrderBookState for pulse ${pulse_id} is ${order_book}")
+            self.log_with_context("info", "Fetched order book", pulse_id=pulse_id, order_book=str(order_book))
             return order_book
 
         except Exception as e:
-            self.logger.error(f"Error fetching order book for pulse {pulse_id}: {e}")
+            self.log_with_context("error", "Error fetching order book", pulse_id=pulse_id, error=str(e))
             return None
 
     def can_place_order(self, pulse_id: int, price: Decimal) -> bool:
+        current_time = time.time()
+        last_order = self.last_order_time.get(pulse_id, 0)
+        if current_time - last_order < self.MIN_ORDER_INTERVAL:
+            self.log_with_context("info", "Preventing order spam: last order placed too recently",
+                                  pulse_id=pulse_id, time_since_last=current_time - last_order)
+            return False
+
         # Price range check
         if price < self.min_price or price > self.max_price:
-            self.logger.info(f"[cannot_place_order] Order cannot be placed for pulse ${pulse_id}")
+            self.log_with_context("info", "Order price out of range", pulse_id=pulse_id, price=str(price))
             return False
 
         # Position check
-        position = self.positions.get(pulse_id, {'Yes': 0, 'No': 0})
-        total_position = abs(position['Yes']) + abs(position['No'])
+        position = self.positions.get(
+            pulse_id,
+            {
+                'Yes': {'quantity': 0, 'amount': Decimal('0.0')},
+                'No': {'quantity': 0, 'amount': Decimal('0.0')}
+            }
+        )
+        total_position = abs(position['Yes']['quantity']) + abs(position['No']['quantity'])
         if total_position >= self.max_position_per_pulse:
-            self.logger.info(f"[cannot_place_order] Order cannot be placed for pulse ${pulse_id}")
+            self.log_with_context("info", "Max position reached", pulse_id=pulse_id, total_position=total_position)
             return False
 
-        self.logger.info(f"[can_place_order] Order can be placed for pulse ${pulse_id}")
+        self.log_with_context("info", "Order can be placed", pulse_id=pulse_id, price=str(price))
         return True
 
     def should_create_orders(self, order_book: OrderBookState, pulse_id: int) -> bool:
         """Only create orders if needed"""
         # Don't create if market is already liquid
         if order_book.yes_volume > 150 and order_book.no_volume > 150:
-            self.logger.info(f"[should_create_orders] volume more than 50 for pulse {pulse_id} & ${order_book}")
+            self.log_with_context("info", "Market already liquid", pulse_id=pulse_id,
+                                  yes_volume=order_book.yes_volume, no_volume=order_book.no_volume)
             return False
-
-        self.logger.info(f"[should_create_orders] should create orders for ${order_book}")
+        self.log_with_context("info", "Orders will be created", pulse_id=pulse_id)
         return True
 
     def bulk_cancel_orders(self, order_ids: List[int]) -> bool:
@@ -166,7 +219,7 @@ class MarketMaker:
             payload = {
                 "orderIds": long_order_ids
             }
-            self.logger.info(f"[bulk_cancel_orders] Found ${order_ids} to be canceled")
+            self.log_with_context("info", "Attempting bulk cancellation", order_ids=order_ids)
 
             response = requests.post(
                 f"{self.base_url}/api/order/bulkCancel",  # New endpoint for bulk cancellation
@@ -176,34 +229,34 @@ class MarketMaker:
             )
 
             # Log the actual response
-            self.logger.info(f"Bulk cancel response: {response.text}")
+            self.log_with_context("info", "Bulk cancel response received", response_text=response.text)
 
             if response.status_code == 200:
                 response_data = response.json()
                 if response_data.get('data') == True:
-                    self.logger.info(f"Successfully canceled {len(order_ids)} orders")
+                    self.log_with_context("info", "Bulk cancellation successful", cancelled_count=len(order_ids))
                     return True
                 else:
-                    self.logger.error(f"Bulk cancellation failed: {response_data}")
+                    self.log_with_context("error", "Bulk cancellation failed", response_data=response_data)
                     return False
             else:
-                self.logger.error(f"Bulk cancellation failed: HTTP {response.status_code}, Response: {response.text}")
+                self.log_with_context("error", "Bulk cancellation HTTP error", status_code=response.status_code, response_text=response.text)
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error in bulk order cancellation: {str(e)}", exc_info=True)
+            self.log_with_context("error", "Exception in bulk cancellation", error=str(e))
             return False
 
     def cleanup_old_orders(self, pulse_id: int):
         """Cancel old orders that are no longer needed"""
-        self.logger.info(f"Fetching open orders for pulse for clean up {pulse_id}")
+        self.log_with_context("info", "Starting cleanup of old orders", pulse_id=pulse_id)
         try:
             response = requests.get(
                 f"{self.base_url}/api/order/open/{pulse_id}/5",
                 headers=self.headers
             )
             if response.status_code != 200:
-                self.logger.error(f"Failed to fetch open orders for pulse {pulse_id}")
+                self.log_with_context("error", "Failed to fetch open orders", pulse_id=pulse_id, status_code=response.status_code)
                 return
 
             response.raise_for_status()  # This will raise an exception for non-200 status codes
@@ -232,22 +285,21 @@ class MarketMaker:
 
             # Bulk cancel orders if any found
             if orders_to_cancel:
-                self.logger.info(f"Attempting to cancel {len(orders_to_cancel)} orders")
+                self.logger.info(f"Attempting to cancel {len(orders_to_cancel)} orders for pulse {pulse_id}")
                 success = self.bulk_cancel_orders(orders_to_cancel)
                 if success:
-                    self.logger.info(f"Successfully cancelled {len(orders_to_cancel)} orders")
-                    # Update positions after successful cancellation
+                    self.logger.info(f"Successfully cancelled {len(orders_to_cancel)} orders for pulse {pulse_id}")
                     for order in orders:
                         if order['id'] in orders_to_cancel:
                             side = order['orderSide']
                             qty = order['remainingQuantity']
                             if pulse_id in self.positions:
                                 self.positions[pulse_id][side] -= qty
-                        else:
-                            self.logger.error("Failed to cancel orders")
+                    else:
+                        self.logger.error("Bulk cancellation failed")
 
         except Exception as e:
-            self.logger.error(f"Error cleaning up orders for pulse {pulse_id}: {e}")
+            self.log_with_context("error", "Error cleaning up orders", pulse_id=pulse_id, error=str(e))
 
     def provide_layered_liquidity(self, pulse: Pulse, user_id: int, order_book: OrderBookState):
         """Provide layered liquidity on both sides"""
@@ -323,78 +375,78 @@ class MarketMaker:
 
             # If order was successful
             if response_data.get('data') == True:
-                self.logger.info(f"Order placed successfully: {payload}")
-                # Update position tracking
+                self.log_with_context("info", "Order placed successfully", pulse_id=pulse_id, side=side, price=str(price), quantity=quantity)
                 if pulse_id not in self.positions:
-                    self.positions[pulse_id] = {'Yes': 0, 'No': 0}
-                self.positions[pulse_id][side] += quantity
-
-                self.logger.info(f"Order placed successfully: {payload}")
+                    self.positions[pulse_id] = {
+                        'Yes': {'quantity': 0, 'amount': Decimal('0.0')},
+                        'No': {'quantity': 0, 'amount': Decimal('0.0')}
+                    }
+                if side == "Yes":
+                    self.positions[pulse_id]['Yes']['quantity'] += quantity
+                    self.positions[pulse_id]['Yes']['amount'] += price * Decimal(quantity)
+                else:
+                    self.positions[pulse_id]['No']['quantity'] += quantity
+                    self.positions[pulse_id]['No']['amount'] += price * Decimal(quantity)
+                # Update last order time to prevent spamming
+                self.last_order_time[pulse_id] = time.time()
+                # Log current positions for basic position management
+                self.log_positions(pulse_id)
                 return True
-
-            # Log error message from API
-            error_message = response_data.get('message', 'Unknown error')
-            self.logger.error(f"Failed to place order: {error_message}")
-            return False
+            else:
+                error_message = response_data.get('message', 'Unknown error')
+                self.log_with_context("error", "Failed to place order", pulse_id=pulse_id, error=error_message)
+                return False
 
         except Exception as e:
-            self.logger.error(f"Error placing order: {e}")
+            self.log_with_context("error", "Exception while placing order", pulse_id=pulse_id, error=str(e))
             return False
 
     def process_pulse(self, pulse: Pulse, user_id: int):
         """Process a single pulse"""
-        self.logger.info(f"processing pulse ${pulse.id}")
+        self.log_with_context("info", "Processing pulse", pulse_id=pulse.id)
         try:
             # 1. Get order book
             order_book = self.get_order_book(pulse.id)
             if not order_book:
-                self.logger.error(f"No order book exist for pulse ${pulse.id}")
+                self.log_with_context("error", "No order book found", pulse_id=pulse.id)
                 return
 
             # 2 Cleanup old orders first
             self.logger.info(f"2 processing pulse cleaning up old orders for ${pulse.id}")
             self.cleanup_old_orders(pulse.id)
 
-            #3 Check if we should create new orders
+            # 3 Check if we should create new orders
             if not self.should_create_orders(order_book, pulse.id):
-                self.logger.info(f"3 processing pulse ${pulse.id}")
-                self.logger.info(f"Skipping order creation for pulse {pulse.id} - market conditions not met")
+                self.log_with_context("info", "Skipping order creation", pulse_id=pulse.id)
                 return
-
-            # 4. Calculate and place order
-            self.logger.info(f"4 processing pulse ${pulse.id}")
+            #4
             self.provide_layered_liquidity(pulse, user_id, order_book)
 
         except Exception as e:
-            self.logger.error(f"Error processing pulse {pulse.id}: {e}")
+            self.log_with_context("error", "Error processing pulse", pulse_id=pulse.id, error=str(e))
 
     def run(self, user_id: int):
-        """Main market making loop for all active pulses"""
         while True:
             try:
                 start_time = time.time()
-
-                # 1. Fetch all active pulses
                 active_pulses = self.get_active_pulses()
-                self.logger.info(f"active pulse ${active_pulses[0].id}")
+                if not active_pulses:
+                    self.log_with_context("info", "No active pulses found, sleeping", sleep_time=10)
+                    time.sleep(10)
+                    continue
 
-                # 2. Process each pulse concurrently
+                # Process pulses concurrently
                 with futures.ThreadPoolExecutor(max_workers=5) as executor:
-                    futures1 = [
-                        executor.submit(self.process_pulse, pulse, user_id)
-                        for pulse in active_pulses
-                    ]
-                    futures.wait(futures1)
-
-                # Wait before next iteration
-                # Calculate sleep time to maintain consistent interval
+                    tasks = [executor.submit(self.process_pulse, pulse, user_id) for pulse in active_pulses]
+                    futures.wait(tasks)
                 elapsed = time.time() - start_time
-                sleep_time = max(10 - elapsed, 0)  # Aim for 10-second intervals
+                sleep_time = max(10 - elapsed, 0)
+                self.log_with_context("info", "Main loop iteration complete", iteration_time=elapsed, sleep_time=sleep_time)
                 time.sleep(sleep_time)
-
             except Exception as e:
-                self.logger.error(f"Error in main loop: {e}")
+                self.log_with_context("error", "Error in main loop", error=str(e))
                 time.sleep(5)
+
 
 if __name__ == "__main__":
     config = {
@@ -408,4 +460,3 @@ if __name__ == "__main__":
 
     market_maker = MarketMaker(config['base_url'], config['headers'])
     market_maker.run(config['user_id'])
-
