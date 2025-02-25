@@ -68,7 +68,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <h1 className="text-5xl font-bold animate-fade-in">
-                Skill-Based Games Made Simple
+                Play, Compete, Win!
               </h1>
               <p className="text-xl opacity-90">
                 Join millions of players enjoying skill-based games and earning rewards
