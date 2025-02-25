@@ -11,6 +11,9 @@ import java.util.*
 
 @Repository
 interface MatchRepository : JpaRepository<Match, Int> {
+    @Query("SELECT m FROM Match m LEFT JOIN FETCH m.team1Entity t1 LEFT JOIN FETCH m.team2Entity t2 WHERE m.cricbuzzMatchId = :cricbuzzMatchId")
+    fun findByCricbuzzMatchIdWithTeams(@Param("cricbuzzMatchId") cricbuzzMatchId: Int): Match?
+
     @Query(
         """  
     SELECT DISTINCT m FROM Match m 

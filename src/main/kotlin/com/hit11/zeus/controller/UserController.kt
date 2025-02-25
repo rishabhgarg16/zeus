@@ -14,12 +14,12 @@ import com.hit11.zeus.model.response.ApiResponse
 import com.hit11.zeus.service.UserService
 import com.hit11.zeus.service.sms.Fast2SmsService
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 import javax.validation.constraints.NotBlank
 
@@ -83,15 +83,16 @@ class UserController(
     }
 
     @PostMapping("/createnew/{firebaseUID}")
+    @Deprecated("Please use new api login")
     fun createNew(
         @PathVariable("firebaseUID") @NotBlank firebaseUID: String,
         @RequestParam("fcmToken") @NotBlank fcmToken: String
     ): ResponseEntity<ApiResponse<User>> {
         return try {
-            val user = userService.createUser(firebaseUID, fcmToken)
+//            val user = userService.createUser(firebaseUID, fcmToken)
             ResponseEntity.ok(
                 ApiResponse(
-                    data = user,
+                    data = null,
                     status = HttpStatus.CREATED.value(),
                     message = "User created successfully",
                     internalCode = null
@@ -142,16 +143,37 @@ class UserController(
     @PostMapping("/login")
     fun loginHit11(
         @RequestBody otpRequest: OtpRequest
-    ): ResponseEntity<ApiResponse<OtpResponse>> {
+    ): ResponseEntity<ApiResponse<LoginResponse>> {
         try {
             if (otpRequest.otp == "786598") {
                 val user = userService.getOrCreateUser(otpRequest.phoneNumber)
+
+                // Check if this was a new user creation (check if user was created just now)
+                val isNewUser = user.createdAt.isAfter(Instant.now().minus(1, ChronoUnit.MINUTES))
+
+                // Create login response with JWT token
                 val otpResponse = createJwt(user)
+
+                // If this is a new user, add signup bonus info
+                val bonusInfo = if (isNewUser) {
+                    BonusInfo(
+                        amount = userService.getSignupBonusAmount(),
+                        expiryDays = 7,
+                        type = "SIGNUP_BONUS"
+                    )
+                } else null
+
+                // Combine user login data with bonus info
+                val loginResponse = LoginResponse(
+                    user = otpResponse,
+                    bonus = bonusInfo
+                )
+
                 return ResponseEntity.ok(
                     ApiResponse(
-                        data = otpResponse,
+                        data = loginResponse,
                         status = HttpStatus.OK.value(),
-                        message = "FCM token updated successfully",
+                        message = if (isNewUser) "New user created with signup bonus" else "Login successful",
                         internalCode = null
                     )
                 )
@@ -244,6 +266,13 @@ data class OtpResponse(
     val jwt: String = ""
 )
 
+// New model to hold bonus information
+data class BonusInfo(
+    val amount: BigDecimal,
+    val expiryDays: Int,
+    val type: String
+)
+
 class OtpMismatchException(message: String = "The provided OTP is incorrect.") : Exception(message)
 
 data class TokenUserClaims(
@@ -251,6 +280,12 @@ data class TokenUserClaims(
     val email: String,
     val name: String,
     val phone: String
+)
+
+// New model that combines login response with bonus info
+data class LoginResponse(
+    val user: OtpResponse,
+    val bonus: BonusInfo? = null
 )
 
 private fun createJwt(

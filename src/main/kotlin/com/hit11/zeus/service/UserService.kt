@@ -56,67 +56,91 @@ class UserService(
         if (user != null) {
             return user
         }
+        // Creating a new user
         val createdUser = User(
-            phone = mobileNumber
+            phone = mobileNumber,
+            depositedBalance = BigDecimal.ZERO,
+            promotionalBalance = BigDecimal.ZERO,
+            winningsBalance = BigDecimal.ZERO,
+            reservedBalance = BigDecimal.ZERO,
+            lastLoginDate = Date()
         )
-        val savedUser = userRepository.save(createdUser)
-        return savedUser
-    }
+        try {
+            val savedUser = userRepository.save(createdUser)
 
-    fun createUser(firebaseUID: String, fcmToken: String): User {
-        val firebaseUser = try {
-            firebaseAuth.getUser(firebaseUID)
-        } catch (e: FirebaseAuthException) {
-            logger.error("Invalid Firebase user", e)
-            throw UserNotFoundException("Firebase user not found")
-        }
-
-        val existingUser = userRepository.findByFirebaseUID(firebaseUID)
-
-        return existingUser?.let { user ->
-            // Update existing user's FCM token if different
-            if (user.fcmToken != fcmToken) {
-                user.fcmToken = fcmToken
-                user.lastLoginDate = Date()
-                logger.info("Updated FCM token for user: ${user.id}")
-                userRepository.save(user)
-            } else {
-                user
-            }
-        } ?: run {
-            val newUser = User(
-                firebaseUID = firebaseUser.uid,
-                fcmToken = fcmToken,
-                email = firebaseUser.email,
-                name = firebaseUser.displayName,
-                phone = firebaseUser.phoneNumber,
-                depositedBalance = BigDecimal.ZERO,
-                promotionalBalance = BigDecimal.ZERO,
-                winningsBalance = BigDecimal.ZERO,
-                reservedBalance = BigDecimal.ZERO,
-                lastLoginDate = Date()
+            // Add signup bonus - similar to what we do in createUser method
+            addPromotionalCredit(
+                userId = savedUser.id,
+                amount = BigDecimal(SIGNUP_BONUS),
+                type = PromotionalType.SIGNUP_BONUS,
+                expiryDays = 7 // 7 days
             )
-            try {
-                val savedUser = userRepository.save(newUser)
-                // Add signup bonus
-                addPromotionalCredit(
-                    userId = savedUser.id,
-                    amount = BigDecimal(SIGNUP_BONUS),
-                    type = PromotionalType.SIGNUP_BONUS,
-                    expiryDays = 7 // 7 days
-                )
 
-                logger.info("New user created: ${savedUser.id}")
-                savedUser
-            } catch (e: SQLIntegrityConstraintViolationException) {
-                logger.error("User creation failed due to constraint violation", e)
-                throw UserAlreadyExistsException("User already exists")
-            } catch (e: Exception) {
-                logger.error("Unexpected error during user creation", e)
-                throw e
-            }
+            logger.info("New user created with mobile number: $mobileNumber, ID: ${savedUser.id}, with signup bonus of $SIGNUP_BONUS")
+            return savedUser
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            logger.error("User creation failed due to constraint violation", e)
+            throw UserAlreadyExistsException("User already exists with mobile number: $mobileNumber")
+        } catch (e: Exception) {
+            logger.error("Unexpected error during user creation", e)
+            throw e
         }
     }
+
+//    fun createUser(firebaseUID: String, fcmToken: String): User {
+//        val firebaseUser = try {
+//            firebaseAuth.getUser(firebaseUID)
+//        } catch (e: FirebaseAuthException) {
+//            logger.error("Invalid Firebase user", e)
+//            throw UserNotFoundException("Firebase user not found")
+//        }
+//
+//        val existingUser = userRepository.findByFirebaseUID(firebaseUID)
+//
+//        return existingUser?.let { user ->
+//            // Update existing user's FCM token if different
+//            if (user.fcmToken != fcmToken) {
+//                user.fcmToken = fcmToken
+//                user.lastLoginDate = Date()
+//                logger.info("Updated FCM token for user: ${user.id}")
+//                userRepository.save(user)
+//            } else {
+//                user
+//            }
+//        } ?: run {
+//            val newUser = User(
+//                firebaseUID = firebaseUser.uid,
+//                fcmToken = fcmToken,
+//                email = firebaseUser.email,
+//                name = firebaseUser.displayName,
+//                phone = firebaseUser.phoneNumber,
+//                depositedBalance = BigDecimal.ZERO,
+//                promotionalBalance = BigDecimal.ZERO,
+//                winningsBalance = BigDecimal.ZERO,
+//                reservedBalance = BigDecimal.ZERO,
+//                lastLoginDate = Date()
+//            )
+//            try {
+//                val savedUser = userRepository.save(newUser)
+//                // Add signup bonus
+//                addPromotionalCredit(
+//                    userId = savedUser.id,
+//                    amount = BigDecimal(SIGNUP_BONUS),
+//                    type = PromotionalType.SIGNUP_BONUS,
+//                    expiryDays = 7 // 7 days
+//                )
+//
+//                logger.info("New user created: ${savedUser.id}")
+//                savedUser
+//            } catch (e: SQLIntegrityConstraintViolationException) {
+//                logger.error("User creation failed due to constraint violation", e)
+//                throw UserAlreadyExistsException("User already exists")
+//            } catch (e: Exception) {
+//                logger.error("Unexpected error during user creation", e)
+//                throw e
+//            }
+//        }
+//    }
 
     fun updateFCMToken(firebaseUID: String, fcmToken: String): Boolean {
         return try {
@@ -420,9 +444,12 @@ class UserService(
         }
     }
 
+    fun getSignupBonusAmount(): BigDecimal = BigDecimal(SIGNUP_BONUS)
+    fun getDailyRewardAmount(): BigDecimal = BigDecimal(DAILY_REWARD_AMOUNT)
+
     companion object {
-        private const val DAILY_REWARD_AMOUNT = 200.0
-        private const val SIGNUP_BONUS = 500.0
+        const val DAILY_REWARD_AMOUNT = 200.0
+        const val SIGNUP_BONUS = 500.0
         private const val MINIMUM_DAYS_BETWEEN_REWARDS = 1L
     }
 

@@ -10,18 +10,22 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import javax.transaction.Transactional
 
-
-data class CachedTeam(
-    val team: TeamEntity,
-    val lastUpdated: Instant = Instant.now()
-)
-
 @Service
 class TeamService(
     private val teamRepository: TeamRepository
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
+    // Cache for team entities by cricbuzz ID
+    private data class CachedTeam(
+        val team: TeamEntity,
+        val lastUpdated: Instant = Instant.now()
+    )
+
+    // Cache settings
+    private val CACHE_TTL_MINUTES = 10L
+
+    // Main team cache
     // criccbuzz id to TeamEntity
     private val teamCache = ConcurrentHashMap<Int, CachedTeam>()
 
@@ -29,16 +33,14 @@ class TeamService(
         val now = Instant.now()
 
         // Check if the team is already cached and valid
+        // Check if the team is already cached and valid
         teamCache[cricbuzzTeam.teamId]?.let { cached ->
-            if (now.isBefore(cached.lastUpdated.plus(Duration.ofMinutes(10)))) {
+            if (isTeamCacheValid(cached.lastUpdated)) {
                 return cached.team
-            } else {
-                // TTL expired, remove the cached entry
-                teamCache.remove(cricbuzzTeam.teamId)
             }
         }
 
-        // Not in cache or expired: Try to retrieve from DB or create a new team
+        // Not in cache or expired: Try to retrieve from DB
         val teamFromDB = try {
             teamRepository.findByCricbuzzTeamId(cricbuzzTeam.teamId)
         } catch (ex: Exception) {
@@ -46,18 +48,17 @@ class TeamService(
             null
         }
 
-        // If found in DB, use it; otherwise, attempt to create a new team.
+        // If found in DB, use it; otherwise, create a new team
         val team = teamFromDB ?: createTeam(cricbuzzTeam)
 
-        // If team is still null, return null.
+        // If team is still null, return null
         if (team == null) return null
 
-        // Create a new CachedTeam instance with current timestamp
+        // Update caches
         val newCachedTeam = CachedTeam(team, now)
+        teamCache[cricbuzzTeam.teamId] = newCachedTeam
 
-        // Insert into the cache in a thread-safe manner. If another thread already inserted a value, use that one.
-        val cachedTeam = teamCache.putIfAbsent(cricbuzzTeam.teamId, newCachedTeam)
-        return (cachedTeam ?: newCachedTeam).team
+        return team
     }
 
     @Transactional
@@ -78,6 +79,10 @@ class TeamService(
         }
     }
 
+    private fun isTeamCacheValid(timestamp: Instant): Boolean {
+        return Instant.now().minus(Duration.ofMinutes(CACHE_TTL_MINUTES)).isBefore(timestamp)
+    }
+
     fun updateTeam(teamId: Long, cricbuzzTeam: CricbuzzTeam): TeamEntity? {
         return teamRepository.findById(teamId).map { existingTeam ->
             val updatedTeam = existingTeam.copy(
@@ -95,6 +100,50 @@ class TeamService(
     private fun generateTeamImageUrl(imageId: Int?): String? {
         return imageId?.let { "https://cricbuzz-cricket.p.rapidapi.com/img/v1/i1/c$it/i.jpg" }
     }
+
+    @Transactional
+    fun getTeamsByCricbuzzIds(cricbuzzTeamIds: List<Int>): List<TeamEntity> {
+        if (cricbuzzTeamIds.isEmpty()) return emptyList()
+
+        val now = Instant.now()
+        val result = mutableListOf<TeamEntity>()
+        val missingIds = mutableListOf<Int>()
+
+        // Check cache first for each team
+        cricbuzzTeamIds.forEach { teamId ->
+            val cachedTeam = teamCache[teamId]
+            if (cachedTeam != null && isTeamCacheValid(cachedTeam.lastUpdated)) {
+                result.add(cachedTeam.team)
+            } else {
+                missingIds.add(teamId)
+            }
+        }
+
+        // Only fetch teams not found in cache
+        if (missingIds.isNotEmpty()) {
+            val teamEntities = teamRepository.findAllByCricbuzzTeamIdIn(missingIds)
+
+            // Update caches with fetched teams
+            teamEntities.forEach { team ->
+                team.cricbuzzTeamId?.let { id ->
+                    teamCache[id] = CachedTeam(team, now)
+                }
+                result.add(team)
+            }
+
+            // Create any missing teams
+            val foundIds = teamEntities.mapNotNull { it.cricbuzzTeamId }.toSet()
+            val stillMissingIds = missingIds.filter { it !in foundIds }
+
+            if (stillMissingIds.isNotEmpty()) {
+                logger.info("Teams not found for IDs: $stillMissingIds")
+                // Teams would be created when individual getOrCreateTeam calls are made
+            }
+        }
+
+        return result
+    }
+
 
     fun getCacheStats(): Map<String, Any> {
         return mapOf(

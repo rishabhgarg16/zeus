@@ -21,6 +21,9 @@ class CricbuzzMatchService(
     private val logger = Logger.getLogger(this::class.java)
     private val matchExistsCache = ConcurrentHashMap<Int, Match>()
 
+    // Cache for teams during batch processing
+    private val teamBatchCache = ConcurrentHashMap<Int, TeamEntity>()
+
     // Cache for live/upcoming matches
     private data class MatchCache(
         val matches: CricbuzzMatchResponse,
@@ -51,9 +54,31 @@ class CricbuzzMatchService(
 
     @Transactional
     private fun syncTeamsAndMatches(response: CricbuzzMatchResponse) {
-        val existingMatchIds = mutableSetOf<Int>()
-        val newMatches = mutableListOf<Match>()
-        val updatedMatches = mutableListOf<Match>()
+        val newMatchBatch = mutableListOf<Match>()
+        val updateMatchBatch = mutableListOf<Match>()
+
+        // Extract team IDs for batch loading
+        val cricbuzzTeamIds = mutableSetOf<Int>()
+        response.typeMatches.forEach { typeMatch ->
+            typeMatch.seriesMatches.forEach { seriesMatch ->
+                seriesMatch.seriesAdWrapper?.matches?.forEach { match ->
+                    cricbuzzTeamIds.add(match.matchInfo.team1.teamId)
+                    cricbuzzTeamIds.add(match.matchInfo.team2.teamId)
+                }
+            }
+        }
+
+        // Batch load teams to avoid N+1 queries
+        val teams = teamService.getTeamsByCricbuzzIds(cricbuzzTeamIds.toList())
+
+        // Cache loaded teams for quick lookup
+        teamBatchCache.clear()
+        teams.forEach { team ->
+            team.cricbuzzTeamId?.let { teamBatchCache[it] = team }
+        }
+
+        // Process only unique matches
+        val processedMatchIds = mutableSetOf<Int>()
 
         response.typeMatches.forEach { typeMatch ->
             val matchType = typeMatch.matchType
@@ -61,28 +86,40 @@ class CricbuzzMatchService(
                 seriesMatch.seriesAdWrapper?.matches?.forEach { cricbuzzMatch ->
                     try {
                         val cricbuzzMatchInfo = cricbuzzMatch.matchInfo
-
-                        if (cricbuzzMatchInfo.matchId in existingMatchIds) return@forEach
-                        existingMatchIds.add(cricbuzzMatchInfo.matchId)
-
-                        // First ensure teams exist
-                        val team1 = teamService.getOrCreateTeam(cricbuzzMatchInfo.team1) ?: return@forEach
-                        val team2 = teamService.getOrCreateTeam(cricbuzzMatchInfo.team2) ?: return@forEach
-
                         val cricbuzzMatchId = cricbuzzMatchInfo.matchId
-                        val existingMatch = checkIfMatchExists(cricbuzzMatchId)
+
+                        // Skip if already processed
+                        if (cricbuzzMatchInfo.matchId in processedMatchIds) return@forEach
+                        processedMatchIds.add(cricbuzzMatchInfo.matchId)
+
+                        // Get teams from local cache first
+                        val team1 = teamBatchCache[cricbuzzMatchInfo.team1.teamId]
+                            ?: teamService.getOrCreateTeam(cricbuzzMatchInfo.team1)
+                            ?: return@forEach
+
+                        val team2 = teamBatchCache[cricbuzzMatchInfo.team2.teamId]
+                            ?: teamService.getOrCreateTeam(cricbuzzMatchInfo.team2)
+                            ?: return@forEach
+
+                        // Check existing match
+                        // Check existing match efficiently
+                        val existingMatch = matchExistsCache[cricbuzzMatchId]
+                            ?: matchRepository.findByCricbuzzMatchIdWithTeams(cricbuzzMatchId)
+
+                        // Update match cache
+                        existingMatch?.let { matchExistsCache[cricbuzzMatchId] = it }
 
                         if (existingMatch != null) {
                             // Update only if there are changes
                             if (hasMatchChanged(existingMatch, cricbuzzMatchInfo)) {
                                 val updatedMatch =
                                     updateMatch(existingMatch, cricbuzzMatchInfo, team1, team2)
-                                updatedMatches.add(updatedMatch)
+                                updateMatchBatch.add(updatedMatch)
                             }
                         } else {
                             // Create new match
                             val newMatch = createMatch(cricbuzzMatchInfo, typeMatch.matchType, team1, team2)
-                            newMatches.add(newMatch)
+                            newMatchBatch.add(newMatch)
                         }
                     } catch (e: Exception) {
                         logger.error("Error syncing match ${cricbuzzMatch.matchInfo.matchId}", e)
@@ -92,23 +129,24 @@ class CricbuzzMatchService(
         }
 
         try {
-            if (newMatches.isNotEmpty() || updatedMatches.isNotEmpty()) {
+            if (newMatchBatch.isNotEmpty() || updateMatchBatch.isNotEmpty()) {
                 // Clear matches cache when any updates happen
                 matchCache = null
                 logger.info("Cleared matches cache due to updates")
             }
             // Batch save new matches
-            if (newMatches.isNotEmpty()) {
-                matchRepository.saveAll(newMatches)
-                newMatches.map { matchExistsCache.put(it.cricbuzzMatchId!!, it) }
-                logger.info("Created ${newMatches.size} new matches")
+            if (newMatchBatch.isNotEmpty()) {
+                val savedMatches = matchRepository.saveAll(newMatchBatch)
+                savedMatches.map { matchExistsCache.put(it.cricbuzzMatchId!!, it) }
+                logger.info("Created ${newMatchBatch.size} new matches")
             }
 
             // Batch update existing matches
-            if (updatedMatches.isNotEmpty()) {
-                matchRepository.saveAll(updatedMatches)
+            if (updateMatchBatch.isNotEmpty()) {
+                val updatedMatches = matchRepository.saveAll(updateMatchBatch)
+                // Clear match cache entries that were updated
                 updatedMatches.map { matchExistsCache.remove(it.cricbuzzMatchId!!) }
-                logger.info("Updated ${updatedMatches.size} existing matches")
+                logger.info("Updated ${updateMatchBatch.size} existing matches")
             }
         } catch (e: Exception) {
             logger.error("Error saving matches to database", e)
