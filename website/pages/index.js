@@ -5,6 +5,7 @@ import GameCarousel from '../components/GameCarousel'; // Renamed from MatchCaro
 import AnimatedStats from '../components/AnimatedStats';
 import TestimonialSlider from '../components/TestimonialSlider';
 import { Download, TrendingUp, Shield, Trophy, Users } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Home() {
   // Sample data for components
@@ -33,28 +34,28 @@ export default function Home() {
   ];
 
   const testimonials = [
-    {
-      name: "Rahul K.",
-      location: "Mumbai",
-      comment: "The best skill-based gaming app! Earned ₹20,000 in my first month. The interface is super easy to use and withdrawals are instant.",
-      rating: 5,
-      image: "/api/placeholder/64/64"
-    },
-    {
-      name: "Priya S.",
-      location: "Delhi",
-      comment: "Very user-friendly interface and quick withdrawals. I enjoy testing my knowledge and skills daily!",
-      rating: 5,
-      image: "/api/placeholder/64/64"
-    },
-    {
-      name: "Amit P.",
-      location: "Bangalore",
-      comment: "Great platform for skill-based games! The customer support is very responsive and helpful.",
-      rating: 5,
-      image: "/api/placeholder/64/64"
-    }
-  ];
+      {
+        name: "Rahul K.",
+        location: "Mumbai",
+        comment: "The best skill-based gaming app! Earned ₹20,000 in my first month. The interface is super easy to use and withdrawals are instant.",
+        rating: 5,
+        image: "/api/placeholder/64/64"
+      },
+      {
+        name: "Priya S.",
+        location: "Delhi",
+        comment: "Very user-friendly interface and quick withdrawals. I enjoy testing my knowledge and skills daily!",
+        rating: 5,
+        image: "/api/placeholder/64/64"
+      },
+      {
+        name: "Amit P.",
+        location: "Bangalore",
+        comment: "Great platform for skill-based games! The customer support is very responsive and helpful.",
+        rating: 5,
+        image: "/api/placeholder/64/64"
+      }
+    ];
 
   return (
     <Layout>
@@ -80,11 +81,13 @@ export default function Home() {
                       <Download className="w-5 h-5 group-hover:animate-bounce" />
                       <span>Download App</span>
                     </div>
-                  </button>
-                  <button className="border-2 border-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-all">
-                    Learn More
-                  </button>
-                </div>
+                   </button>
+                    <Link href="/features">
+                      <button className="border-2 border-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-all">
+                        Learn More
+                      </button>
+                    </Link>
+                  </div>
                 <div className="text-sm bg-white/20 px-3 py-1 rounded-full inline-block">
                   For 18 years and above only
                 </div>

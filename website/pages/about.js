@@ -100,7 +100,7 @@ export default function About() {
               <p className="text-gray-600">App Downloads</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-              <div className="text-4xl font-bold text-indigo-600 mb-2">₹10Cr+</div>
+              <div className="text-4xl font-bold text-indigo-600 mb-2">₹1Cr+</div>
               <p className="text-gray-600">Rewards Distributed</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-lg text-center">
