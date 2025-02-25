@@ -1,4 +1,3 @@
-// pages/about.js
 import React from 'react';
 import Layout from '../components/Layout';
 import { Shield, Target, Users, Award } from 'lucide-react';
@@ -18,23 +17,23 @@ export default function About() {
     {
       icon: Users,
       title: "Community First",
-      description: "Building a strong, engaged community of cricket enthusiasts"
+      description: "Building a strong, engaged community of gaming enthusiasts"
     },
     {
       icon: Award,
       title: "Excellence",
-      description: "Committed to providing the best prediction experience"
+      description: "Committed to providing the best skill-based gaming experience"
     }
   ];
 
   return (
     <Layout>
       {/* Hero Section */}
-      <div className="bg-blue-600 text-white py-20">
+      <div className="bg-indigo-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold mb-6">About HIT11</h1>
           <p className="text-xl max-w-2xl mx-auto">
-            India's leading cricket prediction platform, revolutionizing how fans engage with the game
+            India's leading skill-based gaming platform, revolutionizing mobile entertainment
           </p>
         </div>
       </div>
@@ -46,17 +45,17 @@ export default function About() {
             <div>
               <h2 className="text-3xl font-bold mb-6">Our Story</h2>
               <p className="text-gray-600 mb-4">
-                Founded in 2023, HIT11 emerged from a passion for cricket and technology. We recognized
-                the need for a secure, user-friendly platform where cricket enthusiasts could showcase
-                their knowledge and engage with the sport they love.
+                Founded in 2023, HIT11 emerged from a passion for gaming and technology. We recognized
+                the need for a secure, user-friendly platform where players could showcase
+                their skills and engage in entertaining gameplay.
               </p>
               <p className="text-gray-600 mb-4">
                 Today, we're proud to serve millions of users across India, providing them with an
-                exciting and reliable prediction platform that brings them closer to the game.
+                exciting and reliable gaming platform that enhances their skills and knowledge.
               </p>
               <p className="text-gray-600">
-                Our mission is to revolutionize cricket engagement by providing fans with an
-                innovative platform to demonstrate their cricket knowledge and insights.
+                Our mission is to revolutionize mobile gaming by providing users with an
+                innovative platform that rewards skill, strategy, and quick thinking.
               </p>
             </div>
             <div className="relative">
@@ -79,8 +78,8 @@ export default function About() {
               const Icon = value.icon;
               return (
                 <div key={index} className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-8 h-8 text-blue-600" />
+                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Icon className="w-8 h-8 text-indigo-600" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
                   <p className="text-gray-600">{value.description}</p>
@@ -97,15 +96,15 @@ export default function About() {
           <h2 className="text-3xl font-bold text-center mb-12">Our Achievements</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">1M+</div>
+              <div className="text-4xl font-bold text-indigo-600 mb-2">1M+</div>
               <p className="text-gray-600">App Downloads</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">₹10Cr+</div>
+              <div className="text-4xl font-bold text-indigo-600 mb-2">₹10Cr+</div>
               <p className="text-gray-600">Rewards Distributed</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">4.5★</div>
+              <div className="text-4xl font-bold text-indigo-600 mb-2">4.5★</div>
               <p className="text-gray-600">User Rating</p>
             </div>
           </div>
@@ -133,11 +132,11 @@ export default function About() {
       </div>
 
       {/* Join Us CTA */}
-      <div className="bg-blue-600 text-white py-16">
+      <div className="bg-indigo-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Join the HIT11 Community</h2>
-          <p className="text-xl mb-8">Be part of India's fastest-growing cricket prediction platform</p>
-          <button className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-blue-50">
+          <p className="text-xl mb-8">Be part of India's fastest-growing skill-based gaming platform</p>
+          <button className="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-indigo-50">
             Download Now
           </button>
         </div>

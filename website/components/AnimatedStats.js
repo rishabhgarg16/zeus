@@ -41,7 +41,7 @@ const AnimatedCounter = ({ end, duration = 2000, prefix = '', suffix = '' }) => 
   };
 
   return (
-    <div ref={countRef} className="text-4xl font-bold text-blue-600 mb-2">
+    <div ref={countRef} className="text-4xl font-bold text-indigo-600 mb-2">
       {prefix}
       {count.toLocaleString()}
       {suffix}
@@ -53,7 +53,7 @@ const AnimatedStats = () => {
   const stats = [
     { number: 1000000, label: "Downloads", suffix: "+" },
     { number: 750000, label: "Active Users", suffix: "+" },
-    { number: 5000000, label: "Predictions Made", suffix: "+" }
+    { number: 5000000, label: "Games Played", suffix: "+" }
   ];
 
   return (

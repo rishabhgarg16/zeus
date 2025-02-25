@@ -18,7 +18,7 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Fixed Header */}
-      <header className="bg-blue-600 fixed w-full top-0 z-50">
+      <header className="bg-indigo-600 fixed w-full top-0 z-50">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
@@ -33,12 +33,12 @@ export default function Layout({ children }) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-white hover:text-blue-100"
+                  className="text-white hover:text-indigo-100"
                 >
                   {item.name}
                 </Link>
               ))}
-              <button className="bg-white text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50">
+              <button className="bg-white text-indigo-600 px-6 py-2 rounded-lg hover:bg-indigo-50">
                 Download App
               </button>
             </div>
@@ -63,13 +63,13 @@ export default function Layout({ children }) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-white block px-3 py-2 rounded-md hover:bg-blue-700"
+                  className="text-white block px-3 py-2 rounded-md hover:bg-indigo-700"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
               ))}
-              <button className="w-full bg-white text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 mt-2">
+              <button className="w-full bg-white text-indigo-600 px-6 py-2 rounded-lg hover:bg-indigo-50 mt-2">
                 Download App
               </button>
             </div>
@@ -89,7 +89,7 @@ export default function Layout({ children }) {
             <div>
               <h3 className="text-lg font-semibold mb-4">About HIT11</h3>
               <p className="text-gray-400">
-                India's premier cricket prediction platform. Make predictions, win rewards!
+                India's premier skill-based gaming platform. Play games, showcase skills, earn rewards!
               </p>
             </div>
             <div>
@@ -160,8 +160,8 @@ export default function Layout({ children }) {
           {/* Disclaimer */}
           <div className="mt-8 text-gray-400 text-sm">
             <h4 className="font-semibold mb-2">Disclaimer</h4>
-            <p className="mb-2">This game may be habit-forming or financially risky. Play Responsibly.</p>
-            <p>*HIT11 is available in all states where allowed by law. However, users in some states might not be able to access our app or its contests.</p>
+            <p className="mb-2">HIT11 offers skill-based games. Play responsibly.</p>
+            <p>*HIT11 is available only in those Indian states where skill gaming is permitted by regulations. Users in some states might not be able to access our app or its games.</p>
           </div>
         </div>
       </footer>

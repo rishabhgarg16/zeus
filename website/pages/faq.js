@@ -17,7 +17,7 @@ export default function FAQ() {
         },
         {
           q: "Is HIT11 legal in India?",
-          a: "Yes, HIT11 is completely legal in India. We operate as a skill-based prediction platform in accordance with Indian laws."
+          a: "Yes, HIT11 is completely legal in India. We operate as a skill-based gaming platform in accordance with Indian laws. Games of skill are protected under Article 19(1)(g) of the Constitution of India and have been recognized by the Supreme Court."
         },
         {
           q: "How do I create an account?",
@@ -26,19 +26,19 @@ export default function FAQ() {
       ]
     },
     {
-      title: "Predictions & Trading",
+      title: "Games & Gameplay",
       questions: [
         {
-          q: "How do predictions work?",
-          a: "Select an ongoing or upcoming match, choose your prediction type, analyze the odds, and make your prediction based on your cricket knowledge."
+          q: "How do the skill games work?",
+          a: "Browse our selection of skill-based games, choose a game that interests you, read the rules, and start playing. Success depends on your knowledge, strategy, and analytical skills."
         },
         {
-          q: "What types of predictions can I make?",
-          a: "You can predict match winners, player performances, and specific match events like runs scored, wickets taken, etc."
+          q: "What types of games are available?",
+          a: "We offer a variety of skill-based games including knowledge quizzes, word games, puzzle challenges, and strategic thinking games that test different cognitive abilities."
         },
         {
           q: "How are rewards calculated?",
-          a: "Rewards are calculated based on the accuracy of your predictions and the odds at the time of making the prediction."
+          a: "Rewards are calculated based on your performance in the games, your skill level, and the specific game rules. Better performance leads to better rewards."
         }
       ]
     },
@@ -58,13 +58,30 @@ export default function FAQ() {
           a: "Yes, your money is completely safe. We use bank-grade security and maintain separate user accounts for all transactions."
         }
       ]
+    },
+    {
+      title: "Legal & Compliance",
+      questions: [
+        {
+          q: "In which states is HIT11 available?",
+          a: "HIT11 is available in all Indian states where skill-based gaming is permitted by regulations. The app is not available in Assam, Andhra Pradesh, Odisha, Telangana, Nagaland, Sikkim, and Tamil Nadu due to state-specific regulations."
+        },
+        {
+          q: "Is there an age restriction?",
+          a: "Yes, HIT11 is strictly for users who are 18 years of age or older. We implement age verification measures during the registration process."
+        },
+        {
+          q: "How does HIT11 ensure fair play?",
+          a: "We have robust systems and algorithms that ensure all games are fair and based on skill. Our platform undergoes regular audits to maintain integrity and fairness."
+        }
+      ]
     }
   ];
 
   return (
     <Layout>
       {/* Hero Section */}
-      <div className="bg-blue-600 text-white py-20">
+      <div className="bg-indigo-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold mb-6">Frequently Asked Questions</h1>
           <p className="text-xl max-w-2xl mx-auto">
@@ -119,12 +136,24 @@ export default function FAQ() {
         </div>
       </div>
 
+      {/* Legal Notice */}
+      <div className="bg-gray-100 py-8">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="bg-white p-6 rounded-lg shadow text-center">
+            <p className="text-gray-600 text-sm">
+              HIT11 is a skill-based gaming platform available only in those Indian states where skill gaming is permitted by regulations.
+              For users 18 years and above only. Please play responsibly.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Still Have Questions */}
       <div className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Still Have Questions?</h2>
           <p className="text-xl mb-8">Our support team is here to help you 24/7</p>
-          <button className="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700">
+          <button className="bg-indigo-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-indigo-700">
             Contact Support
           </button>
         </div>

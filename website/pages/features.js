@@ -1,4 +1,3 @@
-// pages/features.js
 import React from 'react';
 import Layout from '../components/Layout';
 import { Shield, Smartphone, Zap, Trophy, Wallet, Users } from 'lucide-react';
@@ -13,17 +12,17 @@ export default function Features() {
     {
       icon: Smartphone,
       title: "User-Friendly Interface",
-      description: "Easy-to-use mobile app designed for seamless prediction experience"
+      description: "Easy-to-use mobile app designed for seamless gaming experience"
     },
     {
       icon: Zap,
       title: "Real-Time Updates",
-      description: "Get live match updates and instant predictions"
+      description: "Get live game updates and instant results"
     },
     {
       icon: Trophy,
       title: "Exciting Rewards",
-      description: "Win big rewards based on your cricket knowledge"
+      description: "Earn rewards based on your skills and performance"
     },
     {
       icon: Wallet,
@@ -33,38 +32,38 @@ export default function Features() {
     {
       icon: Users,
       title: "Active Community",
-      description: "Join thousands of cricket enthusiasts"
+      description: "Join thousands of gaming enthusiasts"
     }
   ];
 
   const screenshots = [
     {
-      title: "Live Matches",
+      title: "Game Selection",
       image: "/api/placeholder/300/600",
-      description: "View all ongoing and upcoming matches"
+      description: "Browse a variety of skill-based games"
     },
     {
-      title: "Make Predictions",
+      title: "Play Games",
       image: "/api/placeholder/300/600",
-      description: "Simple interface for making predictions"
+      description: "Simple interface for playing games"
     },
     {
-      title: "Track Performance",
+      title: "Track Progress",
       image: "/api/placeholder/300/600",
-      description: "Monitor your prediction history"
+      description: "Monitor your performance and progress"
     }
   ];
 
   return (
     <Layout>
       {/* Hero Section */}
-      <div className="bg-blue-600 text-white py-20">
+      <div className="bg-indigo-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold mb-6">
-            Experience the Best Cricket Prediction App
+            Experience the Best Skill-Based Gaming App
           </h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Discover why thousands of cricket fans choose HIT11 for their predictions
+            Discover why thousands of users choose HIT11 for skill-based entertainment
           </p>
         </div>
       </div>
@@ -80,8 +79,8 @@ export default function Features() {
               const Icon = feature.icon;
               return (
                 <div key={index} className="bg-white p-6 rounded-lg shadow-lg">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                    <Icon className="w-6 h-6 text-indigo-600" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                   <p className="text-gray-600">{feature.description}</p>
@@ -119,10 +118,10 @@ export default function Features() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-blue-600 text-white py-16">
+      <div className="bg-indigo-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-8">Ready to Start Predicting?</h2>
-          <button className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-blue-50">
+          <h2 className="text-3xl font-bold mb-8">Ready to Start Playing?</h2>
+          <button className="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-indigo-50">
             Download HIT11 Now
           </button>
         </div>

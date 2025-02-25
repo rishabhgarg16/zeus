@@ -1,6 +1,7 @@
 package com.hit11.zeus.service
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.hit11.zeus.exception.Logger
 import com.hit11.zeus.livedata.*
 import com.hit11.zeus.model.MatchFormat
@@ -14,7 +15,6 @@ import okhttp3.Request
 import org.springframework.stereotype.Service
 import java.io.IOException
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
@@ -43,23 +43,37 @@ class CricbuzzApiService(
         try {
             // Fetch live matches
             if (lastLiveFetch.isBefore(Instant.now().minus(LIVE_FETCH_INTERVAL_MIN, ChronoUnit.MINUTES))) {
-                val liveMatches = fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live")
-                combinedMatches.addAll(liveMatches.typeMatches)
-                lastLiveFetch = Instant.now()
+                try {
+                    val liveMatches = fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live")
+                    combinedMatches.addAll(liveMatches.typeMatches ?: emptyList())
+                    lastLiveFetch = Instant.now()
+                } catch (e: Exception) {
+                    logger.error("Error fetching live matches, continuing with other endpoints", e)
+                    // Continue execution - we don't want to fail the entire function if one endpoint fails
+                }
             }
 
             // Fetch upcoming matches
             if (lastUpcomingFetch.isBefore(Instant.now().minus(UPCOMING_FETCH_INTERVAL_MIN, ChronoUnit.MINUTES))) {
-                val upcomingMatches =
-                    fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/upcoming")
-                combinedMatches.addAll(upcomingMatches.typeMatches)
-                lastUpcomingFetch = Instant.now()
+                try {
+                    val upcomingMatches =
+                        fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/upcoming")
+                    combinedMatches.addAll(upcomingMatches.typeMatches ?: emptyList())
+                    lastUpcomingFetch = Instant.now()
+                } catch (e: Exception) {
+                    logger.error("Error fetching upcoming matches, continuing with other endpoints", e)
+                }
             }
 
             if (lastRecentFetch.isBefore(Instant.now().minus(RECENT_FETCH_INTERVAL_MIN, ChronoUnit.MINUTES))) {
-                val recentMatches = fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/recent")
-                combinedMatches.addAll(recentMatches.typeMatches)
-                lastRecentFetch = Instant.now()
+                try {
+                    val recentMatches =
+                        fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/recent")
+                    combinedMatches.addAll(recentMatches.typeMatches ?: emptyList())
+                    lastRecentFetch = Instant.now()
+                } catch (e: Exception) {
+                    logger.error("Error fetching recent matches, continuing with other endpoints", e)
+                }
             }
 
             return CricbuzzMatchResponse(
@@ -69,12 +83,20 @@ class CricbuzzApiService(
                 responseLastUpdated = Instant.now().toString()
             )
         } catch (e: Exception) {
-            logger.error("Error fetching matches from Cricbuzz", e)
-            throw e
+            logger.error("Error aggregating matches from Cricbuzz", e)
+            return CricbuzzMatchResponse(
+                typeMatches = emptyList(),
+                responseLastUpdated = Instant.now().toString()
+            )
         }
     }
 
     private fun fetchMatchesByEndpoint(endpoint: String): CricbuzzMatchResponse {
+        val cached = apiResponseCache[endpoint]
+        if (cached != null && cached.first.isAfter(Instant.now().minus(apiResponseCacheTTL, ChronoUnit.MINUTES))) {
+            return cached.second
+        }
+
         val request = Request.Builder()
             .url(endpoint)
             .addHeader("x-rapidapi-host", "cricbuzz-cricket.p.rapidapi.com")
@@ -82,24 +104,40 @@ class CricbuzzApiService(
             .build()
 
         return try {
-            val cached = apiResponseCache[endpoint]
-            if (cached != null && cached.first.isAfter(Instant.now().minus(apiResponseCacheTTL, ChronoUnit.MINUTES))) {
-                return cached.second
-            }
-
             val response = client.newCall(request).execute()
             val responseBody = response.body?.string()
 
-            if (!response.isSuccessful || responseBody == null) {
+            if (!response.isSuccessful) {
                 throw IOException("Unexpected response $response")
             }
 
-            val convertedMatchResponse = Gson().fromJson(responseBody, CricbuzzMatchResponse::class.java)
-            apiResponseCache[endpoint] = Instant.now() to convertedMatchResponse
-            convertedMatchResponse
+            if (responseBody == null) {
+                throw IOException("Response body is null")
+            }
+
+            val gson = Gson()
+            try {
+                val convertedMatchResponse = gson.fromJson(responseBody, CricbuzzMatchResponse::class.java)
+
+                // Validate essential fields
+                if (convertedMatchResponse.typeMatches == null) {
+                    logger.warn("API returned null for typeMatches from $endpoint")
+                    convertedMatchResponse.copy(typeMatches = emptyList())
+                } else {
+                    // Store in cache
+                    apiResponseCache[endpoint] = Instant.now() to convertedMatchResponse
+                    convertedMatchResponse
+                }
+            } catch (e: JsonSyntaxException) {
+                logger.error("Error parsing JSON response from $endpoint", e)
+                logger.debug("Response body: $responseBody")
+                throw e
+            }
         } catch (e: Exception) {
             logger.error("Error fetching matches from endpoint $endpoint", e)
-            throw e
+
+            // Return cached data if available, otherwise rethrow
+            cached?.second?.let { return it } ?: throw e
         }
     }
 
@@ -113,19 +151,43 @@ class CricbuzzApiService(
             .addHeader("x-rapidapi-host", "cricbuzz-cricket.p.rapidapi.com")
             .addHeader("x-rapidapi-key", "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9")
             .build()
-        val response = client.newCall(request).execute()
-
-        val gson = Gson()
         return try {
-            val criccbuzzMatchDataModel =
-                gson.fromJson(response.body?.string(), CriccbuzzLiveScoreDataModel::class.java)
-            val team1 = teamRepository.findByCricbuzzTeamId(criccbuzzMatchDataModel.matchHeader.team1.id)
-            val team2 = teamRepository.findByCricbuzzTeamId(criccbuzzMatchDataModel.matchHeader.team2.id)
-            var hit11ScoreCard = transformMatchDataToHit11Scorecard(matchId, criccbuzzMatchDataModel, team1, team2)
-            hit11ScoreCard
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+
+            if (!response.isSuccessful) {
+                logger.error("Unsuccessful response getting match score: ${response.code}")
+                return null
+            }
+
+            if (responseBody == null) {
+                logger.error("Null response body when getting match score")
+                return null
+            }
+
+            val gson = Gson()
+
+            try {
+                val criccbuzzMatchDataModel =
+                    gson.fromJson(responseBody, CriccbuzzLiveScoreDataModel::class.java)
+                val team1 = teamRepository.findByCricbuzzTeamId(criccbuzzMatchDataModel.matchHeader.team1.id)
+                val team2 = teamRepository.findByCricbuzzTeamId(criccbuzzMatchDataModel.matchHeader.team2.id)
+                var hit11ScoreCard = transformMatchDataToHit11Scorecard(matchId, criccbuzzMatchDataModel, team1, team2)
+                hit11ScoreCard
+            } catch (e: JsonSyntaxException) {
+                logger.error("Error parsing JSON response for match score", e)
+                logger.debug("Response body: $responseBody")
+                null
+            } catch (e: NullPointerException) {
+                logger.error("Null pointer exception processing match score", e)
+                null
+            } catch (e: Exception) {
+                logger.error("Unexpected error processing match score: ${e.message}", e)
+                null
+            }
         } catch (e: Exception) {
-            logger.error("Error parsing JSON response: ${e.message}")
-            throw e
+            logger.error("Error fetching match score: ${e.message}", e)
+            null
         }
     }
 }
@@ -177,8 +239,12 @@ fun transformMatchDataToHit11Scorecard(
         status = matchHeader.status,
         state = getCricbuzzMatchPlayingState(matchHeader.state),
         result = matchResult,
-        team1 = Team(id = team1.id, name = team1.name, shortName = team1.shortName, teamImageUrl = dbteam1?.teamImageUrl ?: ""),
-        team2 = Team(id = team2.id, name = team2.name, shortName = team2.shortName, teamImageUrl = dbteam2?.teamImageUrl ?: ""),
+        team1 = Team(
+            id = team1.id, name = team1.name, shortName = team1.shortName, teamImageUrl = dbteam1?.teamImageUrl ?: ""
+        ),
+        team2 = Team(
+            id = team2.id, name = team2.name, shortName = team2.shortName, teamImageUrl = dbteam2?.teamImageUrl ?: ""
+        ),
         innings = inningsList,
         playerOfTheMatch = playerOfTheMatch,
         tossResult = tossResult
