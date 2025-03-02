@@ -22,10 +22,13 @@ class QuestionController(
     private val logger = Logger.getLogger(this::class.java)
 
     @GetMapping("/all-active")
-    fun getAllActivePulses(): ResponseEntity<ApiResponse<List<Question>?>> {
-        try {
-            val response = questionService.getAllActivePulses()
-            return ResponseEntity.ok(
+    fun getAllActivePulses(
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "500") size: Int
+    ): ResponseEntity<ApiResponse<List<Question>?>> {
+        return try {
+            val response = questionService.getAllActivePulses(page, size)
+            ResponseEntity.ok(
                 ApiResponse(
                     status = HttpStatus.OK.value(),
                     internalCode = null,
@@ -35,7 +38,7 @@ class QuestionController(
             )
         } catch (e: Exception) {
             logger.error("Error fetching active pulses", e)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ApiResponse(
                     status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     internalCode = null,

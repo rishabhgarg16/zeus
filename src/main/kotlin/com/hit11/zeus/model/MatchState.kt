@@ -39,7 +39,7 @@ enum class CricbuzzMatchPlayingState(val state: String) {
 }
 
 fun getCricbuzzMatchPlayingState(state: String): CricbuzzMatchPlayingState {
-    for (value in CricbuzzMatchPlayingState.entries) {
+    for (value in CricbuzzMatchPlayingState.values()) {
         if (value.state == state) {
             return value
         }

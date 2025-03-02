@@ -45,7 +45,13 @@ class CricbuzzApiService(
             if (lastLiveFetch.isBefore(Instant.now().minus(LIVE_FETCH_INTERVAL_MIN, ChronoUnit.MINUTES))) {
                 try {
                     val liveMatches = fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live")
-                    combinedMatches.addAll(liveMatches.typeMatches ?: emptyList())
+
+                    // Filter to keep only International and League matches
+                    val filteredLiveMatches = liveMatches.typeMatches.filter {
+                        it.matchType == "International" || it.matchType == "League"
+                    } ?: emptyList()
+
+                    combinedMatches.addAll(filteredLiveMatches)
                     lastLiveFetch = Instant.now()
                 } catch (e: Exception) {
                     logger.error("Error fetching live matches, continuing with other endpoints", e)
@@ -58,7 +64,12 @@ class CricbuzzApiService(
                 try {
                     val upcomingMatches =
                         fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/upcoming")
-                    combinedMatches.addAll(upcomingMatches.typeMatches ?: emptyList())
+                    // Filter to keep only International and League matches
+                    val filteredUpcomingMatches = upcomingMatches.typeMatches.filter {
+                        it.matchType == "International" || it.matchType == "League"
+                    }
+
+                    combinedMatches.addAll(filteredUpcomingMatches)
                     lastUpcomingFetch = Instant.now()
                 } catch (e: Exception) {
                     logger.error("Error fetching upcoming matches, continuing with other endpoints", e)
@@ -69,7 +80,12 @@ class CricbuzzApiService(
                 try {
                     val recentMatches =
                         fetchMatchesByEndpoint("https://cricbuzz-cricket.p.rapidapi.com/matches/v1/recent")
-                    combinedMatches.addAll(recentMatches.typeMatches ?: emptyList())
+                    // Filter to keep only International and League matches
+                    val filteredRecentMatches = recentMatches.typeMatches.filter {
+                        it.matchType == "International" || it.matchType == "League"
+                    }
+
+                    combinedMatches.addAll(filteredRecentMatches)
                     lastRecentFetch = Instant.now()
                 } catch (e: Exception) {
                     logger.error("Error fetching recent matches, continuing with other endpoints", e)

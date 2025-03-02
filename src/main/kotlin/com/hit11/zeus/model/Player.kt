@@ -34,7 +34,7 @@ enum class PlayerRole(val text: String) {
 
     companion object {
         fun fromText(text: String?): PlayerRole {
-            return entries.find { it.text.equals(text, ignoreCase = true) } ?: INVALID
+            return values().find { it.text.equals(text, ignoreCase = true) } ?: INVALID
         }
     }
 }

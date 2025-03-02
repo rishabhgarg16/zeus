@@ -1,6 +1,8 @@
 package com.hit11.zeus.repository
 
 import com.hit11.zeus.model.*
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -139,7 +141,7 @@ interface QuestionRepository : JpaRepository<Question, Int> {
     ): Boolean
 
     fun findByMatchId(matchId: Int): List<Question>?
-    fun findAllByStatus(status: QuestionStatus): List<Question>
+    fun findAllByStatus(status: QuestionStatus, pageable: Pageable): Page<Question>
     fun findAllByStatusAndPulseEndDateAfter(status: QuestionStatus, currentDate: Instant): List<Question>
     fun findAllByMatchIdIn(matchIds: List<Int>): List<Question>
     fun getPulseById(id: Int): Question

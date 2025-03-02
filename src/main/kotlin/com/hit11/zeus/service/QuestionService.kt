@@ -12,6 +12,10 @@ import com.hit11.zeus.question.ResolutionStrategy
 import com.hit11.zeus.question.RunsScoredByBatsmanQuestionGenerator
 import com.hit11.zeus.question.TeamRunsInMatchQuestionGenerator
 import com.hit11.zeus.repository.QuestionRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentHashMap
@@ -24,16 +28,16 @@ class QuestionService(
     private val resolutionStrategies: Map<QuestionType, ResolutionStrategy>,
     private val payoutService: PayoutService
 ) {
+    private val logger = Logger.getLogger(QuestionService::class.java)
     private val previousStates = ConcurrentHashMap<Int, MatchState>()
     private val lastProcessedBallNumbers = ConcurrentHashMap<Int, Int>()
 
-    fun getAllActivePulses(): List<Question>? {
-        return questionRepository.findAllByStatusAndPulseEndDateAfter(
-            QuestionStatus.LIVE, ZonedDateTime.now().toInstant()
-        )
+    fun getAllActivePulses(page: Int, size: Int): List<Question>? {
+        val pageable: Pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        val questionPage: Page<Question> = questionRepository.findAllByStatus(QuestionStatus.LIVE, pageable)
+        return questionPage.content
     }
 
-    private val logger = Logger.getLogger(QuestionService::class.java)
     fun getAllActiveQuestionsByMatch(matchIdList: List<Int>): List<Question>? {
         return questionRepository.findByMatchIdInAndStatusAndPulseEndDateAfter(
             matchIdList, QuestionStatus.LIVE, ZonedDateTime.now().toInstant()
@@ -60,16 +64,9 @@ class QuestionService(
     fun processNewScorecard(scorecard: Hit11Scorecard): BallEventProcessResponse {
         val matchId = scorecard.matchId
         val currentState = MatchState(scorecard)
+
         val currentInnings = scorecard.innings.find { it.isCurrentInnings }
         val latestBallNumber = currentInnings?.ballByBallEvents?.maxByOrNull { it.ballNumber }?.ballNumber ?: 0
-
-        // Get the last processed ball number for this match (defaulting to 0)
-        val lastProcessed = lastProcessedBallNumbers[matchId] ?: 0
-
-        // If the latest ball is not greater than the last processed, it's a duplicate (or out-of-sequence); do nothing.
-        if (latestBallNumber <= lastProcessed) {
-            return BallEventProcessResponse(emptyList(), emptyList(), emptyList(), emptyList())
-        }
 
         // Retrieve the previous state for this match if it exists
         val prevState = previousStates[matchId]

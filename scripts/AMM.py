@@ -56,6 +56,12 @@ class MarketMaker:
         # Position tracking
         # Each pulse_id maps to a dict with keys "Yes" and "No".
         # Each of those maps to another dict with "quantity" (int) and "amount" (Decimal).
+        # Ex:
+        #   4908: {
+                # 'Yes': {'quantity': 50, 'amount': Decimal('250.0')},
+                # 'No': {'quantity': 30, 'amount': Decimal('180.0')}
+            # }
+        # }
         self.positions: Dict[int, Dict[str, Dict[str, Union[int, Decimal]]]] = {}
 
         # Active pulses tracking
@@ -172,12 +178,13 @@ class MarketMaker:
             self.log_with_context("error", "Error fetching order book", pulse_id=pulse_id, error=str(e))
             return None
 
-    def can_place_order(self, pulse_id: int, price: Decimal) -> bool:
+    def can_place_order(self, pulse_id: int, price: Decimal, side: str) -> bool:
         current_time = time.time()
-        last_order = self.last_order_time.get(pulse_id, 0)
+        last_order = self.last_order_time.get((pulse_id, side), 0)
+
         if current_time - last_order < self.MIN_ORDER_INTERVAL:
-            self.log_with_context("info", "Preventing order spam: last order placed too recently",
-                                  pulse_id=pulse_id, time_since_last=current_time - last_order)
+            self.log_with_context("info", f"${side} Order blocked by MIN_ORDER_INTERVAL", pulse_id=pulse_id, side=side,
+                          last_order_time=last_order, current_time=current_time, time_diff=current_time - last_order)
             return False
 
         # Price range check
@@ -294,7 +301,7 @@ class MarketMaker:
                             side = order['orderSide']
                             qty = order['remainingQuantity']
                             if pulse_id in self.positions:
-                                self.positions[pulse_id][side] -= qty
+                                self.positions[pulse_id][side]['quantity'] -= qty
                     else:
                         self.logger.error("Bulk cancellation failed")
 
@@ -325,7 +332,7 @@ class MarketMaker:
         # Place layered orders
         for i in range(len(self.LAYER_SPREADS)):
             # Place Yes orders
-            if self.can_place_order(pulse.id, yes_prices[i]):
+            if self.can_place_order(pulse.id, yes_prices[i], "Yes"):
                 self.place_order(
                     pulse_id=pulse.id,
                     match_id=pulse.match_id,
@@ -336,7 +343,7 @@ class MarketMaker:
                 )
 
             # Place No orders
-            if self.can_place_order(pulse.id, no_prices[i]):
+            if self.can_place_order(pulse.id, no_prices[i], "No"):
                 self.place_order(
                     pulse_id=pulse.id,
                     match_id=pulse.match_id,
@@ -387,8 +394,13 @@ class MarketMaker:
                 else:
                     self.positions[pulse_id]['No']['quantity'] += quantity
                     self.positions[pulse_id]['No']['amount'] += price * Decimal(quantity)
+
                 # Update last order time to prevent spamming
-                self.last_order_time[pulse_id] = time.time()
+                if side == "Yes":
+                    self.last_order_time[(pulse_id, "Yes")] = time.time()
+                else:
+                    self.last_order_time[(pulse_id, "No")] = time.time()
+
                 # Log current positions for basic position management
                 self.log_positions(pulse_id)
                 return True

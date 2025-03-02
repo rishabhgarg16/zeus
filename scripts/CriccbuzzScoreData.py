@@ -84,10 +84,12 @@ def get_matches_with_cache():
 
     # Set cache TTL based on if there are any live matches
     # Set TTL based on match states
-    has_live_matches = any(match["status"].lower() in ["live", "in progress"] for match in matches)
+    has_live_matches = any(
+        match["status"].lower() in ["live", "in progress", "drink", "tea", "innings break"] for match in
+        matches)
     has_scheduled_soon = any(
-        match["status"].lower() in ["scheduled", "preview"] and
-        match.get("start_timestamp", 0) - current_time*1000 < 30*60*1000  # 30 minutes
+        match["status"].lower() in ["scheduled", "toss", "preview"] and
+        match.get("start_timestamp", 0) - current_time * 1000 < 30 * 60 * 1000  # 30 minutes
         for match in matches
     )
 
@@ -103,6 +105,7 @@ def get_matches_with_cache():
     match_list_cache["expires"] = current_time + ttl
 
     return matches
+
 
 def get_active_matches_from_api():
     """Fetch active matches directly from Cricbuzz via our API"""
@@ -162,12 +165,14 @@ def disable_all_active_questions(match_id):
             finally:
                 cursor.close()
 
+
 def log_critical_alert(message):
     """Log critical alerts to both normal logs and a separate alerts file"""
     logging.critical(f"!!! CRITICAL ALERT !!! {message}")
 
     with open('critical_alerts.log', 'a') as f:
         f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
+
 
 def get_or_create_match(match_header):
     with get_db_connection() as conn:
@@ -264,30 +269,31 @@ def update_match(cursor, match_header, match_id):
 
 match_data_cache = {}
 
+
 def get_match_data_from_cricbuzz_with_cache(match):
     match_id = match["cricbuzz_id"]
-    current_time = time.time()
+    current_time_ms = time.time() * 1000 # in milliseconds
 
     # Check if cache valid
-    if match_id in match_data_cache and match_data_cache[match_id]["expires"] > current_time:
+    if match_id in match_data_cache and match_data_cache[match_id]["expires"] > current_time_ms:
         return match_data_cache[match_id]["data"]
 
     # Determine TTL based on match status
     status = match["status"].lower()
     state_title = match["state_title"].lower()
 
-    if status in ["live", "in progress"]:
+    if status in ["live", "toss", "in progress", "drink", "tea", "innings break"]:
         ttl = 15  # 15 seconds for live matches
     elif status == "complete" or state_title.endswith("won"):
         # Shorter cache for recent completions, longer for older ones
-        time_since_completion = current_time*1000 - match.get("end_timestamp", 0)
-        if time_since_completion <= 15*60*1000:  # 15 minutes
+        time_since_completion = current_time_ms - match.get("end_timestamp", 0)
+        if time_since_completion <= 15 * 60 * 1000:  # 15 minutes
             ttl = 120  # 2 minutes for recently completed
         else:
             ttl = 1800  # 30 minutes for older completed
     else:  # upcoming/scheduled
-        time_to_start = match.get("start_timestamp", 0) - current_time*1000
-        if time_to_start < 60*60*1000:  # Less than 1 hour to start
+        time_to_start = match.get("start_timestamp", 0) - current_time_ms
+        if time_to_start < 60 * 60 * 1000:  # Less than 1 hour to start
             ttl = 300  # 5 minutes if starting soon
         else:
             ttl = 1800  # 30 minutes otherwise
@@ -302,10 +308,11 @@ def get_match_data_from_cricbuzz_with_cache(match):
 
         match_data_cache[match_id] = {
             "data": data,
-            "expires": current_time + ttl
+            "expires": (current_time_ms / 1000) + ttl  # expiry time in seconds
         }
 
     return data
+
 
 def call_cricbuzz_commentry_api(match_id):
     url = f"https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/{match_id}/comm"
@@ -831,6 +838,7 @@ last_updated_time = {
     "timestamp": 0  # Using dict to make it mutable and accessible inside functions
 }
 
+
 def main():
     while True:
         try:
@@ -859,7 +867,9 @@ def main():
                     process_cricbuzz_data(match_data)
 
             # Sleep for appropriate interval (shorter if live matches exist)
-            has_live = any(match["status"].lower() in ["live", "in progress"] for match in all_matches)
+            has_live = any(
+                match["status"].lower() in ["live", "toss", "in progress", "drink", "tea", "innings break"] for match in
+                all_matches)
             sleep_time = 15 if has_live else 60
             time.sleep(sleep_time)
 
@@ -867,6 +877,7 @@ def main():
             logging.error(f"An unexpected error occurred: {e}")
             logging.error(traceback.format_exc())
             time.sleep(60)
+
 
 if __name__ == "__main__":
     main()

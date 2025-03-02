@@ -30,6 +30,14 @@ class CricbuzzMatchService(
         val expiryTime: Instant = Instant.now().plusSeconds(120) // 2 min cache
     )
 
+    // Filter for Indian leagues and tournaments
+    private val isIndianLeague: (String) -> Boolean = { seriesName ->
+        seriesName.contains("IPL", ignoreCase = true) ||
+                seriesName.contains("Indian Premier League", ignoreCase = true) ||
+                seriesName.contains("Premier League", ignoreCase = true) && seriesName.contains("India", ignoreCase = true) ||
+                seriesName.contains("BCCI", ignoreCase = true)
+    }
+
     private var matchCache: MatchCache? = null
 
     fun getLiveAndUpcomingMatches(): CricbuzzMatchResponse {
@@ -41,15 +49,53 @@ class CricbuzzMatchService(
         }
 
         // Fetch fresh data
-        val matches = cricbuzzApiService.getLiveAndUpcomingMatches()
+        val allMatches = cricbuzzApiService.getLiveAndUpcomingMatches()
+
+        // Filter matches to include only international and Indian leagues
+        val filteredMatches = filterMatchTypes(allMatches)
 
         // Update cache
-        matchCache = MatchCache(matches)
+        matchCache = MatchCache(filteredMatches)
 
         // Process teams and matches
-        syncTeamsAndMatches(matches)
+        syncTeamsAndMatches(filteredMatches)
 
-        return matches
+        return filteredMatches
+    }
+
+    private fun filterMatchTypes(response: CricbuzzMatchResponse): CricbuzzMatchResponse {
+        val filteredTypeMatches = response.typeMatches.filter { typeMatch ->
+            // Include all international matches
+            if (typeMatch.matchType == "International") {
+                return@filter true
+            }
+            // For leagues, check if it's an Indian league
+            else if (typeMatch.matchType == "League") {
+                val hasIndianLeague = typeMatch.seriesMatches.any { seriesMatch ->
+                    seriesMatch.seriesAdWrapper?.seriesName?.let { isIndianLeague(it) } ?: false
+                }
+                return@filter hasIndianLeague
+            }
+            // Exclude all other match types
+            else {
+                return@filter false
+            }
+        }
+
+        // Filter each series to include only Indian leagues for league match type
+        val processedTypeMatches = filteredTypeMatches.map { typeMatch ->
+            if (typeMatch.matchType == "League") {
+                val filteredSeriesMatches = typeMatch.seriesMatches.filter { seriesMatch ->
+                    seriesMatch.seriesAdWrapper?.seriesName?.let { isIndianLeague(it) } ?: false
+                }
+                typeMatch.copy(seriesMatches = filteredSeriesMatches)
+            } else {
+                typeMatch
+            }
+        }
+
+        // Return modified response with filtered matches
+        return response.copy(typeMatches = processedTypeMatches)
     }
 
     @Transactional
