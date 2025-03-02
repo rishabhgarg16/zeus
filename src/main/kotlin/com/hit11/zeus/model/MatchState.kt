@@ -35,7 +35,10 @@ enum class CricbuzzMatchPlayingState(val state: String) {
     STUMPS("Stumps"),
 
     @JsonProperty("Tea")
-    TEA("Tea")
+    TEA("Tea"),
+
+    @JsonProperty("Abandon")
+    ABANDON("Abandon")
 }
 
 fun getCricbuzzMatchPlayingState(state: String): CricbuzzMatchPlayingState {
