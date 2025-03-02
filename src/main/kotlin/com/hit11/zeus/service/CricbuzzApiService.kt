@@ -25,7 +25,7 @@ class CricbuzzApiService(
 ) {
     val client = OkHttpClient()
     private val logger = Logger.getLogger(CricbuzzApiService::class.java)
-    private val apiKey = "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9"
+    private val apiKey = "812ccf7ceemsh4ccdd29e8208a08p147c6cjsn2235603a694b"
     private var lastLiveFetch: Instant = Instant.MIN
     private var lastUpcomingFetch: Instant = Instant.MIN
     private var lastRecentFetch: Instant = Instant.MIN
@@ -149,7 +149,7 @@ class CricbuzzApiService(
         val request = Request.Builder()
             .url("https://cricbuzz-cricket.p.rapidapi.com/mcenter/v1/$cricbuzzMatchId/comm")
             .addHeader("x-rapidapi-host", "cricbuzz-cricket.p.rapidapi.com")
-            .addHeader("x-rapidapi-key", "cf1c48d00fmshcf81b48d77b26b8p1e23f0jsn7bf53d9ff8d9")
+            .addHeader("x-rapidapi-key", "812ccf7ceemsh4ccdd29e8208a08p147c6cjsn2235603a694b")
             .build()
         return try {
             val response = client.newCall(request).execute()
