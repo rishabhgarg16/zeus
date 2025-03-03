@@ -55,10 +55,12 @@ class CricbuzzMatchService(
         val filteredMatches = filterMatchTypes(allMatches)
 
         // Update cache
-        matchCache = MatchCache(filteredMatches)
+        if(filteredMatches.typeMatches.isNotEmpty()) {
+            matchCache = MatchCache(filteredMatches)
 
-        // Process teams and matches
-        syncTeamsAndMatches(filteredMatches)
+            // Process teams and matches
+            syncTeamsAndMatches(filteredMatches)
+        }
 
         return filteredMatches
     }

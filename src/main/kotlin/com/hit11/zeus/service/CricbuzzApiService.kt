@@ -49,7 +49,7 @@ class CricbuzzApiService(
                     // Filter to keep only International and League matches
                     val filteredLiveMatches = liveMatches.typeMatches.filter {
                         it.matchType == "International" || it.matchType == "League"
-                    } ?: emptyList()
+                    }
 
                     combinedMatches.addAll(filteredLiveMatches)
                     lastLiveFetch = Instant.now()
@@ -135,6 +135,15 @@ class CricbuzzApiService(
             try {
                 val convertedMatchResponse = gson.fromJson(responseBody, CricbuzzMatchResponse::class.java)
 
+                // Check if the deserialized response is null
+                if (convertedMatchResponse == null) {
+                    logger.error("Deserialized response is null from endpoint $endpoint")
+                    return CricbuzzMatchResponse(
+                        typeMatches = emptyList(),
+                        responseLastUpdated = Instant.now().toString()
+                    )
+                }
+
                 // Validate essential fields
                 if (convertedMatchResponse.typeMatches == null) {
                     logger.warn("API returned null for typeMatches from $endpoint")
@@ -152,8 +161,11 @@ class CricbuzzApiService(
         } catch (e: Exception) {
             logger.error("Error fetching matches from endpoint $endpoint", e)
 
-            // Return cached data if available, otherwise rethrow
-            cached?.second?.let { return it } ?: throw e
+            // Return cached data if available, otherwise return empty response
+            cached?.second ?: CricbuzzMatchResponse(
+                typeMatches = emptyList(),
+                responseLastUpdated = Instant.now().toString()
+            )
         }
     }
 

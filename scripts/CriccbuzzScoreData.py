@@ -73,7 +73,7 @@ match_list_cache = {
 }
 
 def get_matches_with_cache():
-    current_time = time.time()
+    current_time = time.time() # seconds
 
     # Check if cache valid
     if match_list_cache["data"] and match_list_cache["expires"] > current_time:
@@ -272,27 +272,35 @@ match_data_cache = {}
 
 def get_match_data_from_cricbuzz_with_cache(match):
     match_id = match["cricbuzz_id"]
-    current_time_ms = time.time() * 1000 # in milliseconds
-
-    # Check if cache valid
-    if match_id in match_data_cache and match_data_cache[match_id]["expires"] > current_time_ms:
-        return match_data_cache[match_id]["data"]
-
-    # Determine TTL based on match status
     status = match["status"].lower()
     state_title = match["state_title"].lower()
+    current_time_sec = time.time()  # in seconds
+
+    if status in ["upcoming", "scheduled"] and match.get("end_timestamp", 0) < current_time_sec*1000:
+        logging.info(f"Skipping match {match_id} - Marked as upcoming but end date {datetime.fromtimestamp(match.get('end_timestamp', 0)/1000)} is in the past")
+        return False
+
+    # Check if cache valid
+    if match_id in match_data_cache and match_data_cache[match_id]["expires"] > current_time_sec:
+        logging.info(f"Cache HIT for match {match_id} status {status} - Using cached data")
+        return match_data_cache[match_id]["data"]
+    else:
+        if match_id in match_data_cache:
+            logging.info(f"Cache EXPIRED for match {match_id} status {status} - Fetching new data")
+        else:
+            logging.info(f"Cache MISS for match {match_id} status {status} - Using criccbuzz data")
 
     if status in ["live", "toss", "in progress", "drink", "tea", "innings break"]:
         ttl = 15  # 15 seconds for live matches
-    elif status == "complete" or state_title.endswith("won"):
+    elif status == "complete" or status == "abandon" or state_title.endswith("won"):
         # Shorter cache for recent completions, longer for older ones
-        time_since_completion = current_time_ms - match.get("end_timestamp", 0)
+        time_since_completion = current_time_sec*1000 - match.get("end_timestamp", 0)
         if time_since_completion <= 15 * 60 * 1000:  # 15 minutes
             ttl = 120  # 2 minutes for recently completed
         else:
             ttl = 1800  # 30 minutes for older completed
     else:  # upcoming/scheduled
-        time_to_start = match.get("start_timestamp", 0) - current_time_ms
+        time_to_start = match.get("start_timestamp", 0) - current_time_sec*1000
         if time_to_start < 60 * 60 * 1000:  # Less than 1 hour to start
             ttl = 300  # 5 minutes if starting soon
         else:
@@ -308,8 +316,19 @@ def get_match_data_from_cricbuzz_with_cache(match):
 
         match_data_cache[match_id] = {
             "data": data,
-            "expires": (current_time_ms / 1000) + ttl  # expiry time in seconds
+            "expires": current_time_sec + ttl  # expiry time in seconds
         }
+    else:
+        # Empty or error response
+        # Use shorter TTL for empty responses
+        empty_ttl = min(ttl, 300)  # Max 5 minutes for empty responses
+
+        match_data_cache[match_id] = {
+            "data": False,
+            "expires": current_time_sec + empty_ttl,
+            "empty": True
+        }
+        logging.info(f"Cache UPDATED with empty response for match {match_id} - Empty cache expires in {empty_ttl}s")
 
     return data
 
@@ -326,11 +345,13 @@ def call_cricbuzz_commentry_api(match_id):
         response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
 
         # Check if the response has content before trying to parse it
-        if not response.text:
+        # Check if the response has content before trying to parse it
+        if response.status_code == 204 or not response.text:
             logging.error(f"Empty response received from Cricbuzz for match {match_id}")
             return False
 
-        logging.info(f"Data fetched successfully from Cricbuzz {match_id}. Response: {response.text}")
+        # logging.info(f"Data fetched successfully from Cricbuzz {match_id}. Response: {response.text}")
+
         try:
             response_json = response.json()
             return response_json
