@@ -324,9 +324,21 @@ def call_cricbuzz_commentry_api(match_id):
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
+
+        # Check if the response has content before trying to parse it
+        if not response.text:
+            logging.error(f"Empty response received from Cricbuzz for match {match_id}")
+            return False
+
         logging.info(f"Data fetched successfully from Cricbuzz {match_id}. Response: {response.text}")
-        response_json = response.json()
-        return response_json
+        try:
+            response_json = response.json()
+            return response_json
+        except json.JSONDecodeError as json_err:
+            logging.error(f"Invalid JSON received from Cricbuzz for match {match_id}: {json_err}")
+            logging.error(f"Response text: {response.text[:500]}...")  # Log first 500 chars of response
+            return False
+
     except requests.exceptions.RequestException as e:
         logging.error(f"Error getting data from Cricbuzz: {e}")
         return False
